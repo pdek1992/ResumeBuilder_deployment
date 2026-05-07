@@ -32,6 +32,11 @@ export async function assertCsrf() {
   const cookieValue = cookieStore.get(CSRF_COOKIE_NAME)?.value;
 
   if (!headerValue || !cookieValue || headerValue !== cookieValue) {
+    console.error("CSRF Validation Failed:", {
+      hasHeader: !!headerValue,
+      hasCookie: !!cookieValue,
+      match: headerValue === cookieValue,
+    });
     throw new Error("Invalid CSRF token");
   }
 }

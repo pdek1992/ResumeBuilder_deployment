@@ -12,10 +12,12 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export async function middleware(request: NextRequest) {
   try {
+    // 1. Initial response
     let response = NextResponse.next({
       request,
     });
 
+    // 2. Handle Supabase Session
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         cookies: {
@@ -24,6 +26,7 @@ export async function middleware(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+            // Re-create response to include updated request cookies
             response = NextResponse.next({
               request,
             });
@@ -32,19 +35,23 @@ export async function middleware(request: NextRequest) {
         },
       });
 
-      // Refresh session if it exists
       await supabase.auth.getUser();
     }
 
-    if (!request.cookies.get("vrb_csrf")) {
+    // 3. Handle CSRF Token
+    // We check both the request and the response (in case it was set in a previous middleware step or this one)
+    const existingCsrf = request.cookies.get("vrb_csrf")?.value || response.cookies.get("vrb_csrf")?.value;
+    
+    if (!existingCsrf) {
       response.cookies.set("vrb_csrf", generateRandomToken(24), {
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
+        httpOnly: false, // Required for client-side apiFetch to read it
       });
     }
 
-    // Set Security Headers
+    // 4. Apply Security Headers to the FINAL response object
     const headers = response.headers;
     headers.set("X-Frame-Options", "DENY");
     headers.set("X-Content-Type-Options", "nosniff");
@@ -53,7 +60,6 @@ export async function middleware(request: NextRequest) {
     headers.set("Cross-Origin-Opener-Policy", "same-origin");
     headers.set("Cross-Origin-Resource-Policy", "same-site");
     
-    // Minimal CSP for stability
     headers.set(
       "Content-Security-Policy",
       "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.razorpay.com; frame-src https://checkout.razorpay.com; object-src 'none';"
@@ -61,8 +67,7 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (error) {
-    // Fail safe to basic response if something breaks
-    console.error("Middleware error:", error);
+    console.error("Middleware Critical Error:", error);
     return NextResponse.next();
   }
 }
