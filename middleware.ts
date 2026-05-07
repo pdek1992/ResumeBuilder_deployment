@@ -1,15 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-import { env } from "@/lib/env";
-import { generateCsrfCookieValue } from "@/lib/security/csrf";
+import { generateRandomToken } from "@/lib/security/tokens";
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request,
   });
 
-  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -27,7 +29,7 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getUser();
 
   if (!request.cookies.get("vrb_csrf")) {
-    response.cookies.set("vrb_csrf", generateCsrfCookieValue(), {
+    response.cookies.set("vrb_csrf", generateRandomToken(24), {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",

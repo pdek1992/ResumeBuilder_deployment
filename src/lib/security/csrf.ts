@@ -1,15 +1,9 @@
-import { cookies, headers } from "next/headers";
+import { generateRandomToken } from "./tokens";
 
 const CSRF_COOKIE_NAME = "vrb_csrf";
 
-function createRandomToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 export function generateCsrfCookieValue() {
-  return createRandomToken();
+  return generateRandomToken(24);
 }
 
 export async function getOrCreateCsrfToken() {
