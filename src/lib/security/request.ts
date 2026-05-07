@@ -13,18 +13,39 @@ export async function getRequestMetadata() {
 
 export async function assertSafeOrigin() {
   const { origin, referer } = await getRequestMetadata();
+  const headerStore = await headers();
+  const host = headerStore.get("host") ?? "";
 
+  // In development, we are more lenient with localhost
+  const isDev = process.env.NODE_ENV === "development";
+  
   if (!origin && !referer) {
     return;
   }
 
-  const expectedOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+  
+  // Check if it's a same-site request by comparing with the current host
+  const isSameHost = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.host === host;
+    } catch {
+      return false;
+    }
+  };
 
-  if (origin && !origin.startsWith(expectedOrigin)) {
-    throw new Error("Blocked cross-site request");
+  if (origin && !isSameHost(origin) && (!isDev || !origin.includes("localhost"))) {
+    if (appUrl && !origin.startsWith(appUrl)) {
+      console.error(`Blocked Origin: ${origin}, Expected: ${appUrl} or ${host}`);
+      throw new Error("Blocked cross-site request");
+    }
   }
 
-  if (referer && !referer.startsWith(expectedOrigin)) {
-    throw new Error("Blocked cross-site referer");
+  if (referer && !isSameHost(referer) && (!isDev || !referer.includes("localhost"))) {
+    if (appUrl && !referer.startsWith(appUrl)) {
+      console.error(`Blocked Referer: ${referer}, Expected: ${appUrl} or ${host}`);
+      throw new Error("Blocked cross-site referer");
+    }
   }
 }
