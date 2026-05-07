@@ -1,3 +1,4 @@
+import { cookies, headers } from "next/headers";
 import { generateRandomToken } from "./tokens";
 
 const CSRF_COOKIE_NAME = "vrb_csrf";
