@@ -1,0 +1,78 @@
+# -----------------------------------------------
+# Build outputs
+# -----------------------------------------------
+.next/
+out/
+dist/
+dist-ssr/
+build/
+
+# -----------------------------------------------
+# Dependencies
+# -----------------------------------------------
+node_modules/
+
+# -----------------------------------------------
+# Environment files — NEVER commit secrets
+# .env.example is safe and should be committed
+# -----------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# -----------------------------------------------
+# Encrypted / secret key files
+# -----------------------------------------------
+keys
+*.key
+*.pem
+*.p12
+*.pfx
+
+# -----------------------------------------------
+# Logs
+# -----------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# -----------------------------------------------
+# Editor / OS artifacts
+# -----------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# -----------------------------------------------
+# Temporary / generated images (dev screenshots)
+# -----------------------------------------------
+tmp-*.png
+tmp-*.jpg
+template*.png
+
+# -----------------------------------------------
+# TypeScript / Next.js generated files
+# -----------------------------------------------
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# -----------------------------------------------
+# Misc
+# -----------------------------------------------
+*.local
+.turbo/
+.vercel/

@@ -1,0 +1,137 @@
+openapi: 3.1.0
+info:
+  title: VigilSiddhiAI Resume Builder API
+  version: 1.0.0
+servers:
+  - url: https://your-domain.example
+paths:
+  /api/auth/session-event:
+    post:
+      summary: Log signup/login and upsert profile state
+      responses:
+        "200":
+          description: Session event recorded
+  /api/resumes:
+    get:
+      summary: List authenticated user resumes
+      responses:
+        "200":
+          description: Resume list
+    post:
+      summary: Create a blank draft resume
+      responses:
+        "200":
+          description: Resume created
+  /api/resumes/import:
+    post:
+      summary: Parse an uploaded resume or pasted text and create a mapped draft
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                text:
+                  type: string
+      responses:
+        "200":
+          description: Imported draft created
+  /api/resumes/save:
+    post:
+      summary: Autosave canonical resume state and template selection
+      responses:
+        "200":
+          description: Resume saved
+  /api/templates:
+    get:
+      summary: Fetch active dynamic templates
+      responses:
+        "200":
+          description: Template list
+  /api/ai/generate:
+    post:
+      summary: Generate sanitized AI content
+      responses:
+        "200":
+          description: Clean AI response returned
+  /api/payments/create-order:
+    post:
+      summary: Create a Razorpay order for a gated feature
+      responses:
+        "200":
+          description: Order created
+  /api/payments/verify:
+    post:
+      summary: Verify Razorpay signature and activate entitlement
+      responses:
+        "200":
+          description: Payment verified
+  /api/downloads/token:
+    post:
+      summary: Issue a short-lived signed export URL
+      responses:
+        "200":
+          description: Signed URL generated
+  /api/downloads/pdf:
+    get:
+      summary: Download a server-generated PDF using a signed token
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PDF stream
+  /api/downloads/docx:
+    get:
+      summary: Download a server-generated DOCX using a signed token
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: DOCX stream
+  /api/cover-letters:
+    post:
+      summary: Generate and store a paid cover letter
+      responses:
+        "200":
+          description: Cover letter created
+  /api/mock-interviews:
+    post:
+      summary: Consume a mock interview payment and generate 20 Q&A items
+      responses:
+        "200":
+          description: Interview pack created
+  /api/support:
+    get:
+      summary: Get prefilled support context
+      responses:
+        "200":
+          description: Support context
+    post:
+      summary: Create a support request
+      responses:
+        "200":
+          description: Support request created
+  /api/account/delete:
+    post:
+      summary: Delete personal account data while retaining payment audit records
+      responses:
+        "200":
+          description: Account deleted
+  /api/track:
+    post:
+      summary: Record a client-originated access event
+      responses:
+        "200":
+          description: Event logged

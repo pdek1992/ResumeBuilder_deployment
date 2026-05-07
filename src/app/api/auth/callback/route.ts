@@ -1,0 +1,41 @@
+import { NextResponse, type NextRequest } from "next/server";
+
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+
+export async function GET(request: NextRequest) {
+  const next = request.nextUrl.searchParams.get("next") ?? "/dashboard";
+  const code = request.nextUrl.searchParams.get("code");
+
+  if (!code) {
+    return NextResponse.redirect(new URL(next, request.url));
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (error || !session?.user) {
+    return NextResponse.redirect(new URL("/sign-in", request.url));
+  }
+
+  const admin = getSupabaseAdminClient();
+  const metadata = session.user.user_metadata ?? {};
+
+  await admin.from("users").upsert({
+    id: session.user.id,
+    email: session.user.email ?? "",
+    mobile: metadata.mobile ?? null,
+    auth_provider: metadata.auth_provider ?? "google",
+    full_name_locked: Boolean(metadata.first_name && metadata.last_name),
+    first_name: metadata.first_name ?? session.user.user_metadata?.full_name?.split(" ")[0] ?? "",
+    last_name: metadata.last_name ?? session.user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
+    consent_given: Boolean(metadata.consent_given),
+    consent_timestamp: metadata.consent_timestamp ?? null,
+    last_login: new Date().toISOString(),
+  });
+
+  return NextResponse.redirect(new URL(next, request.url));
+}
