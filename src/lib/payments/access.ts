@@ -98,13 +98,13 @@ export async function markPaymentFailed(orderId: string, reason: string) {
 export async function getActiveResumePass(userId: string) {
   const supabase = getSupabaseAdminClient();
   const { data } = await supabase
-    .from(\"payments\")
-    .select(\"*\")
-    .eq(\"user_id\", userId)
-    .eq(\"payment_type\", \"resume_download\")
-    .eq(\"status\", \"paid\")
-    .gt(\"expires_at\", new Date().toISOString())
-    .order(\"created_at\", { ascending: false })
+    .from("payments")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("payment_type", "resume_download")
+    .eq("status", "paid")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -115,13 +115,13 @@ export async function hasCoverLetterAccess(userId: string) {
   const supabase = getSupabaseAdminClient();
   // Check for either a full resume pass OR a specific cover letter pass
   const { data } = await supabase
-    .from(\"payments\")
-    .select(\"*\")
-    .eq(\"user_id\", userId)
-    .in(\"payment_type\", [\"resume_download\", \"cover_letter\"])
-    .eq(\"status\", \"paid\")
-    .gt(\"expires_at\", new Date().toISOString())
-    .order(\"created_at\", { ascending: false })
+    .from("payments")
+    .select("*")
+    .eq("user_id", userId)
+    .in("payment_type", ["resume_download", "cover_letter"])
+    .eq("status", "paid")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
