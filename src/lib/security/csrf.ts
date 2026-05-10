@@ -4,7 +4,7 @@ import { generateRandomToken } from "./tokens";
 const CSRF_COOKIE_NAME = "vrb_csrf";
 
 export function generateCsrfCookieValue() {
-  return generateRandomToken(24);
+  return generateRandomToken();
 }
 
 export async function getOrCreateCsrfToken() {
