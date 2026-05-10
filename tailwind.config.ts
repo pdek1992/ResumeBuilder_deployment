@@ -35,15 +35,9 @@ const config: Config = {
         "5xl": "2.75rem",
       },
       fontFamily: {
-        sans: [
-          "var(--font-sans)"
-        ],
-        display: [
-          "var(--font-display)"
-        ],
-        mono: [
-          "var(--font-mono)"
-        ]
+        sans: ["var(--font-sans)", "Inter", "sans-serif"],
+        display: ["var(--font-display)", "Inter", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
       backgroundImage: {
         "hero-grid": "radial-gradient(circle at top left, rgba(48,103,234,0.2), transparent 30%), radial-gradient(circle at bottom right, rgba(15,108,124,0.14), transparent 28%)",

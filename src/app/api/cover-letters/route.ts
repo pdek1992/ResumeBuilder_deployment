@@ -11,6 +11,7 @@ import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logUserAction } from "@/lib/logging";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 export async function POST(request: Request) {
   try {
@@ -76,6 +77,8 @@ export async function POST(request: Request) {
         resumeId: body.resumeId,
       },
     });
+
+    await sendTelegramAlert(`📝 *Cover Letter Generated*\nUser: \`${user.id}\`\nCompany: \`${body.companyName}\`\nResume: \`${body.resumeId}\``);
 
     return ok({ content });
   } catch (error) {

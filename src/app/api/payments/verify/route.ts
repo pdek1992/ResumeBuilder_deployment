@@ -7,6 +7,7 @@ import { verifyRazorpaySignature } from "@/lib/payments/razorpay";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { sendTelegramAlert } from "@/lib/telegram";
 import type { PaymentType } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -64,6 +65,8 @@ export async function POST(request: Request) {
         paymentType: payment.payment_type,
       },
     });
+
+    await sendTelegramAlert(`✅ *Payment Successful*\nUser: \`${user.id}\`\nAmount: ₹100\nType: \`${payment.payment_type}\`\nID: \`${body.razorpay_payment_id}\``);
 
     return ok({ payment });
   } catch (error) {

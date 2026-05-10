@@ -3,19 +3,19 @@ import { redirect } from "next/navigation";
 import type { UserProfile } from "@/lib/types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-export async function getCurrentSession() {
+export async function getCurrentUser() {
   const supabase = await getSupabaseServerClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return session;
+  return user;
 }
 
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
-  const session = await getCurrentSession();
+  const user = await getCurrentUser();
 
-  if (!session?.user) {
+  if (!user) {
     return null;
   }
 
@@ -23,7 +23,7 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   const { data } = await supabase
     .from("users")
     .select("*")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
   return (data as UserProfile | null) ?? null;

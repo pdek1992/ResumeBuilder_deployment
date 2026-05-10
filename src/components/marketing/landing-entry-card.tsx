@@ -14,134 +14,85 @@ export function LandingEntryCard({ signedIn }: { signedIn: boolean }) {
       router.push("/sign-up");
       return;
     }
-    const query = mobile.trim() ? `?mobile=${encodeURIComponent(mobile.trim())}` : "";
+    const query = mobile.trim()
+      ? `?mobile=${encodeURIComponent(mobile.trim())}`
+      : "";
     router.push(`/builder/import${query}`);
   }
 
-  // ── Signed-in: show builder entry ──────────────────────────────────────────
-  if (signedIn) {
-    return (
-      <section className="rounded-[3rem] border border-white/70 bg-white/82 px-6 py-8 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur md:px-10 md:py-10">
-        <p className="text-[12px] font-black uppercase tracking-[0.32em] text-primary">Step 1: Start</p>
-        <h1 className="mt-6 font-display text-[3.65rem] font-black leading-[0.92] tracking-tight text-slate-950 md:text-[5.7rem]">
-          Your Next Career
-          <br />
-          Move Starts
-          <br />
-          <span className="text-primary">Now</span>
-        </h1>
-        <p className="mt-8 max-w-2xl text-[18px] leading-10 text-slate-500 md:text-[1.75rem] md:leading-[3.2rem]">
-          Create a premium, ATS-optimized resume in minutes. &#8377;100 gives you 24h unlimited access, multiple
-          templates, and AI-powered refinements.
-        </p>
+  return (
+    <section className="rounded-[2.5rem] bg-white p-6 shadow-sm md:p-12 lg:p-16 h-full flex flex-col justify-center">
+      <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-6">
+        Step 1: Identity
+      </p>
+      <h1 className="font-display text-[3rem] md:text-[4rem] font-black leading-[1.05] tracking-tight text-gray-900">
+        Your Next Career
+        <br />
+        Move Starts <span className="text-blue-600 underline decoration-blue-200 underline-offset-[12px] decoration-4">Now</span>
+      </h1>
+      <p className="mt-8 max-w-2xl text-[16px] leading-relaxed text-gray-500 font-medium">
+        Create a premium, ATS-optimized resume in minutes. &#8377;100 gives you
+        24h unlimited access, multiple templates, and AI-powered refinements.
+      </p>
 
-        <div className="mt-12">
-          <label htmlFor="landing-mobile" className="ml-2 text-[11px] font-black uppercase tracking-[0.32em] text-slate-400">
-            Enter Mobile Number
-          </label>
-          <input
-            id="landing-mobile"
-            type="tel"
-            inputMode="numeric"
-            value={mobile}
-            onChange={(event) => setMobile(event.target.value)}
-            placeholder="985012XXXX"
-            className="mt-4 w-full rounded-[1.9rem] border-2 border-transparent bg-slate-50 px-6 py-5 text-[20px] font-bold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white"
-          />
-          <p className="mt-5 px-2 text-[11px] font-black uppercase tracking-[0.27em] text-slate-400">
-            Used for draft recovery &amp; 24h access support.
-            <span className="text-primary"> 10-digit number required.</span>
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleStart}
-          className="mt-10 w-full rounded-[2rem] bg-primary py-5 text-[15px] font-black uppercase tracking-[0.28em] text-white shadow-[0_24px_54px_rgba(48,103,234,0.25)] transition hover:brightness-105"
+      <div className="mt-12">
+        <label
+          htmlFor="landing-mobile"
+          className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400"
         >
-          Start Building &mdash; &#8377;100
-        </button>
+          Enter Mobile Number
+        </label>
+        <input
+          id="landing-mobile"
+          type="tel"
+          inputMode="numeric"
+          value={mobile}
+          onChange={(event) => setMobile(event.target.value)}
+          placeholder="9823340379"
+          className="mt-3 w-full rounded-full border-0 bg-gray-50/80 px-8 py-5 text-[18px] font-bold text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
+        />
+        <p className="mt-4 px-4 text-[9px] font-black uppercase tracking-widest text-gray-400">
+          Used for draft recovery &amp; 24h access support.
+          <span className="text-blue-600"> 10-digit number required.</span>
+        </p>
+      </div>
 
+      <button
+        type="button"
+        onClick={handleStart}
+        className="mt-10 w-full rounded-full bg-blue-600 py-5 text-[13px] font-black uppercase tracking-widest text-white transition hover:bg-blue-700 shadow-md shadow-blue-600/20"
+      >
+        Start Building &mdash; &#8377;100
+      </button>
+
+      {!signedIn && (
+        <div className="mt-8 flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gray-100" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              Already a member?
+            </p>
+            <div className="h-px flex-1 bg-gray-100" />
+          </div>
+          <Link
+            href="/sign-in"
+            className="flex w-full items-center justify-center rounded-full border-2 border-gray-100 bg-white py-4 text-[12px] font-bold uppercase tracking-widest text-gray-500 transition hover:border-gray-200 hover:text-gray-700"
+          >
+            Sign In to Your Account
+          </Link>
+        </div>
+      )}
+
+      {signedIn && (
         <div className="mt-8">
           <Link
             href="/dashboard"
-            className="block w-full rounded-[2rem] border-2 border-slate-200 py-4 text-center text-[13px] font-black uppercase tracking-[0.26em] text-slate-500 transition hover:border-primary hover:text-primary"
+            className="block w-full rounded-full border-2 border-gray-100 bg-white py-4 text-center text-[12px] font-bold uppercase tracking-widest text-gray-500 transition hover:border-gray-200 hover:text-gray-700"
           >
             Go to My Dashboard
           </Link>
         </div>
-
-        <div className="mt-10 grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-xl font-black text-slate-950">100%</p>
-            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">ATS Friendly</p>
-          </div>
-          <div>
-            <p className="text-xl font-black text-slate-950">Unlimited</p>
-            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Template Swaps</p>
-          </div>
-          <div>
-            <p className="text-xl font-black text-slate-950">Secure</p>
-            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Private Build</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // ── Guest: show sign-in / sign-up entry ────────────────────────────────────
-  return (
-    <section className="rounded-[3rem] border border-white/70 bg-white/82 px-6 py-8 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur md:px-10 md:py-10">
-      <p className="text-[12px] font-black uppercase tracking-[0.32em] text-primary">Step 1: Identity</p>
-      <h1 className="mt-6 font-display text-[3.65rem] font-black leading-[0.92] tracking-tight text-slate-950 md:text-[5.7rem]">
-        Your Next Career
-        <br />
-        Move Starts
-        <br />
-        <span className="text-primary">Now</span>
-      </h1>
-      <p className="mt-8 max-w-2xl text-[18px] leading-10 text-slate-500 md:text-[1.75rem] md:leading-[3.2rem]">
-        Create a premium, ATS-optimized resume in minutes. Sign up free, then pay &#8377;100 for 24h unlimited access
-        and AI-powered refinements.
-      </p>
-
-      {/* Primary CTA: Sign Up */}
-      <Link
-        href="/sign-up"
-        className="mt-12 flex w-full items-center justify-center rounded-[2rem] bg-primary py-5 text-[15px] font-black uppercase tracking-[0.28em] text-white shadow-[0_24px_54px_rgba(48,103,234,0.25)] transition hover:brightness-105"
-      >
-        Create Free Account &mdash; Start Building
-      </Link>
-
-      {/* Divider */}
-      <div className="mt-8 flex items-center gap-4">
-        <div className="h-px flex-1 bg-slate-200" />
-        <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Already a member?</p>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      {/* Secondary CTA: Sign In */}
-      <Link
-        href="/sign-in"
-        className="mt-6 flex w-full items-center justify-center rounded-[2rem] border-2 border-slate-200 py-5 text-[15px] font-black uppercase tracking-[0.28em] text-slate-600 transition hover:border-primary hover:text-primary"
-      >
-        Sign In to Your Account
-      </Link>
-
-      <div className="mt-10 grid grid-cols-3 gap-4 text-center">
-        <div>
-          <p className="text-xl font-black text-slate-950">Free</p>
-          <p className="mt-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Sign Up</p>
-        </div>
-        <div>
-          <p className="text-xl font-black text-slate-950">18+</p>
-          <p className="mt-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Templates</p>
-        </div>
-        <div>
-          <p className="text-xl font-black text-slate-950">Secure</p>
-          <p className="mt-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Private Build</p>
-        </div>
-      </div>
+      )}
     </section>
   );
 }

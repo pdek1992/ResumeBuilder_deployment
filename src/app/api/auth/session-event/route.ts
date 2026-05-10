@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { logUserAction } from "@/lib/logging";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 export async function POST(request: Request) {
   try {
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
         provider: profile.auth_provider ?? user.user_metadata?.auth_provider ?? "password",
       },
     });
+
+    await sendTelegramAlert(`🔐 *User ${body.event === "signup" ? "Registered" : "Logged In"}*\nUser: \`${user.id}\`\nEmail: \`${user.email}\`\nMobile: \`${profile.mobile ?? "Not provided"}\``);
 
     return ok({ success: true });
   } catch (error) {

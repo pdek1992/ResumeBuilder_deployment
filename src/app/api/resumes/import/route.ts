@@ -11,6 +11,7 @@ import { createResumeDraft } from "@/lib/resume/repository";
 import { createDefaultResumeData, resumeSectionAliases } from "@/lib/resume/defaults";
 import { extractResumeTextFromFile } from "@/lib/resume/import";
 import { logUserAction } from "@/lib/logging";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 const importSchema = z.object({
   personal: z.object({
@@ -111,6 +112,8 @@ export async function POST(request: Request) {
         resumeId: resume.id,
       },
     });
+
+    await sendTelegramAlert(`📄 *Resume Imported*\nUser: \`${user.id}\`\nTitle: \`${resume.title}\``);
 
     return ok({ resume });
   } catch (error) {

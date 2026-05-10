@@ -5,6 +5,7 @@ import { getActiveResumePass } from "@/lib/payments/access";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 export async function POST(request: Request) {
   try {
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
       resumeId: body.resumeId,
       format: body.format,
     });
+
+    await sendTelegramAlert(`📥 *Export Initiated*\nUser: \`${user.id}\`\nFormat: \`${body.format.toUpperCase()}\`\nResume: \`${body.resumeId}\``);
 
     return ok({
       url: absoluteUrl(`/api/downloads/${body.format}?token=${encodeURIComponent(token)}`),

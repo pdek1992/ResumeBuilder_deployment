@@ -13,6 +13,7 @@ import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logUserAction } from "@/lib/logging";
+import { sendTelegramAlert } from "@/lib/telegram";
 
 const interviewSchema = z.object({
   items: z.array(
@@ -96,6 +97,8 @@ export async function POST(request: Request) {
         resumeId: body.resumeId,
       },
     });
+
+    await sendTelegramAlert(`🎙️ *Mock Interview Generated*\nUser: \`${user.id}\`\nCompany: \`${body.companyName}\`\nQuestions: 20`);
 
     return ok(parsed);
   } catch (error) {

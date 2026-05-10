@@ -7,7 +7,7 @@ import { getResumeForUser, saveResumeDraft } from "@/lib/resume/repository";
 import { decompressJson } from "@/lib/compression";
 import type { ResumeData } from "@/lib/types";
 import { logUserAction } from "@/lib/logging";
-
+import { sendTelegramAlert } from "@/lib/telegram";
 export async function POST(request: Request) {
   try {
     await assertSafeOrigin();
@@ -54,6 +54,10 @@ export async function POST(request: Request) {
         templateId: body.templateId ?? existing.template_id,
       },
     });
+
+    if (body.templateId && body.templateId !== existing.template_id) {
+      await sendTelegramAlert(`🔄 *User Template Swapped*\nUser: \`${user.id}\`\nNew Template: \`${body.templateId}\``);
+    }
 
     return ok({ resume: updated });
   } catch (error) {

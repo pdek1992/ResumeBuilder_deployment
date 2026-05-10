@@ -482,15 +482,14 @@ export function ResumeEditor({
 
                     <div className="mt-10 grid gap-6">
                       <div>
-                        <label className={labelClassName}>Full Name</label>
+                        <div className="flex items-center justify-between">
+                          <label className={labelClassName}>Full Name (Locked to Account)</label>
+                          <a href={supportLink()} target="_blank" rel="noreferrer" className="text-[10px] font-bold uppercase tracking-wider text-primary hover:underline">Change via Support</a>
+                        </div>
                         <input
-                          value={[resume.personal.firstName, resume.personal.lastName].filter(Boolean).join(" ")}
-                          onChange={(event) => {
-                            const [firstName = "", ...rest] = event.target.value.split(" ");
-                            updatePersonal("firstName", firstName);
-                            updatePersonal("lastName", rest.join(" "));
-                          }}
-                          className={fieldClassName}
+                          value={[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
+                          readOnly
+                          className={`${fieldClassName} cursor-not-allowed opacity-60`}
                         />
                       </div>
                       <div>
