@@ -35,18 +35,41 @@ export async function POST(request: Request) {
     const profile = body.profile ?? {};
     const admin = getSupabaseAdminClient();
 
-    await admin.from("users").upsert({
-      id: user.id,
-      email: user.email ?? "",
-      mobile: profile.mobile ?? user.user_metadata?.mobile ?? null,
-      auth_provider: profile.auth_provider ?? user.user_metadata?.auth_provider ?? "password",
-      full_name_locked: Boolean(profile.first_name && profile.last_name),
-      first_name: profile.first_name ?? user.user_metadata?.first_name ?? "",
-      last_name: profile.last_name ?? user.user_metadata?.last_name ?? "",
-      consent_given: Boolean(profile.consent_given ?? false),
-      consent_timestamp: profile.consent_timestamp ?? null,
-      last_login: new Date().toISOString(),
-    });
+    // Check if user exists to avoid triggering the prevent_locked_name_change error on empty names
+    const { data: existingUser } = await admin.from("users").select("id").eq("id", user.id).maybeSingle();
+
+    if (existingUser) {
+      // Just update login time and mobile/auth_provider if missing
+      const { error: updateError } = await admin.from("users").update({
+        last_login: new Date().toISOString(),
+        ...(profile.mobile && { mobile: profile.mobile }),
+        ...(profile.auth_provider && { auth_provider: profile.auth_provider }),
+      }).eq("id", user.id);
+
+      if (updateError) {
+        console.error("[Session Event] Failed to update user profile:", updateError);
+        throw new Error("Failed to update user profile in database");
+      }
+    } else {
+      // Insert new user
+      const { error: insertError } = await admin.from("users").insert({
+        id: user.id,
+        email: user.email ?? "",
+        mobile: profile.mobile ?? user.user_metadata?.mobile ?? null,
+        auth_provider: profile.auth_provider ?? user.user_metadata?.auth_provider ?? "password",
+        full_name_locked: Boolean(profile.first_name && profile.last_name),
+        first_name: profile.first_name ?? user.user_metadata?.first_name ?? "",
+        last_name: profile.last_name ?? user.user_metadata?.last_name ?? "",
+        consent_given: Boolean(profile.consent_given ?? false),
+        consent_timestamp: profile.consent_timestamp ?? null,
+        last_login: new Date().toISOString(),
+      });
+
+      if (insertError) {
+        console.error("[Session Event] Failed to insert user profile:", insertError);
+        throw new Error("Failed to create user profile in database");
+      }
+    }
 
     await logUserAction({
       userId: user.id,

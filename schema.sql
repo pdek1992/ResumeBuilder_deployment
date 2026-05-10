@@ -228,6 +228,14 @@ EXECUTE FUNCTION public.prevent_locked_name_change();
 -- ROW LEVEL SECURITY
 -- -----------------------------------------------
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- Helper function to bypass RLS for admin checks
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT is_admin FROM public.users WHERE id = auth.uid();
+$$;
 ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resumes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resume_versions ENABLE ROW LEVEL SECURITY;
@@ -241,9 +249,7 @@ ALTER TABLE public.user_last_activity ENABLE ROW LEVEL SECURITY;
 -- Users
 DROP POLICY IF EXISTS users_select_own ON public.users;
 CREATE POLICY users_select_own ON public.users
-FOR SELECT USING (auth.uid() = id OR EXISTS (
-  SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.is_admin = TRUE
-));
+FOR SELECT USING (auth.uid() = id OR public.is_admin());
 
 DROP POLICY IF EXISTS users_update_own ON public.users;
 CREATE POLICY users_update_own ON public.users
@@ -252,9 +258,7 @@ FOR UPDATE USING (auth.uid() = id);
 -- Admin full-access policy on users
 DROP POLICY IF EXISTS users_admin_all ON public.users;
 CREATE POLICY users_admin_all ON public.users
-FOR ALL USING (EXISTS (
-  SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.is_admin = TRUE
-));
+FOR ALL USING (public.is_admin());
 
 -- Templates
 DROP POLICY IF EXISTS templates_read_active ON public.templates;
@@ -263,9 +267,7 @@ FOR SELECT USING (active = TRUE);
 
 DROP POLICY IF EXISTS templates_admin_all ON public.templates;
 CREATE POLICY templates_admin_all ON public.templates
-FOR ALL USING (EXISTS (
-  SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.is_admin = TRUE
-));
+FOR ALL USING (public.is_admin());
 
 -- Resumes
 DROP POLICY IF EXISTS resumes_manage_own ON public.resumes;
@@ -274,9 +276,7 @@ FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS resumes_admin_all ON public.resumes;
 CREATE POLICY resumes_admin_all ON public.resumes
-FOR ALL USING (EXISTS (
-  SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.is_admin = TRUE
-));
+FOR ALL USING (public.is_admin());
 
 -- Resume Versions
 DROP POLICY IF EXISTS resume_versions_read_own ON public.resume_versions;
@@ -297,9 +297,7 @@ FOR SELECT USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS payments_admin_all ON public.payments;
 CREATE POLICY payments_admin_all ON public.payments
-FOR ALL USING (EXISTS (
-  SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.is_admin = TRUE
-));
+FOR ALL USING (public.is_admin());
 
 -- Mock Interviews
 DROP POLICY IF EXISTS mock_interviews_manage_own ON public.mock_interviews;

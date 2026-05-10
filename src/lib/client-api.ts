@@ -12,11 +12,22 @@ function readCookie(name: string) {
 }
 
 export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit) {
-  const csrf = decodeURIComponent(readCookie("vrb_csrf"));
+  let csrf = decodeURIComponent(readCookie("vrb_csrf"));
 
   console.log("[DEBUG API] vrb_csrf read from cookie:", csrf || "<empty>");
-  if (typeof document !== "undefined") {
-    console.log("[DEBUG API] full document.cookie:", document.cookie);
+  
+  if (!csrf) {
+    console.log("[DEBUG API] CSRF token missing in cookie, fetching from server...");
+    try {
+      const csrfRes = await fetch("/api/csrf");
+      if (csrfRes.ok) {
+        const csrfData = await csrfRes.json();
+        csrf = csrfData.token;
+        console.log("[DEBUG API] Fetched new CSRF token:", csrf);
+      }
+    } catch (e) {
+      console.error("[DEBUG API] Failed to fetch fallback CSRF token", e);
+    }
   }
 
   const response = await fetch(input, {
