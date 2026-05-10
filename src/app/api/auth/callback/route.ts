@@ -21,21 +21,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  const admin = getSupabaseAdminClient();
-  const metadata = session.user.user_metadata ?? {};
+  try {
+    const admin = getSupabaseAdminClient();
+    const metadata = session.user.user_metadata ?? {};
 
-  await admin.from("users").upsert({
-    id: session.user.id,
-    email: session.user.email ?? "",
-    mobile: metadata.mobile ?? null,
-    auth_provider: metadata.auth_provider ?? "google",
-    full_name_locked: Boolean(metadata.first_name && metadata.last_name),
-    first_name: metadata.first_name ?? session.user.user_metadata?.full_name?.split(" ")[0] ?? "",
-    last_name: metadata.last_name ?? session.user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
-    consent_given: Boolean(metadata.consent_given),
-    consent_timestamp: metadata.consent_timestamp ?? null,
-    last_login: new Date().toISOString(),
-  });
+    const { error: upsertError } = await admin.from("users").upsert({
+      id: session.user.id,
+      email: session.user.email ?? "",
+      mobile: metadata.mobile ?? null,
+      auth_provider: metadata.auth_provider ?? "google",
+      full_name_locked: Boolean(metadata.first_name && metadata.last_name),
+      first_name: metadata.first_name ?? session.user.user_metadata?.full_name?.split(" ")[0] ?? "",
+      last_name: metadata.last_name ?? session.user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
+      consent_given: Boolean(metadata.consent_given),
+      consent_timestamp: metadata.consent_timestamp ?? null,
+      last_login: new Date().toISOString(),
+    });
+
+    if (upsertError) {
+      console.error("Failed to upsert user profile on login:", upsertError);
+    }
+  } catch (err) {
+    console.error("Critical error during user profile setup (check SUPABASE_SERVICE_ROLE_KEY):", err);
+  }
 
   return NextResponse.redirect(new URL(next, request.url));
 }
