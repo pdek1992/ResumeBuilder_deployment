@@ -1,5 +1,3 @@
-export function generateRandomToken(length = 24) {
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+export function generateRandomToken() {
+  return crypto.randomUUID().replace(/-/g, "");
 }

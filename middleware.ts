@@ -1,10 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-function generateRandomToken(length = 24) {
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+function generateRandomToken() {
+  return crypto.randomUUID().replace(/-/g, '');
 }
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -25,8 +23,7 @@ export async function middleware(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-            // Re-create response to include updated request cookies
+            cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
             response = NextResponse.next({
               request,
             });
@@ -43,7 +40,7 @@ export async function middleware(request: NextRequest) {
     const existingCsrf = request.cookies.get("vrb_csrf")?.value || response.cookies.get("vrb_csrf")?.value;
     
     if (!existingCsrf) {
-      response.cookies.set("vrb_csrf", generateRandomToken(24), {
+      response.cookies.set("vrb_csrf", generateRandomToken(), {
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
