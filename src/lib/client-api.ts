@@ -14,6 +14,11 @@ function readCookie(name: string) {
 export async function apiFetch<T>(input: RequestInfo | URL, init?: RequestInit) {
   const csrf = decodeURIComponent(readCookie("vrb_csrf"));
 
+  console.log("[DEBUG API] vrb_csrf read from cookie:", csrf || "<empty>");
+  if (typeof document !== "undefined") {
+    console.log("[DEBUG API] full document.cookie:", document.cookie);
+  }
+
   const response = await fetch(input, {
     ...init,
     headers: {

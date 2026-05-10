@@ -38,7 +38,9 @@ export function SignInForm() {
     await apiFetch("/api/auth/session-event", {
       method: "POST",
       body: JSON.stringify({ event: "login" }),
-    }).catch(() => undefined);
+    }).catch((err) => {
+      console.error("Session event logging failed:", err);
+    });
 
     router.push("/dashboard");
     router.refresh();

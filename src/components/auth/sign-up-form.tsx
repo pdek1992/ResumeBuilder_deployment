@@ -83,6 +83,8 @@ export function SignUpForm({ defaultMobile = "" }: { defaultMobile?: string }) {
           auth_provider: "password",
         },
       }),
+    }).catch((err) => {
+      console.error("Session event logging failed:", err);
     });
 
     router.push("/builder/import");
