@@ -30,23 +30,45 @@ export async function getResumeForUser(userId: string, resumeId: string) {
 
 export async function ensurePublicUserExists(userId: string) {
   const supabase = getSupabaseAdminClient();
-  const { data: user } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
+  
+  // Try to find by ID first
+  const { data: existing } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
+  if (existing) return;
 
-  if (!user) {
-    // Fetch user info from auth to populate public profile if possible
-    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-    const email = authUser?.user?.email ?? "";
-    const name = authUser?.user?.user_metadata?.full_name ?? "";
-    const parts = name.split(" ");
-    
-    await supabase.from("users").insert({
+  // Fetch from Auth to get email and name
+  const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+  if (authError || !authUser?.user) {
+    console.error("[SYNC] Could not fetch user from auth:", authError);
+    // If we can't get auth info, we insert a minimal stub to avoid FK error
+    const { error: stubError } = await supabase.from("users").upsert({
       id: userId,
-      email: email,
-      first_name: parts[0] || "User",
-      last_name: parts.slice(1).join(" ") || "",
+      email: `sync_fallback_${userId}@resumebuilder.internal`,
+      first_name: "User",
+      last_name: "",
       is_admin: false,
       ai_config: {},
-    });
+    }, { onConflict: 'id' });
+    
+    if (stubError) throw new Error(`User sync failed: ${stubError.message}`);
+    return;
+  }
+
+  const email = authUser.user.email ?? "";
+  const name = authUser.user.user_metadata?.full_name ?? "";
+  const parts = name.split(" ");
+  
+  const { error: syncError } = await supabase.from("users").upsert({
+    id: userId,
+    email: email,
+    first_name: parts[0] || "User",
+    last_name: parts.slice(1).join(" ") || "",
+    is_admin: false,
+    ai_config: {},
+  }, { onConflict: 'id' });
+
+  if (syncError) {
+    console.error("[SYNC] Public user upsert failed:", syncError);
+    throw new Error(`User synchronization failed: ${syncError.message}`);
   }
 }
 

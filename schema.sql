@@ -221,11 +221,45 @@ BEGIN
 END;
 $$;
 
+-- -----------------------------------------------
+-- AUTOMATIC USER SYNC (AUTH -> PUBLIC)
+-- -----------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.users (id, email, first_name, last_name, auth_provider)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'first_name', 'User'),
+    COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
+    COALESCE(NEW.raw_app_meta_data->>'provider', 'password')
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+-- Note: This trigger requires access to auth schema. 
+-- In many Supabase setups, this is safe to include in schema.sql
+-- but may require manual execution if the role doesn't have permissions on 'auth'.
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Remove restrictive CHECK constraint if it exists to allow social providers
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_auth_provider_check;
+
 DROP TRIGGER IF EXISTS trg_prevent_locked_name_change ON public.users;
 CREATE TRIGGER trg_prevent_locked_name_change
 BEFORE UPDATE ON public.users
 FOR EACH ROW
 EXECUTE FUNCTION public.prevent_locked_name_change();
+
 
 -- -----------------------------------------------
 -- ROW LEVEL SECURITY
