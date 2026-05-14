@@ -16,36 +16,42 @@ export async function assertSafeOrigin() {
   const headerStore = await headers();
   const host = headerStore.get("host") ?? "";
 
-  // In development, we are more lenient with localhost
+  // In development, be lenient with localhost
   const isDev = process.env.NODE_ENV === "development";
-  
-  if (!origin && !referer) {
-    return;
+  if (isDev) return;
+
+  // No origin/referer means a server-to-server or same-origin fetch — allow it
+  if (!origin && !referer) return;
+
+  // Build set of allowed hostnames from NEXT_PUBLIC_APP_URL (strip trailing slash)
+  const allowedHosts = new Set<string>();
+  allowedHosts.add(host);
+
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  if (appUrl) {
+    try {
+      allowedHosts.add(new URL(appUrl).host);
+    } catch {
+      // ignore malformed URL
+    }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-  
-  // Check if it's a same-site request by comparing with the current host
-  const isSameHost = (url: string) => {
+  const isAllowed = (url: string) => {
     try {
-      const urlObj = new URL(url);
-      return urlObj.host === host;
+      return allowedHosts.has(new URL(url).host);
     } catch {
       return false;
     }
   };
 
-  if (origin && !isSameHost(origin) && (!isDev || !origin.includes("localhost"))) {
-    if (appUrl && !origin.startsWith(appUrl)) {
-      console.error(`Blocked Origin: ${origin}, Expected: ${appUrl} or ${host}`);
-      throw new Error("Blocked cross-site request");
-    }
+  if (origin && !isAllowed(origin)) {
+    console.error(`Blocked Origin: ${origin}, Allowed: ${[...allowedHosts].join(", ")}`);
+    throw new Error("Blocked cross-site request");
   }
 
-  if (referer && !isSameHost(referer) && (!isDev || !referer.includes("localhost"))) {
-    if (appUrl && !referer.startsWith(appUrl)) {
-      console.error(`Blocked Referer: ${referer}, Expected: ${appUrl} or ${host}`);
-      throw new Error("Blocked cross-site referer");
-    }
+  if (referer && !isAllowed(referer)) {
+    console.error(`Blocked Referer: ${referer}, Allowed: ${[...allowedHosts].join(", ")}`);
+    throw new Error("Blocked cross-site referer");
   }
 }
+
