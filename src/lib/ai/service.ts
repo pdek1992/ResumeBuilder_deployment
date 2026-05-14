@@ -13,6 +13,10 @@ type GenerateAiContentInput = {
   systemPrompt?: string;
   provider?: "gemini" | "openai";
   metadata?: Record<string, unknown>;
+  file?: {
+    mimeType: string;
+    data: string; // base64
+  };
 };
 
 const providerCursor = {
@@ -100,7 +104,19 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
               model: modelName,
               systemInstruction: finalSystemPrompt,
             });
-            const result = await model.generateContent(prompt);
+            const result = await model.generateContent(
+              file
+                ? [
+                    {
+                      inlineData: {
+                        mimeType: file.mimeType,
+                        data: file.data,
+                      },
+                    },
+                    prompt,
+                  ]
+                : prompt
+            );
             raw = result.response.text();
           } else {
             const client = new OpenAI({ apiKey: key });

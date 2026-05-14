@@ -12,6 +12,7 @@ import { createDefaultResumeData, resumeSectionAliases } from "@/lib/resume/defa
 import { extractResumeTextFromFile } from "@/lib/resume/import";
 import { logUserAction } from "@/lib/logging";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { RESUME_JSON_PROMPT } from "@/lib/ai/prompts";
 
 const importSchema = z.object({
   personal: z.object({
@@ -94,56 +95,85 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const text = String(formData.get("text") ?? "").trim();
-    let extractedText = text;
+    
+    let aiContent = "";
 
     if (file instanceof File) {
       if (!isSupportedImportFile(file)) {
         return failImport("Unsupported file type. Please upload a PDF, DOCX, or DOC file.");
       }
 
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        // Native AI parsing for PDF
+        const arrayBuffer = await file.arrayBuffer();
+        const base64Data = Buffer.from(arrayBuffer).toString("base64");
+        
+        try {
+          aiContent = await generateAiContent({
+            mode: "JSON",
+            prompt: RESUME_JSON_PROMPT,
+            userId: user.id,
+            provider: "gemini",
+            file: {
+              mimeType: "application/pdf",
+              data: base64Data,
+            },
+            metadata: { purpose: "resume_import_native_pdf" },
+          });
+        } catch (error) {
+          return failImport(`AI PDF import failed: ${getErrorMessage(error)}`, 502, error);
+        }
+      } else {
+        // Use traditional extraction for DOCX/DOC
+        try {
+          const extractedText = await extractResumeTextFromFile(file);
+          const prompt = [
+            RESUME_JSON_PROMPT,
+            "Raw text from document:",
+            extractedText.slice(0, 18000),
+          ].join("\n");
+          
+          aiContent = await generateAiContent({
+            mode: "JSON",
+            prompt,
+            userId: user.id,
+            metadata: { purpose: "resume_import_docx" },
+          });
+        } catch (error) {
+          return failImport(`Could not read uploaded file: ${getErrorMessage(error)}`, 400, error);
+        }
+      }
+    } else if (text) {
+      // Manual text import
+      const prompt = [
+        RESUME_JSON_PROMPT,
+        "Raw text:",
+        text.slice(0, 18000),
+      ].join("\n");
+      
       try {
-        extractedText = await extractResumeTextFromFile(file);
+        aiContent = await generateAiContent({
+          mode: "JSON",
+          prompt,
+          userId: user.id,
+          metadata: { purpose: "resume_import_text" },
+        });
       } catch (error) {
-        return failImport(`Could not read uploaded file: ${getErrorMessage(error)}`, 400, error);
+        return failImport(`AI text import failed: ${getErrorMessage(error)}`, 502, error);
       }
     }
 
-    if (!extractedText) {
+    if (!aiContent) {
       return fail("No import content found", 400);
-    }
-
-    const prompt = [
-      "Map this raw resume text into the exact JSON structure requested.",
-      "Return ONLY valid JSON.",
-      "Use these section aliases as equivalent targets:",
-      JSON.stringify(resumeSectionAliases),
-      "JSON keys required:",
-      JSON.stringify(createDefaultResumeData()),
-      "Resume text:",
-      extractedText.slice(0, 18000),
-    ].join("\n");
-
-    let content = "";
-    try {
-      content = await generateAiContent({
-        mode: "JSON",
-        prompt,
-        userId: user.id,
-        metadata: {
-          purpose: "resume_import",
-        },
-      });
-    } catch (error) {
-      return failImport(`AI import failed: ${getErrorMessage(error)}`, 502, error);
     }
 
     let parsed;
     try {
-      parsed = importSchema.parse(JSON.parse(content));
+      parsed = importSchema.parse(JSON.parse(aiContent));
     } catch (error) {
       return failImport(`AI returned invalid resume JSON: ${getErrorMessage(error)}`, 502, {
         error,
-        contentPreview: content.slice(0, 1000),
+        contentPreview: aiContent.slice(0, 1000),
       });
     }
 

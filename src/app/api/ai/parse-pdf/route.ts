@@ -1,6 +1,4 @@
-import "@/lib/pdf-polyfill";
 export const runtime = "nodejs";
-
 
 import { ok, fail } from "@/lib/api-response";
 import { generateAiContent } from "@/lib/ai/service";
@@ -10,8 +8,6 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { assertRateLimit } from "@/lib/security/rate-limit";
 import { getRequestMetadata } from "@/lib/security/request";
 import { RESUME_JSON_PROMPT } from "@/lib/ai/prompts";
-import { PDFParse } from "pdf-parse";
-
 
 export async function POST(request: Request) {
   try {
@@ -48,25 +44,19 @@ export async function POST(request: Request) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const parser = new PDFParse({ data: buffer });
-    const pdfData = await parser.getText();
-    await parser.destroy();
-    const textContent = pdfData.text;
-
-    if (!textContent || textContent.trim().length === 0) {
-      return fail("Could not extract text from the PDF", 400);
-    }
-
-    const prompt = `${RESUME_JSON_PROMPT}\n\nRaw Text to Parse:\n${textContent}`;
+    const base64Data = Buffer.from(arrayBuffer).toString("base64");
 
     const rawJsonString = await generateAiContent({
       mode: "JSON",
-      prompt,
+      prompt: RESUME_JSON_PROMPT,
       userId: user.id,
+      provider: "gemini", // Use Gemini for native PDF parsing
+      file: {
+        mimeType: "application/pdf",
+        data: base64Data,
+      },
       metadata: {
-        purpose: "parse_pdf",
+        purpose: "parse_pdf_native",
         fileName: file.name,
         fileSize: file.size,
       },
@@ -76,11 +66,13 @@ export async function POST(request: Request) {
     try {
       parsedResume = JSON.parse(rawJsonString);
     } catch (e) {
+      console.error("[ParsePDF] AI returned invalid JSON:", rawJsonString);
       return fail("AI failed to return valid JSON", 500);
     }
 
     return ok({ data: parsedResume });
   } catch (error) {
+    console.error("[ParsePDF] Error:", error);
     return fail(error, 400);
   }
 }
