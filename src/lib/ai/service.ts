@@ -80,7 +80,10 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
     { name: "nvidia" as const, keys: env.nvidiaApiKeys, models: env.nvidiaModels, baseUrl: "https://integrate.api.nvidia.com/v1" },
   ];
 
-  if (providerOverride) {
+  // Randomize provider order to prevent hitting the same provider first every time
+  if (!providerOverride) {
+    providers.sort(() => Math.random() - 0.5);
+  } else {
     providers = providers.filter(p => p.name === providerOverride);
   }
 

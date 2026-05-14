@@ -14,14 +14,29 @@ const configuredGeminiModels = parseKeyList(process.env.GEMINI_MODELS);
 const configuredOpenAiModels = parseKeyList(process.env.OPENAI_MODELS);
 const configuredNvidiaModels = parseKeyList(process.env.NVIDIA_MODELS);
 
+function collectNumberedKeys(prefix: string) {
+  const keys: string[] = [];
+  let i = 1;
+  while (true) {
+    const key = process.env[`${prefix}_${i}`];
+    if (!key) break;
+    keys.push(key.trim());
+    i++;
+  }
+  return keys;
+}
+
+const geminiLegacyKeys = parseKeyList(process.env.GEMINI_API_KEYS);
+const openAiLegacyKeys = parseKeyList(process.env.OPENAI_API_KEYS);
+
 export const env = {
-  // AI keys — comma-separated rotation lists
-  geminiApiKeys: parseKeyList(process.env.GEMINI_API_KEYS),
-  openAiApiKeys: parseKeyList(process.env.OPENAI_API_KEYS),
+  // AI keys — support both comma-separated and individual numbered variables
+  geminiApiKeys: Array.from(new Set([...collectNumberedKeys("GEMINI_API_KEY"), ...geminiLegacyKeys])),
+  openAiApiKeys: Array.from(new Set([...collectNumberedKeys("OPENAI_API_KEY"), ...openAiLegacyKeys])),
   nvidiaApiKeys: parseKeyList(process.env.NVIDIA_API_KEYS || "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"),
   geminiModels: configuredGeminiModels.length
     ? configuredGeminiModels
-    : ["gemini-2.0-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-1.5-flash-8b-latest"],
+    : ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-pro"],
   openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4o"],
   nvidiaModels: configuredNvidiaModels.length
     ? configuredNvidiaModels
