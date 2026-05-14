@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/((?!api/).*)",
+        source: "/:path*",
         headers: securityHeaders,
       },
     ];
