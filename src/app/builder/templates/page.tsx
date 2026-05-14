@@ -11,9 +11,10 @@ export default async function TemplatePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const profile = await requireUserProfile();
   const params = await searchParams;
   const resumeId = typeof params.resumeId === "string" ? params.resumeId : "";
+  const nextPath = resumeId ? `/builder/templates?resumeId=${encodeURIComponent(resumeId)}` : "/builder/templates";
+  const profile = await requireUserProfile(nextPath);
 
   if (!resumeId) {
     redirect("/dashboard");

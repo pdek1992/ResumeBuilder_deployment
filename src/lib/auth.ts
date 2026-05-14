@@ -65,12 +65,12 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   return (data as UserProfile | null) ?? null;
 }
 
-export async function requireUserProfile() {
+export async function requireUserProfile(nextPath = "/dashboard") {
   const profile = await getCurrentUserProfile();
 
   if (!profile) {
     const headerStore = await headers();
-    const next = headerStore.get("x-current-path") ?? "/dashboard";
+    const next = headerStore.get("x-current-path") ?? nextPath;
     console.log("[AUTH DEBUG] requireUserProfile redirecting to /sign-in because profile is null");
     redirect(`/sign-in?next=${encodeURIComponent(next)}`);
   }

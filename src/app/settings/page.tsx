@@ -13,7 +13,7 @@ const fieldClassName =
 const labelClassName = "ml-2 text-[11px] font-black uppercase tracking-[0.3em] text-slate-400";
 
 export default async function SettingsPage() {
-  const profile = await requireUserProfile();
+  const profile = await requireUserProfile("/settings");
   const supportLink = buildWhatsappSupportLink(
     [
       "Name lock change request",

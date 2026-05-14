@@ -5,7 +5,7 @@ import { listUserResumes } from "@/lib/resume/repository";
 import { LegacyFlowShell } from "@/components/marketing/legacy-shell";
 
 export default async function DashboardPage() {
-  const profile = await requireUserProfile();
+  const profile = await requireUserProfile("/dashboard");
   const resumes = await listUserResumes(profile.id);
 
   return (

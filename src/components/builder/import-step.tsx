@@ -1,8 +1,35 @@
 "use client";
 
 import { ArrowLeft, FolderUp, PenSquare } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+async function getCsrfToken() {
+  const existing =
+    typeof document === "undefined"
+      ? ""
+      : decodeURIComponent(
+          document.cookie
+            .split("; ")
+            .find((entry) => entry.startsWith("vrb_csrf="))
+            ?.split("=")[1] ?? "",
+        );
+
+  if (existing) {
+    return existing;
+  }
+
+  const response = await fetch("/api/csrf", {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not prepare a secure request token");
+  }
+
+  const payload = (await response.json()) as { token?: string };
+  return payload.token ?? "";
+}
 
 export function ImportStep() {
   const router = useRouter();
@@ -11,22 +38,18 @@ export function ImportStep() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const csrf = useMemo(() => {
-    if (typeof document === "undefined") {
-      return "";
-    }
-
-    return decodeURIComponent(
-      document.cookie
-        .split("; ")
-        .find((entry) => entry.startsWith("vrb_csrf="))
-        ?.split("=")[1] ?? "",
-    );
-  }, []);
-
   async function handleManualStart() {
     setLoading(true);
     setError("");
+
+    let csrf = "";
+    try {
+      csrf = await getCsrfToken();
+    } catch (error) {
+      setLoading(false);
+      setError(error instanceof Error ? error.message : "Could not prepare a secure request token");
+      return;
+    }
 
     const response = await fetch("/api/resumes", {
       method: "POST",
@@ -54,6 +77,15 @@ export function ImportStep() {
   async function handleImport() {
     setLoading(true);
     setError("");
+
+    let csrf = "";
+    try {
+      csrf = await getCsrfToken();
+    } catch (error) {
+      setLoading(false);
+      setError(error instanceof Error ? error.message : "Could not prepare a secure request token");
+      return;
+    }
 
     const formData = new FormData();
     if (file) {

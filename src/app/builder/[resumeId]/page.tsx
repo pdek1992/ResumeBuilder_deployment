@@ -9,7 +9,7 @@ import { ResumeEditor } from "@/components/editor/resume-editor";
 
 export default async function ResumeEditorPage({ params }: { params: Promise<{ resumeId: string }> }) {
   const { resumeId } = await params;
-  const profile = await requireUserProfile();
+  const profile = await requireUserProfile(`/builder/${encodeURIComponent(resumeId)}`);
   const [resume, templates, activePass, mockInterviewCredit] = await Promise.all([
     getResumeForUser(profile.id, resumeId),
     listTemplates(),

@@ -76,3 +76,4 @@ tsconfig.tsbuildinfo
 *.local
 .turbo/
 .vercel/
+.vercel
