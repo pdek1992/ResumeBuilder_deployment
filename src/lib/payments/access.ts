@@ -3,6 +3,45 @@ import { addHours } from "date-fns";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { PaymentType } from "@/lib/types";
 
+type SupabaseErrorLike = {
+  code?: string;
+  message?: string;
+};
+
+function isSchemaCompatibilityError(error: SupabaseErrorLike | null | undefined) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    error?.code === "PGRST204" ||
+    error?.code === "42703" ||
+    error?.code === "23514" ||
+    message.includes("could not find") ||
+    message.includes("does not exist") ||
+    message.includes("violates check constraint")
+  );
+}
+
+async function getPaymentByOrderId(orderId: string) {
+  const supabase = getSupabaseAdminClient();
+  const canonical = await supabase.from("payments").select("*").eq("order_id", orderId).maybeSingle();
+
+  if (!canonical.error) {
+    return { data: canonical.data, orderColumn: "order_id" as const };
+  }
+
+  if (!isSchemaCompatibilityError(canonical.error)) {
+    throw canonical.error;
+  }
+
+  const legacy = await supabase.from("payments").select("*").eq("razorpay_order_id", orderId).maybeSingle();
+
+  if (legacy.error) {
+    throw legacy.error;
+  }
+
+  return { data: legacy.data, orderColumn: "razorpay_order_id" as const };
+}
+
 export async function createPaymentRecord({
   userId,
   orderId,
@@ -15,7 +54,7 @@ export async function createPaymentRecord({
   paymentType: PaymentType;
 }) {
   const supabase = getSupabaseAdminClient();
-  const { data, error } = await supabase
+  const canonical = await supabase
     .from("payments")
     .insert({
       user_id: userId,
@@ -27,11 +66,31 @@ export async function createPaymentRecord({
     .select("*")
     .single();
 
-  if (error) {
-    throw error;
+  if (!canonical.error) {
+    return canonical.data;
   }
 
-  return data;
+  if (!isSchemaCompatibilityError(canonical.error)) {
+    throw canonical.error;
+  }
+
+  const legacy = await supabase
+    .from("payments")
+    .insert({
+      user_id: userId,
+      razorpay_order_id: orderId,
+      amount,
+      payment_type: paymentType,
+      status: "pending",
+    })
+    .select("*")
+    .single();
+
+  if (legacy.error) {
+    throw legacy.error;
+  }
+
+  return legacy.data;
 }
 
 export async function markPaymentPaid({
@@ -44,11 +103,7 @@ export async function markPaymentPaid({
   method?: string;
 }) {
   const supabase = getSupabaseAdminClient();
-  const { data: current } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("order_id", orderId)
-    .single();
+  const { data: current, orderColumn } = await getPaymentByOrderId(orderId);
 
   if (!current) {
     throw new Error("Payment record not found");
@@ -59,7 +114,7 @@ export async function markPaymentPaid({
       ? addHours(new Date(), 24).toISOString()
       : null;
 
-  const { data, error } = await supabase
+  const canonicalUpdate = await supabase
     .from("payments")
     .update({
       status: "paid",
@@ -71,20 +126,40 @@ export async function markPaymentPaid({
         consumed: false,
       },
     })
-    .eq("order_id", orderId)
+    .eq(orderColumn, orderId)
     .select("*")
     .single();
 
-  if (error) {
-    throw error;
+  if (!canonicalUpdate.error) {
+    return canonicalUpdate.data;
   }
 
-  return data;
+  if (!isSchemaCompatibilityError(canonicalUpdate.error)) {
+    throw canonicalUpdate.error;
+  }
+
+  const legacyUpdate = await supabase
+    .from("payments")
+    .update({
+      status: "paid",
+      razorpay_payment_id: paymentId,
+      expires_at: expiresAt,
+    })
+    .eq(orderColumn, orderId)
+    .select("*")
+    .single();
+
+  if (legacyUpdate.error) {
+    throw legacyUpdate.error;
+  }
+
+  return legacyUpdate.data;
 }
 
 export async function markPaymentFailed(orderId: string, reason: string) {
   const supabase = getSupabaseAdminClient();
-  await supabase
+  const { orderColumn } = await getPaymentByOrderId(orderId);
+  const canonicalUpdate = await supabase
     .from("payments")
     .update({
       status: "failed",
@@ -92,7 +167,20 @@ export async function markPaymentFailed(orderId: string, reason: string) {
         failure_reason: reason,
       },
     })
-    .eq("order_id", orderId);
+    .eq(orderColumn, orderId);
+
+  if (!canonicalUpdate.error || !isSchemaCompatibilityError(canonicalUpdate.error)) {
+    if (canonicalUpdate.error) {
+      throw canonicalUpdate.error;
+    }
+    return;
+  }
+
+  const legacyUpdate = await supabase.from("payments").update({ status: "failed" }).eq(orderColumn, orderId);
+
+  if (legacyUpdate.error) {
+    throw legacyUpdate.error;
+  }
 }
 
 export async function getActiveResumePass(userId: string) {

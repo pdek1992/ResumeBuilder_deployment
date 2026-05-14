@@ -75,6 +75,7 @@ export async function POST(request: Request) {
       currency: order.currency,
     });
   } catch (error) {
+    console.error("[Payments] Failed to create Razorpay order:", error);
     return fail(error, 400);
   }
 }
