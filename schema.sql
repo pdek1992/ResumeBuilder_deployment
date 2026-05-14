@@ -462,6 +462,18 @@ END $$;
 -- Add missing columns to resumes table if they don't exist
 DO $$
 BEGIN
+    -- template_id
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'template_id') THEN
+        ALTER TABLE public.resumes ADD COLUMN template_id TEXT;
+        -- Attempt to link to templates if it was missing (might need manual cleanup if templates are empty)
+        ALTER TABLE public.resumes ADD CONSTRAINT resumes_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.templates(id);
+    END IF;
+
+    -- raw_json_compressed
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'raw_json_compressed') THEN
+        ALTER TABLE public.resumes ADD COLUMN raw_json_compressed TEXT;
+    END IF;
+
     -- ats_score
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'ats_score') THEN
         ALTER TABLE public.resumes ADD COLUMN ats_score INTEGER;
@@ -481,12 +493,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'is_locked') THEN
         ALTER TABLE public.resumes ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT FALSE;
     END IF;
-
-    -- raw_json_compressed
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'raw_json_compressed') THEN
-        ALTER TABLE public.resumes ADD COLUMN raw_json_compressed TEXT;
-        -- If NOT NULL is required, we should set it after adding a default if table is not empty
-        -- But for a simple patch, we can just allow NULL or set a default.
-        -- Given it's a resume builder, it's better to have it as TEXT and NOT NULL eventually.
-    END IF;
 END $$;
+
+-- FORCE SCHEMA RELOAD
+NOTIFY pgrst, 'reload schema';

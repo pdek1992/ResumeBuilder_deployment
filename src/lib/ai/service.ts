@@ -68,10 +68,12 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
     .eq("id", userId)
     .single();
 
-  const aiConfig = userProfile?.ai_config ?? {};
+  const aiConfig = userProfile && typeof userProfile === 'object' && userProfile.ai_config 
+    ? userProfile.ai_config 
+    : {};
 
-  const geminiKeys = uniqueKeys([aiConfig.geminiApiKey, ...env.geminiApiKeys]);
-  const openAiKeys = uniqueKeys([aiConfig.openAiApiKey, ...env.openAiApiKeys]);
+  const geminiKeys = uniqueKeys([(aiConfig as any).geminiApiKey, ...env.geminiApiKeys]);
+  const openAiKeys = uniqueKeys([(aiConfig as any).openAiApiKey, ...env.openAiApiKeys]);
 
   const failures: string[] = [];
   let providers = [
