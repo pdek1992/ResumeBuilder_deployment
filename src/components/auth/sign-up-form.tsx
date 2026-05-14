@@ -11,7 +11,7 @@ const fieldClassName =
   "mt-3 w-full rounded-[1.9rem] border-2 border-transparent bg-slate-50 px-6 py-5 text-[17px] font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white";
 const labelClassName = "ml-2 text-[11px] font-black uppercase tracking-[0.3em] text-slate-400";
 
-export function SignUpForm({ defaultMobile = "" }: { defaultMobile?: string }) {
+export function SignUpForm({ defaultMobile = "", next = "/builder/import" }: { defaultMobile?: string; next?: string }) {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const [form, setForm] = useState({
@@ -41,7 +41,7 @@ export function SignUpForm({ defaultMobile = "" }: { defaultMobile?: string }) {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/builder/import`,
+        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
         data: {
           first_name: form.firstName,
           last_name: form.lastName,
@@ -87,7 +87,7 @@ export function SignUpForm({ defaultMobile = "" }: { defaultMobile?: string }) {
       console.error("Session event logging failed:", err);
     });
 
-    router.push("/builder/import");
+    router.push(next);
     router.refresh();
   }
 
@@ -200,7 +200,7 @@ export function SignUpForm({ defaultMobile = "" }: { defaultMobile?: string }) {
 
       <p className="mt-8 text-center text-[13px] font-semibold text-slate-500">
         Already have an account?{" "}
-        <Link href="/sign-in" className="text-primary">
+        <Link href={`/sign-in?next=${encodeURIComponent(next)}`} className="text-primary">
           Sign in
         </Link>
       </p>

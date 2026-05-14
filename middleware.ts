@@ -2,11 +2,39 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 function generateRandomToken() {
-  return crypto.randomUUID().replace(/-/g, '');
+  return crypto.randomUUID().replace(/-/g, "");
 }
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const PROTECTED_PAGE_PREFIXES = ["/dashboard", "/settings", "/builder"];
+
+function isProtectedPage(pathname: string) {
+  return PROTECTED_PAGE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function redirectToSignIn(request: NextRequest) {
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = "/sign-in";
+  redirectUrl.search = "";
+  redirectUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  return redirectUrl;
+}
+
+function applySecurityHeaders(response: NextResponse) {
+  const headers = response.headers;
+  headers.set("X-Frame-Options", "DENY");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("Cross-Origin-Resource-Policy", "same-site");
+
+  headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.razorpay.com; frame-src https://checkout.razorpay.com; object-src 'none';"
+  );
+}
 
 export async function middleware(request: NextRequest) {
   try {
@@ -14,6 +42,7 @@ export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
       request,
     });
+    let isAuthenticated = false;
 
     // 2. Handle Supabase Session
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
@@ -23,7 +52,7 @@ export async function middleware(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
             response = NextResponse.next({
               request,
             });
@@ -32,7 +61,15 @@ export async function middleware(request: NextRequest) {
         },
       });
 
-      await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      isAuthenticated = Boolean(user);
+    }
+
+    if (!isAuthenticated && isProtectedPage(request.nextUrl.pathname)) {
+      response = NextResponse.redirect(redirectToSignIn(request));
     }
 
     // 3. Handle CSRF Token
@@ -49,23 +86,14 @@ export async function middleware(request: NextRequest) {
     }
 
     // 4. Apply Security Headers to the FINAL response object
-    const headers = response.headers;
-    headers.set("X-Frame-Options", "DENY");
-    headers.set("X-Content-Type-Options", "nosniff");
-    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    headers.set("Cross-Origin-Opener-Policy", "same-origin");
-    headers.set("Cross-Origin-Resource-Policy", "same-site");
-    
-    headers.set(
-      "Content-Security-Policy",
-      "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.razorpay.com; frame-src https://checkout.razorpay.com; object-src 'none';"
-    );
+    applySecurityHeaders(response);
 
     return response;
   } catch (error) {
     console.error("Middleware Critical Error:", error);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    applySecurityHeaders(response);
+    return response;
   }
 }
 

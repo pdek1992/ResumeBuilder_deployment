@@ -11,7 +11,7 @@ const fieldClassName =
   "mt-3 w-full rounded-[1.9rem] border-2 border-transparent bg-slate-50 px-6 py-5 text-[17px] font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white";
 const labelClassName = "ml-2 text-[11px] font-black uppercase tracking-[0.3em] text-slate-400";
 
-export function SignInForm() {
+export function SignInForm({ next = "/dashboard" }: { next?: string }) {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const [email, setEmail] = useState("");
@@ -42,7 +42,7 @@ export function SignInForm() {
       console.error("Session event logging failed:", err);
     });
 
-    router.push("/dashboard");
+    router.push(next);
     router.refresh();
   }
 
@@ -50,7 +50,7 @@ export function SignInForm() {
     setLoading(true);
     setError("");
 
-    const redirectTo = `${window.location.origin}/api/auth/callback?next=/dashboard`;
+    const redirectTo = `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`;
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -127,7 +127,7 @@ export function SignInForm() {
 
       <p className="mt-8 text-center text-[13px] font-semibold text-slate-500">
         Need an account?{" "}
-        <Link href="/sign-up" className="text-primary">
+        <Link href={`/sign-up?next=${encodeURIComponent(next)}`} className="text-primary">
           Create one
         </Link>
       </p>

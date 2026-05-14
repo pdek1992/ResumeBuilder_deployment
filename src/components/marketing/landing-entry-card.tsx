@@ -11,7 +11,11 @@ export function LandingEntryCard({ signedIn }: { signedIn: boolean }) {
   function handleStart() {
     // Always enforce authentication before builder
     if (!signedIn) {
-      router.push("/sign-up");
+      const params = new URLSearchParams({ next: "/builder/import" });
+      if (mobile.trim()) {
+        params.set("mobile", mobile.trim());
+      }
+      router.push(`/sign-up?${params.toString()}`);
       return;
     }
     const query = mobile.trim()
