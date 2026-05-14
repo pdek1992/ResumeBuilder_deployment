@@ -59,8 +59,10 @@ const importSchema = z.object({
     }),
 });
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Unexpected error";
+function getErrorMessage(error: any) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) return String(error.message);
+  return "Unexpected error";
 }
 
 function failImport(message: string, status = 400, error?: unknown) {

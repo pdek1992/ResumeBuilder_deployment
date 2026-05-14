@@ -454,3 +454,31 @@ BEGIN
     RAISE NOTICE 'Admin user already exists — password reset, is_admin ensured.';
   END IF;
 END $$;
+
+-- -----------------------------------------------
+-- MIGRATIONS / PATCHES
+-- -----------------------------------------------
+
+-- Add missing columns to resumes table if they don't exist
+DO $$
+BEGIN
+    -- ats_score
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'ats_score') THEN
+        ALTER TABLE public.resumes ADD COLUMN ats_score INTEGER;
+    END IF;
+    
+    -- parsed_sections
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'parsed_sections') THEN
+        ALTER TABLE public.resumes ADD COLUMN parsed_sections JSONB NOT NULL DEFAULT '{}'::jsonb;
+    END IF;
+    
+    -- current_draft_state
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'current_draft_state') THEN
+        ALTER TABLE public.resumes ADD COLUMN current_draft_state JSONB NOT NULL DEFAULT '{}'::jsonb;
+    END IF;
+    
+    -- is_locked
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'is_locked') THEN
+        ALTER TABLE public.resumes ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT FALSE;
+    END IF;
+END $$;
