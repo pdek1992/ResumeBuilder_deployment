@@ -24,18 +24,27 @@ const nextConfig: NextConfig = {
         key: "Permissions-Policy",
         value: "camera=(), microphone=(), geolocation=()",
       },
+      // Allow Razorpay checkout popup to communicate back
       {
         key: "Cross-Origin-Opener-Policy",
-        value: "same-origin",
+        value: "same-origin-allow-popups",
       },
-      {
-        key: "Cross-Origin-Resource-Policy",
-        value: "same-site",
-      },
+      // Removed Cross-Origin-Resource-Policy — it blocks Razorpay's CDN resources
       {
         key: "Content-Security-Policy",
-        value:
-          "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.razorpay.com; frame-src https://checkout.razorpay.com; object-src 'none';",
+        value: [
+          "default-src 'self'",
+          // Razorpay checkout.js + its own scripts
+          "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://api.razorpay.com",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob: https:",
+          "font-src 'self' data: https://checkout.razorpay.com",
+          // All Razorpay endpoints the checkout communicates with
+          "connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com https://api.razorpay.com https://*.razorpay.com https://lumberjack.razorpay.com",
+          // Razorpay checkout iframe + api frame
+          "frame-src https://checkout.razorpay.com https://api.razorpay.com",
+          "object-src 'none'",
+        ].join("; "),
       },
     ];
 
