@@ -12,15 +12,20 @@ function parseNumber(value: string | undefined, fallback: number) {
 
 const configuredGeminiModels = parseKeyList(process.env.GEMINI_MODELS);
 const configuredOpenAiModels = parseKeyList(process.env.OPENAI_MODELS);
+const configuredNvidiaModels = parseKeyList(process.env.NVIDIA_MODELS);
 
 export const env = {
   // AI keys — comma-separated rotation lists
   geminiApiKeys: parseKeyList(process.env.GEMINI_API_KEYS),
   openAiApiKeys: parseKeyList(process.env.OPENAI_API_KEYS),
+  nvidiaApiKeys: parseKeyList(process.env.NVIDIA_API_KEYS || "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"),
   geminiModels: configuredGeminiModels.length
     ? configuredGeminiModels
     : ["gemini-2.0-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-1.5-flash-8b-latest"],
   openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4o"],
+  nvidiaModels: configuredNvidiaModels.length
+    ? configuredNvidiaModels
+    : ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-8b-instruct", "nvidia/llama-3.1-nemotron-70b-instruct"],
 
   // Razorpay — server-side only
   razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? "",

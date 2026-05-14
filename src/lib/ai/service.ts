@@ -11,7 +11,7 @@ type GenerateAiContentInput = {
   prompt: string;
   userId: string;
   systemPrompt?: string;
-  provider?: "gemini" | "openai";
+  provider?: "gemini" | "openai" | "nvidia";
   metadata?: Record<string, unknown>;
   file?: {
     mimeType: string;
@@ -22,11 +22,13 @@ type GenerateAiContentInput = {
 const providerCursor = {
   gemini: 0,
   openai: 0,
+  nvidia: 0,
 };
 
 const modelCursor = {
   gemini: 0,
   openai: 0,
+  nvidia: 0,
 };
 
 function buildSystemPrompt(mode: AiOutputMode) {
@@ -75,6 +77,7 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
   let providers = [
     { name: "gemini" as const, keys: geminiKeys, models: env.geminiModels },
     { name: "openai" as const, keys: openAiKeys, models: env.openAiModels },
+    { name: "nvidia" as const, keys: env.nvidiaApiKeys, models: env.nvidiaModels, baseUrl: "https://integrate.api.nvidia.com/v1" },
   ];
 
   if (providerOverride) {
@@ -127,7 +130,10 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
             );
             raw = result.response.text();
           } else {
-            const client = new OpenAI({ apiKey: key });
+            const client = new OpenAI({ 
+              apiKey: key,
+              baseURL: (provider as any).baseUrl || undefined 
+            });
             const response = await client.chat.completions.create({
               model: modelName,
               temperature: 0.4,
