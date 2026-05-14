@@ -1,12 +1,15 @@
 {
   "name": "vigilsiddhi-ai-resume-builder",
   "version": "1.0.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "deploy": "npm run build",
+    "run": "npm run build && npm run start"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -16,6 +19,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "docx": "^9.6.1",
+    "fast-json-patch": "^3.1.1",
     "framer-motion": "^12.38.0",
     "jose": "^6.2.3",
     "lucide-react": "^1.14.0",

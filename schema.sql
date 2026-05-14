@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_login TIMESTAMPTZ,
-  deleted_at TIMESTAMPTZ
+  deleted_at TIMESTAMPTZ,
+  ai_config JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
 -- Add is_admin if upgrading an existing DB that doesn't have it
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.templates (
   preview_image TEXT NOT NULL,
   config_json JSONB NOT NULL,
   description TEXT NOT NULL,
+  tags TEXT[] NOT NULL DEFAULT '{}',
   active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
@@ -66,6 +68,7 @@ CREATE TABLE IF NOT EXISTS public.resumes (
   parsed_sections JSONB NOT NULL DEFAULT '{}'::jsonb,
   current_draft_state JSONB NOT NULL DEFAULT '{}'::jsonb,
   ats_score INTEGER,
+  is_locked BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -12,9 +12,14 @@ export async function getSupabaseServerClient() {
         return cookieStore.getAll();
       },
       setAll(cookieValues) {
-        cookieValues.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        try {
+          cookieValues.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch (e) {
+          // This will throw during render, but we can ignore it here as the 
+          // actual cookie setting should happen in middleware or route handlers.
+        }
       },
     },
   }) as any;

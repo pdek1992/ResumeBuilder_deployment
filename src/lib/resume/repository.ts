@@ -43,6 +43,7 @@ export async function createResumeDraft(userId: string, title = "Untitled Resume
         activeSection: "personal",
       },
       ats_score: calculateAtsScore(payload),
+      is_locked: false,
     })
     .select("*")
     .single();
@@ -78,6 +79,10 @@ export async function saveResumeDraft({
     throw new Error("Resume not found");
   }
 
+  if (existing.is_locked) {
+    throw new Error("Resume is locked and cannot be edited");
+  }
+
   const { data: updated, error } = await supabase
     .from("resumes")
     .update({
@@ -106,6 +111,58 @@ export async function saveResumeDraft({
   }
 
   return updated as ResumeRecord;
+}
+
+export async function toggleResumeLock(userId: string, resumeId: string, locked: boolean) {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("resumes")
+    .update({ is_locked: locked })
+    .eq("id", resumeId)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as ResumeRecord;
+}
+
+export async function duplicateResume(userId: string, resumeId: string) {
+  const supabase = getSupabaseAdminClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("resumes")
+    .select("*")
+    .eq("id", resumeId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError || !existing) {
+    throw new Error("Resume not found");
+  }
+
+  const { data, error } = await supabase
+    .from("resumes")
+    .insert({
+      user_id: userId,
+      template_id: existing.template_id,
+      title: `${existing.title} (Copy)`,
+      raw_json_compressed: existing.raw_json_compressed,
+      parsed_sections: existing.parsed_sections,
+      current_draft_state: existing.current_draft_state,
+      ats_score: existing.ats_score,
+      is_locked: false,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as ResumeRecord;
 }
 
 export async function listTemplates() {

@@ -27,6 +27,7 @@ export default async function ResumeEditorPage({ params }: { params: Promise<{ r
       initialTitle={resume.title}
       initialData={decompressJson(resume.raw_json_compressed, createDefaultResumeData())}
       initialTemplateId={resume.template_id}
+      initialIsLocked={resume.is_locked}
       templates={templates}
       profile={profile}
       hasActiveResumePass={Boolean(activePass)}

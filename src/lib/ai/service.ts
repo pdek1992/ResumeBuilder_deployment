@@ -10,6 +10,8 @@ type GenerateAiContentInput = {
   mode: AiOutputMode;
   prompt: string;
   userId: string;
+  systemPrompt?: string;
+  provider?: "gemini" | "openai";
   metadata?: Record<string, unknown>;
 };
 
@@ -71,16 +73,32 @@ function isRetryableError(error: unknown) {
   return ["quota", "rate", "429", "timeout", "throttle", "invalid"].some((token) => message.includes(token));
 }
 
-export async function generateAiContent({ mode, prompt, userId, metadata }: GenerateAiContentInput) {
+export async function generateAiContent({ mode, prompt, userId, systemPrompt, provider: providerOverride, metadata }: GenerateAiContentInput) {
   assertServerEnv(["jwtSecret"]);
 
-  const geminiKeys = env.geminiApiKeys;
-  const openAiKeys = env.openAiApiKeys;
+  const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
+  const { data: userProfile } = await getSupabaseAdminClient()
+    .from("users")
+    .select("ai_config")
+    .eq("id", userId)
+    .single();
+
+  const aiConfig = userProfile?.ai_config ?? {};
+
+  const geminiKeys = aiConfig.geminiApiKey ? [aiConfig.geminiApiKey] : env.geminiApiKeys;
+  const openAiKeys = aiConfig.openAiApiKey ? [aiConfig.openAiApiKey] : env.openAiApiKeys;
+
   const failures: string[] = [];
-  const providers = [
+  let providers = [
     { name: "gemini" as const, keys: geminiKeys },
     { name: "openai" as const, keys: openAiKeys },
   ];
+
+  if (providerOverride) {
+    providers = providers.filter(p => p.name === providerOverride);
+  }
+
+  const finalSystemPrompt = systemPrompt || buildSystemPrompt(mode);
 
   for (const provider of providers) {
     if (provider.keys.length === 0) {
@@ -91,10 +109,27 @@ export async function generateAiContent({ mode, prompt, userId, metadata }: Gene
 
     for (const key of orderedKeys) {
       try {
-        const raw =
-          provider.name === "gemini"
-            ? await generateWithGemini(key, prompt, mode)
-            : await generateWithOpenAi(key, prompt, mode);
+        let raw = "";
+        if (provider.name === "gemini") {
+          const client = new GoogleGenerativeAI(key);
+          const model = client.getGenerativeModel({
+            model: "gemini-1.5-pro",
+            systemInstruction: finalSystemPrompt,
+          });
+          const result = await model.generateContent(prompt);
+          raw = result.response.text();
+        } else {
+          const client = new OpenAI({ apiKey: key });
+          const response = await client.chat.completions.create({
+            model: "gpt-4.1-mini",
+            temperature: 0.4,
+            messages: [
+              { role: "system", content: finalSystemPrompt },
+              { role: "user", content: prompt },
+            ],
+          });
+          raw = response.choices[0]?.message?.content ?? "";
+        }
         const sanitized = sanitizeAiOutput(raw, mode);
         const validated = validateAiOutput(mode, sanitized);
 

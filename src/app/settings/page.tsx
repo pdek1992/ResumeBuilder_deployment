@@ -3,6 +3,9 @@ import Link from "next/link";
 import { buildWhatsappSupportLink } from "@/lib/whatsapp";
 import { requireUserProfile } from "@/lib/auth";
 import { DeleteAccountCard } from "@/components/auth/delete-account-card";
+import { AISettingsCard } from "@/components/settings/ai-settings-card";
+import { TwoFactorSettingsCard } from "@/components/settings/two-factor-card";
+import { PasskeySettingsCard } from "@/components/settings/passkey-card";
 import { LegacyFlowShell } from "@/components/marketing/legacy-shell";
 
 const fieldClassName =
@@ -74,6 +77,12 @@ export default async function SettingsPage() {
           </div>
 
           <DeleteAccountCard requiresPassword={profile.auth_provider === "password"} />
+          
+          <AISettingsCard initialConfig={profile.ai_config} />
+
+          <TwoFactorSettingsCard />
+
+          <PasskeySettingsCard />
         </section>
       }
     />

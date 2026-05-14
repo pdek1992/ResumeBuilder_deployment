@@ -4,6 +4,7 @@ import type { ChangeEvent, ComponentPropsWithoutRef, ReactNode } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/lib/client-api";
 import { buildWhatsappSupportLink } from "@/lib/whatsapp";
@@ -11,6 +12,7 @@ import { calculateAtsScore } from "@/lib/resume/defaults";
 import type { MockInterviewItem, ResumeData, TemplateRecord, UserProfile } from "@/lib/types";
 import { LogoLockup } from "@/components/ui/logo-lockup";
 import { ResumePreview } from "@/components/builder/resume-preview";
+import { ResumeChatSidebar } from "./resume-chat-sidebar";
 
 const sectionOrder = ["personal", "experience", "education", "skills", "projects", "certifications", "more"] as const;
 const accentOptions = ["#3067ea", "#0f6c7c", "#92400e", "#7c3aed", "#be123c", "#334155"];
@@ -23,6 +25,7 @@ type ResumeEditorProps = {
   initialTitle: string;
   initialData: ResumeData;
   initialTemplateId: string;
+  initialIsLocked: boolean;
   templates: TemplateRecord[];
   profile: UserProfile;
   hasActiveResumePass: boolean;
@@ -83,11 +86,13 @@ export function ResumeEditor({
   initialTitle,
   initialData,
   initialTemplateId,
+  initialIsLocked,
   templates,
   profile,
   hasActiveResumePass,
   hasMockInterviewCredit,
 }: ResumeEditorProps) {
+  const router = useRouter();
   const [resume, setResume] = useState<ResumeData>({
     ...initialData,
     ats: {
@@ -95,6 +100,7 @@ export function ResumeEditor({
       score: initialData.ats.score ?? calculateAtsScore(initialData),
     },
   });
+  const [isLocked, setIsLocked] = useState(initialIsLocked);
   const [title] = useState(initialTitle);
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
   const [activeSection, setActiveSection] = useState<(typeof sectionOrder)[number]>("personal");
@@ -104,6 +110,7 @@ export function ResumeEditor({
   const [coverLetter, setCoverLetter] = useState("");
   const [coverLetterCopied, setCoverLetterCopied] = useState(false);
   const [interviewItems, setInterviewItems] = useState<MockInterviewItem[]>([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const saveTimer = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -113,6 +120,8 @@ export function ResumeEditor({
   );
 
   useEffect(() => {
+    if (isLocked) return;
+    
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
     }
@@ -156,6 +165,38 @@ export function ResumeEditor({
   }, [activeSection, resume, resumeId, selectedTemplateId, title]);
 
   const atsScore = calculateAtsScore(resume);
+
+  const toggleLock = async () => {
+    if (busyAction) return;
+    setBusyAction("lock");
+    try {
+      await apiFetch("/api/resumes/lock", {
+        method: "POST",
+        body: JSON.stringify({ resumeId, lock: !isLocked }),
+      });
+      setIsLocked(!isLocked);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const duplicateResume = async () => {
+    if (busyAction) return;
+    setBusyAction("duplicate");
+    try {
+      const { id } = await apiFetch<{ id: string }>("/api/resumes/duplicate", {
+        method: "POST",
+        body: JSON.stringify({ resumeId }),
+      });
+      router.push(`/builder/${id}`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusyAction(null);
+    }
+  };
 
   async function runAiAction(target: "summary" | "cover-letter" | "mock-interview") {
     setBusyAction(target);
@@ -395,14 +436,39 @@ export function ResumeEditor({
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      <main className="min-h-screen bg-[linear-gradient(180deg,#f7fbff_0%,#eef3ff_100%)] px-4 py-6 md:px-6 md:py-8">
-        <div className="mx-auto max-w-[1120px]">
+      <main className="min-h-screen bg-[linear-gradient(180deg,#f7fbff_0%,#eef3ff_100%)]">
+        {/* Chat Sidebar Overlay */}
+        <div className={`fixed inset-y-0 right-0 z-50 w-full max-w-[420px] transform transition-transform duration-500 ease-out ${isChatOpen ? "translate-x-0" : "translate-x-full"}`}>
+          <ResumeChatSidebar 
+            resumeId={resumeId}
+            currentData={resume}
+            onUpdate={(newData) => setResume(newData)}
+          />
+          {/* Close button inside sidebar for mobile */}
+          <button 
+            onClick={() => setIsChatOpen(false)}
+            className="absolute left-[-50px] top-6 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-400 shadow-xl md:hidden"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className={`mx-auto max-w-[1120px] px-4 py-6 transition-all duration-500 md:px-6 md:py-8 ${isChatOpen ? "mr-[420px]" : ""}`}>
           <div className="mb-6 rounded-[2.2rem] border border-white/80 bg-white/70 px-4 py-3 shadow-[0_20px_60px_rgba(37,99,235,0.12)] backdrop-blur md:px-6">
             <div className="flex items-center justify-between gap-3">
               <LogoLockup href="/dashboard" />
               <div className="flex flex-wrap items-center gap-3">
                 <TopPillButton href={`/builder/templates?resumeId=${resumeId}`}>Switch Style</TopPillButton>
-                <TopPillButton onClick={() => runAiAction("summary")} disabled={busyAction !== null}>
+                <TopPillButton onClick={() => setIsChatOpen(!isChatOpen)}>
+                  {isChatOpen ? "Close Chat" : "✨ AI Chat"}
+                </TopPillButton>
+                <TopPillButton onClick={duplicateResume} disabled={busyAction !== null}>
+                  {busyAction === "duplicate" ? "Duplicating" : "Duplicate"}
+                </TopPillButton>
+                <TopPillButton onClick={toggleLock} disabled={busyAction !== null}>
+                  {isLocked ? "Unlock" : "Lock"}
+                </TopPillButton>
+                <TopPillButton onClick={() => runAiAction("summary")} disabled={busyAction !== null || isLocked}>
                   {busyAction === "summary" ? "Tailoring" : "AI Tailor"}
                 </TopPillButton>
                 <TopPillButton
@@ -431,6 +497,14 @@ export function ResumeEditor({
               </div>
             </div>
           </div>
+          
+          {isLocked && (
+            <div className="mb-8 rounded-[2.2rem] border border-amber-200 bg-amber-50 px-6 py-4 text-center shadow-sm">
+              <p className="text-[12px] font-black uppercase tracking-[0.24em] text-amber-700">
+                🔒 Resume Locked. Unlock to enable editing and AI tailoring.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-8">
             <EditorCard className="pb-0">
@@ -548,13 +622,67 @@ export function ResumeEditor({
                           </div>
                         </div>
                         <div className="mt-5">
-                          <label className={labelClassName}>Highlights</label>
-                          <textarea
-                            value={item.highlights.join("\n")}
-                            onChange={(event) => setExperienceField(item.id, "highlights", event.target.value.split("\n").filter(Boolean))}
-                            className={`${fieldClassName} min-h-[160px]`}
-                            placeholder="Use one line per achievement"
-                          />
+                          <div className="flex items-center justify-between">
+                            <label className={labelClassName}>Highlights</label>
+                          </div>
+                          <div className="mt-3 space-y-3">
+                            {item.highlights.map((highlight, hIndex) => (
+                              <div key={hIndex} className="flex items-start gap-2">
+                                <textarea
+                                  value={highlight}
+                                  onChange={(e) => {
+                                    const newHighlights = [...item.highlights];
+                                    newHighlights[hIndex] = e.target.value;
+                                    setExperienceField(item.id, "highlights", newHighlights);
+                                  }}
+                                  className={`${fieldClassName} mt-0 min-h-[80px] flex-1`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setBusyAction(`optimize-${item.id}-${hIndex}`);
+                                    try {
+                                      const res = await apiFetch<{ optimized: string }>("/api/ai/optimize-bullet", {
+                                        method: "POST",
+                                        body: JSON.stringify({ bullet: highlight, role: item.title, company: item.company }),
+                                      });
+                                      const newHighlights = [...item.highlights];
+                                      newHighlights[hIndex] = res.optimized;
+                                      setExperienceField(item.id, "highlights", newHighlights);
+                                    } finally {
+                                      setBusyAction(null);
+                                    }
+                                  }}
+                                  disabled={busyAction !== null || isLocked}
+                                  className="mt-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-50 text-primary transition hover:bg-slate-100"
+                                  title="Optimize with AI"
+                                >
+                                  {busyAction === `optimize-${item.id}-${hIndex}` ? "⏳" : "✨"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newHighlights = item.highlights.filter((_, i) => i !== hIndex);
+                                    setExperienceField(item.id, "highlights", newHighlights);
+                                  }}
+                                  disabled={isLocked}
+                                  className="mt-2 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-300 transition hover:bg-rose-50 hover:text-rose-500"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExperienceField(item.id, "highlights", [...item.highlights, ""]);
+                              }}
+                              disabled={isLocked}
+                              className="text-[11px] font-black uppercase tracking-widest text-primary hover:underline"
+                            >
+                              + Add Highlight
+                            </button>
+                          </div>
                         </div>
                         {index === resume.experience.length - 1 ? (
                           <button
@@ -695,33 +823,59 @@ export function ResumeEditor({
                 ) : null}
 
                 {activeSection === "more" ? (
-                  <div className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
-                    <div>
-                      <label className={labelClassName}>Job Title Target</label>
-                      <input
-                        value={resume.ats.targetRole}
-                        onChange={(event) => setResume((current) => ({ ...current, ats: { ...current.ats, targetRole: event.target.value } }))}
-                        className={fieldClassName}
-                      />
+                  <div className="space-y-6">
+                    <div className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
+                      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary mb-6">Targeting & ATS Optimization</p>
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div>
+                          <label className={labelClassName}>Target Role</label>
+                          <input
+                            value={resume.ats.targetRole}
+                            onChange={(event) => setResume((current) => ({ ...current, ats: { ...current.ats, targetRole: event.target.value } }))}
+                            className={fieldClassName}
+                            placeholder="e.g. Senior Product Manager"
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClassName}>Target Company</label>
+                          <input
+                            value={resume.ats.targetCompany}
+                            onChange={(event) => setResume((current) => ({ ...current, ats: { ...current.ats, targetCompany: event.target.value } }))}
+                            className={fieldClassName}
+                            placeholder="e.g. Google"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-6">
+                        <label className={labelClassName}>Primary Job Description</label>
+                        <textarea
+                          value={resume.ats.targetJobDescription}
+                          onChange={(event) =>
+                            setResume((current) => ({ ...current, ats: { ...current.ats, targetJobDescription: event.target.value } }))
+                          }
+                          className={`${fieldClassName} min-h-[180px]`}
+                          placeholder="Paste the JD to improve ATS matching and interview tailoring"
+                        />
+                      </div>
+                      <div className="mt-8 flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                        <div>
+                          <p className="text-sm font-bold text-slate-700">Real-time ATS Score</p>
+                          <p className="text-xs text-slate-500 mt-1">Based on keyword density and achievement impact.</p>
+                        </div>
+                        <div className={`text-2xl font-black ${atsScore > 80 ? "text-emerald-500" : atsScore > 50 ? "text-amber-500" : "text-rose-500"}`}>
+                          {atsScore}%
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-5">
-                      <label className={labelClassName}>Company Target</label>
-                      <input
-                        value={resume.ats.targetCompany}
-                        onChange={(event) => setResume((current) => ({ ...current, ats: { ...current.ats, targetCompany: event.target.value } }))}
-                        className={fieldClassName}
-                      />
-                    </div>
-                    <div className="mt-5">
-                      <label className={labelClassName}>Job Description</label>
-                      <textarea
-                        value={resume.ats.targetJobDescription}
-                        onChange={(event) =>
-                          setResume((current) => ({ ...current, ats: { ...current.ats, targetJobDescription: event.target.value } }))
-                        }
-                        className={`${fieldClassName} min-h-[180px]`}
-                        placeholder="Paste the JD to improve ATS matching and interview tailoring"
-                      />
+
+                    <div className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8 opacity-50 cursor-not-allowed">
+                      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400 mb-4">Multi-Job Batch Processing (Premium)</p>
+                      <p className="text-sm text-slate-500 leading-relaxed">
+                        Compare your resume against 3-5 similar jobs simultaneously to identify aggregate gaps.
+                      </p>
+                      <button disabled className="mt-6 rounded-full border border-slate-200 bg-white px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        + Add Additional JD
+                      </button>
                     </div>
                   </div>
                 ) : null}

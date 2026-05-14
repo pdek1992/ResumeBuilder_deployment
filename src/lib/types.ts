@@ -151,6 +151,7 @@ export type ResumeRecord = {
   parsed_sections: Record<string, unknown> | null;
   current_draft_state: Record<string, unknown> | null;
   ats_score: number | null;
+  is_locked: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -161,6 +162,7 @@ export type TemplateRecord = {
   preview_image: string;
   config_json: ResumeThemeConfig;
   description: string;
+  tags: string[];
   active: boolean;
 };
 
@@ -179,6 +181,7 @@ export type UserProfile = {
   updated_at: string;
   last_login: string | null;
   deleted_at: string | null;
+  ai_config: Record<string, any>;
 };
 
 export type AccessLogPayload = {

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
+  serverExternalPackages: ["pdfjs-dist", "pdf-parse"],
 };
 
 export default nextConfig;
