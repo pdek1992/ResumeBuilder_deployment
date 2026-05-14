@@ -1,4 +1,6 @@
+import "@/lib/pdf-polyfill";
 export const runtime = "nodejs";
+
 
 import { ok, fail } from "@/lib/api-response";
 import { generateAiContent } from "@/lib/ai/service";
@@ -9,6 +11,7 @@ import { assertRateLimit } from "@/lib/security/rate-limit";
 import { getRequestMetadata } from "@/lib/security/request";
 import { RESUME_JSON_PROMPT } from "@/lib/ai/prompts";
 import { PDFParse } from "pdf-parse";
+
 
 export async function POST(request: Request) {
   try {

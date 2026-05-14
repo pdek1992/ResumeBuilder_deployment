@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
-  serverExternalPackages: ["pdfjs-dist", "pdf-parse"],
+  serverExternalPackages: ["pdfjs-dist", "pdf-parse", "@napi-rs/canvas"],
   async headers() {
     const securityHeaders = [
       {

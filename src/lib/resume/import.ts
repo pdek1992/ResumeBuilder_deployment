@@ -6,8 +6,10 @@ export async function extractResumeTextFromFile(file: File) {
   const lowerName = file.name.toLowerCase();
 
   if (lowerName.endsWith(".pdf")) {
+    await import("@/lib/pdf-polyfill");
     const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: buffer });
+
     try {
       const parsed = await parser.getText();
       return parsed.text;
