@@ -93,93 +93,86 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
 
   const finalSystemPrompt = systemPrompt || buildSystemPrompt(mode);
 
+  const allAttempts: Array<{
+    provider: typeof providers[number];
+    model: string;
+    key: string;
+  }> = [];
+
   for (const provider of providers) {
-    if (provider.keys.length === 0) {
-      continue;
-    }
-
-    // Use random starting points for rotation to better distribute load across keys/models
-    const keyStartIndex = Math.floor(Math.random() * provider.keys.length);
-    const modelStartIndex = Math.floor(Math.random() * provider.models.length);
-    
-    const orderedKeys = rotate(provider.keys, keyStartIndex);
-    const orderedModels = rotate(provider.models, modelStartIndex);
-
-    for (const modelName of orderedModels) {
-      for (const key of orderedKeys) {
-        const maskedKey = `${key.slice(0, 4)}...${key.slice(-4)}`;
-        try {
-          console.log(`[AI] Attempting ${provider.name}/${modelName} (Key: ${maskedKey})`);
-          
-          let raw = "";
-          if (provider.name === "gemini") {
-            const client = new GoogleGenerativeAI(key);
-            const model = client.getGenerativeModel({
-              model: modelName,
-              systemInstruction: finalSystemPrompt,
-            });
-            const result = await model.generateContent(
-              file
-                ? [
-                    {
-                      inlineData: {
-                        mimeType: file.mimeType,
-                        data: file.data,
-                      },
-                    },
-                    prompt,
-                  ]
-                : prompt
-            );
-            raw = result.response.text();
-          } else {
-            const client = new OpenAI({ 
-              apiKey: key,
-              baseURL: (provider as any).baseUrl || undefined 
-            });
-            const response = await client.chat.completions.create({
-              model: modelName,
-              temperature: 0.4,
-              messages: [
-                { role: "system", content: finalSystemPrompt },
-                { role: "user", content: prompt },
-              ],
-            });
-            raw = response.choices[0]?.message?.content ?? "";
-          }
-          const sanitized = sanitizeAiOutput(raw, mode);
-          const validated = validateAiOutput(mode, sanitized);
-
-          // Update cursors for non-random tracking
-          providerCursor[provider.name] = (keyStartIndex + 1) % provider.keys.length;
-          modelCursor[provider.name] = (modelStartIndex + 1) % provider.models.length;
-
-          await logUserAction({
-            userId,
-            actionType: "ai_generation",
-            metadata: {
-              provider: provider.name,
-              model: modelName,
-              mode,
-              ...metadata,
-            },
-          });
-
-          return validated;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Unknown AI error";
-          const isRetryable = isRetryableError(error);
-          
-          failures.push(`${provider.name}/${modelName} [${maskedKey}]: ${message}`);
-          console.error(`[AI] ${provider.name}/${modelName} failed:`, message);
-
-          if (!isRetryable) {
-            console.warn(`[AI] Non-retryable error for ${modelName}, skipping to next model.`);
-            break; // Skip all other keys for this model and go to next model
-          }
-          // Continue to next key for the same model if it's a quota/rate error
-        }
+    for (const model of provider.models) {
+      for (const key of provider.keys) {
+        allAttempts.push({ provider, model, key });
       }
+    }
+  }
+
+  // Randomize all attempts to interleave providers and keys
+  allAttempts.sort(() => Math.random() - 0.5);
+
+  for (const attempt of allAttempts) {
+    const { provider, model: modelName, key } = attempt;
+    const maskedKey = `${key.slice(0, 4)}...${key.slice(-4)}`;
+
+    try {
+      console.log(`[AI] Attempting ${provider.name}/${modelName} (Key: ${maskedKey})`);
+      
+      let raw = "";
+      if (provider.name === "gemini") {
+        const client = new GoogleGenerativeAI(key);
+        const model = client.getGenerativeModel({
+          model: modelName,
+          systemInstruction: finalSystemPrompt,
+        });
+        const result = await model.generateContent(
+          file
+            ? [
+                {
+                  inlineData: {
+                    mimeType: file.mimeType,
+                    data: file.data,
+                  },
+                },
+                prompt,
+              ]
+            : prompt
+        );
+        raw = result.response.text();
+      } else {
+        const client = new OpenAI({ 
+          apiKey: key,
+          baseURL: (provider as any).baseUrl || undefined 
+        });
+        const response = await client.chat.completions.create({
+          model: modelName,
+          temperature: 0.4,
+          messages: [
+            { role: "system", content: finalSystemPrompt },
+            { role: "user", content: prompt },
+          ],
+        });
+        raw = response.choices[0]?.message?.content ?? "";
+      }
+      const sanitized = sanitizeAiOutput(raw, mode);
+      const validated = validateAiOutput(mode, sanitized);
+
+      await logUserAction({
+        userId,
+        actionType: "ai_generation",
+        metadata: {
+          provider: provider.name,
+          model: modelName,
+          mode,
+          ...metadata,
+        },
+      });
+
+      return validated;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown AI error";
+      failures.push(`${provider.name}/${modelName} [${maskedKey}]: ${message}`);
+      console.error(`[AI] ${provider.name}/${modelName} failed:`, message);
+      // Continue to the next random attempt
     }
   }
 
