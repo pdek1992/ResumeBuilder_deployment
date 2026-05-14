@@ -463,9 +463,14 @@ END $$;
 DO $$
 BEGIN
     -- template_id
+    -- title
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'title') THEN
+        ALTER TABLE public.resumes ADD COLUMN title TEXT NOT NULL DEFAULT 'Untitled Resume';
+    END IF;
+
+    -- template_id
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'template_id') THEN
         ALTER TABLE public.resumes ADD COLUMN template_id TEXT;
-        -- Attempt to link to templates if it was missing (might need manual cleanup if templates are empty)
         ALTER TABLE public.resumes ADD CONSTRAINT resumes_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.templates(id);
     END IF;
 
