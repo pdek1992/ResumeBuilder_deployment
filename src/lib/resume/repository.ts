@@ -28,7 +28,30 @@ export async function getResumeForUser(userId: string, resumeId: string) {
   return (data as ResumeRecord | null) ?? null;
 }
 
+export async function ensurePublicUserExists(userId: string) {
+  const supabase = getSupabaseAdminClient();
+  const { data: user } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
+
+  if (!user) {
+    // Fetch user info from auth to populate public profile if possible
+    const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+    const email = authUser?.user?.email ?? "";
+    const name = authUser?.user?.user_metadata?.full_name ?? "";
+    const parts = name.split(" ");
+    
+    await supabase.from("users").insert({
+      id: userId,
+      email: email,
+      first_name: parts[0] || "User",
+      last_name: parts.slice(1).join(" ") || "",
+      is_admin: false,
+      ai_config: {},
+    });
+  }
+}
+
 export async function createResumeDraft(userId: string, title = "Untitled Resume", initialData?: ResumeData) {
+  await ensurePublicUserExists(userId);
   const supabase = getSupabaseAdminClient();
   const payload = initialData ?? createDefaultResumeData();
   const { data, error } = await supabase

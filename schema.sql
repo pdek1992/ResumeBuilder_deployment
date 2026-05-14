@@ -456,6 +456,16 @@ BEGIN
 END $$;
 
 -- -----------------------------------------------
+-- SEED DATA: TEMPLATES
+-- -----------------------------------------------
+INSERT INTO public.templates (id, template_name, preview_image, description, tags, config_json, active)
+VALUES 
+('minimal-ats', 'ATS Minimal', '/templates/minimal-ats.png', 'Clean ATS-safe layout with a strong recruiter scan path.', ARRAY['ATS', 'Minimal', 'Professional'], '{"accent": "#0f6c7c", "headerBackground": "#0f6c7c", "pageBackground": "#ffffff", "sidebarTint": "#f8fafc", "density": "balanced", "typography": "modern-sans", "columns": "split"}'::jsonb, true),
+('modern-professional', 'Modern Professional', '/templates/modern-professional.png', 'Professional layout with elegant hierarchy for general corporate roles.', ARRAY['Modern', 'Professional', 'Corporate'], '{"accent": "#334155", "headerBackground": "#ffffff", "pageBackground": "#ffffff", "sidebarTint": "#f8fafc", "density": "balanced", "typography": "modern-sans", "columns": "split"}'::jsonb, true),
+('executive', 'Executive', '/templates/executive.png', 'Premium executive profile with crisp spacing and decisive section rhythm.', ARRAY['Executive', 'Premium', 'Classic'], '{"accent": "#1d4ed8", "headerBackground": "#eff6ff", "pageBackground": "#ffffff", "sidebarTint": "#eef2ff", "density": "airy", "typography": "editorial-serif", "columns": "single"}'::jsonb, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- -----------------------------------------------
 -- MIGRATIONS / PATCHES
 -- -----------------------------------------------
 
