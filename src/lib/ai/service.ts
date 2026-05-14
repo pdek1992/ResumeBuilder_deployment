@@ -55,7 +55,7 @@ function uniqueKeys(keys: Array<string | undefined>) {
   return Array.from(new Set(keys.filter((key): key is string => Boolean(key))));
 }
 
-export async function generateAiContent({ mode, prompt, userId, systemPrompt, provider: providerOverride, metadata }: GenerateAiContentInput) {
+export async function generateAiContent({ mode, prompt, userId, systemPrompt, provider: providerOverride, metadata, file }: GenerateAiContentInput) {
   assertServerEnv(["jwtSecret"]);
 
   const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
