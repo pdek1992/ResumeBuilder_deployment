@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 
@@ -10,18 +10,18 @@ export function PasskeySettingsCard() {
   const [error, setError] = useState("");
   const supabase = getSupabaseBrowserClient();
 
-  useEffect(() => {
-    fetchFactors();
-  }, []);
-
-  async function fetchFactors() {
+  const fetchFactors = useCallback(async () => {
     const { data, error } = await supabase.auth.mfa.listFactors();
     if (error) {
       setError(error.message);
     } else {
       setFactors(data.all.filter((f: any) => f.factor_type === "webauthn"));
     }
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchFactors);
+  }, [fetchFactors]);
 
   async function handleEnroll() {
     setLoading(true);

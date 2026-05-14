@@ -4,6 +4,7 @@ const config = [
   {
     ignores: [
       "assets/**",
+      "gh-pages/**",
       "templates/**",
       "public/**",
       "node_modules/**",

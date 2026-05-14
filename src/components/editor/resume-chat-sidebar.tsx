@@ -76,7 +76,7 @@ export function ResumeChatSidebar({
           <div className="text-center py-10">
             <p className="text-4xl mb-4">✨</p>
             <p className="text-sm text-slate-400 px-8 leading-7">
-              "Add a new role as Senior Product Manager at Google from 2022 to 2024"
+              &quot;Add a new role as Senior Product Manager at Google from 2022 to 2024&quot;
             </p>
           </div>
         )}

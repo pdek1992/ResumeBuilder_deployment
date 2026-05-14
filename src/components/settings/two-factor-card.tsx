@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,18 +15,18 @@ export function TwoFactorSettingsCard() {
   const [error, setError] = useState("");
   const supabase = getSupabaseBrowserClient();
 
-  useEffect(() => {
-    fetchFactors();
-  }, []);
-
-  async function fetchFactors() {
+  const fetchFactors = useCallback(async () => {
     const { data, error } = await supabase.auth.mfa.listFactors();
     if (error) {
       setError(error.message);
     } else {
       setFactors(data.all);
     }
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    void Promise.resolve().then(fetchFactors);
+  }, [fetchFactors]);
 
   async function handleEnroll() {
     setLoading(true);
@@ -104,6 +104,7 @@ export function TwoFactorSettingsCard() {
           <div className="space-y-4">
             <p className="text-sm font-bold text-slate-700">Scan QR Code</p>
             <div className="flex justify-center p-4 bg-slate-50 rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={qrCode} alt="QR Code" className="w-48 h-48" />
             </div>
             <div>

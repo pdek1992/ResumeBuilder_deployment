@@ -162,7 +162,7 @@ export function ResumeEditor({
         window.clearTimeout(saveTimer.current);
       }
     };
-  }, [activeSection, resume, resumeId, selectedTemplateId, title]);
+  }, [activeSection, isLocked, resume, resumeId, selectedTemplateId, title]);
 
   const atsScore = calculateAtsScore(resume);
 
