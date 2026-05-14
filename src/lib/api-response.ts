@@ -5,6 +5,6 @@ export function ok(data: unknown, init?: ResponseInit) {
 }
 
 export function fail(error: unknown, status = 400) {
-  const message = error instanceof Error ? error.message : "Unexpected error";
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "Unexpected error";
   return NextResponse.json({ error: message }, { status });
 }

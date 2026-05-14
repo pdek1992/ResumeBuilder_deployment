@@ -1,13 +1,35 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 import type { UserProfile } from "@/lib/types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
+function isDynamicServerUsageError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    String((error as { digest?: unknown }).digest).includes("DYNAMIC_SERVER_USAGE")
+  );
+}
+
 export async function getCurrentUser() {
-  const supabase = await getSupabaseServerClient();
+  let supabase;
+
+  try {
+    supabase = await getSupabaseServerClient();
+  } catch (error) {
+    if (isDynamicServerUsageError(error)) {
+      throw error;
+    }
+
+    console.error("[AUTH DEBUG] Failed to create Supabase server client:", error);
+    return null;
+  }
+
   const {
     data: { user },
-    error
+    error,
   } = await supabase.auth.getUser();
 
   if (error) {
@@ -47,8 +69,10 @@ export async function requireUserProfile() {
   const profile = await getCurrentUserProfile();
 
   if (!profile) {
+    const headerStore = await headers();
+    const next = headerStore.get("x-current-path") ?? "/dashboard";
     console.log("[AUTH DEBUG] requireUserProfile redirecting to /sign-in because profile is null");
-    redirect("/sign-in");
+    redirect(`/sign-in?next=${encodeURIComponent(next)}`);
   }
 
   return profile;

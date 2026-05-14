@@ -58,6 +58,25 @@ const importSchema = z.object({
     }),
 });
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected error";
+}
+
+function failImport(message: string, status = 400, error?: unknown) {
+  if (error) {
+    console.error(`[RESUME_IMPORT] ${message}:`, error);
+  } else {
+    console.error(`[RESUME_IMPORT] ${message}`);
+  }
+
+  return fail(message, status);
+}
+
+function isSupportedImportFile(file: File) {
+  const lowerName = file.name.toLowerCase();
+  return lowerName.endsWith(".pdf") || lowerName.endsWith(".docx") || lowerName.endsWith(".doc");
+}
+
 export async function POST(request: Request) {
   try {
     await assertSafeOrigin();
@@ -75,8 +94,19 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const text = String(formData.get("text") ?? "").trim();
-    const extractedText =
-      file instanceof File ? await extractResumeTextFromFile(file) : text;
+    let extractedText = text;
+
+    if (file instanceof File) {
+      if (!isSupportedImportFile(file)) {
+        return failImport("Unsupported file type. Please upload a PDF, DOCX, or DOC file.");
+      }
+
+      try {
+        extractedText = await extractResumeTextFromFile(file);
+      } catch (error) {
+        return failImport(`Could not read uploaded file: ${getErrorMessage(error)}`, 400, error);
+      }
+    }
 
     if (!extractedText) {
       return fail("No import content found", 400);
@@ -93,17 +123,36 @@ export async function POST(request: Request) {
       extractedText.slice(0, 18000),
     ].join("\n");
 
-    const content = await generateAiContent({
-      mode: "JSON",
-      prompt,
-      userId: user.id,
-      metadata: {
-        purpose: "resume_import",
-      },
-    });
+    let content = "";
+    try {
+      content = await generateAiContent({
+        mode: "JSON",
+        prompt,
+        userId: user.id,
+        metadata: {
+          purpose: "resume_import",
+        },
+      });
+    } catch (error) {
+      return failImport(`AI import failed: ${getErrorMessage(error)}`, 502, error);
+    }
 
-    const parsed = importSchema.parse(JSON.parse(content));
-    const resume = await createResumeDraft(user.id, `${parsed.personal.firstName || "Imported"} Resume`, parsed);
+    let parsed;
+    try {
+      parsed = importSchema.parse(JSON.parse(content));
+    } catch (error) {
+      return failImport(`AI returned invalid resume JSON: ${getErrorMessage(error)}`, 502, {
+        error,
+        contentPreview: content.slice(0, 1000),
+      });
+    }
+
+    let resume;
+    try {
+      resume = await createResumeDraft(user.id, `${parsed.personal.firstName || "Imported"} Resume`, parsed);
+    } catch (error) {
+      return failImport(`Could not save imported resume: ${getErrorMessage(error)}`, 500, error);
+    }
 
     await logUserAction({
       userId: user.id,
@@ -117,6 +166,6 @@ export async function POST(request: Request) {
 
     return ok({ resume });
   } catch (error) {
-    return fail(error, 400);
+    return failImport(getErrorMessage(error), 400, error);
   }
 }
