@@ -20,6 +20,11 @@ const providerCursor = {
   openai: 0,
 };
 
+const modelCursor = {
+  gemini: 0,
+  openai: 0,
+};
+
 function buildSystemPrompt(mode: AiOutputMode) {
   return [
     "Return ONLY requested output.",
@@ -37,40 +42,13 @@ function rotate<T>(items: T[], startIndex: number) {
   return items.map((_, index) => items[(startIndex + index) % items.length]);
 }
 
-async function generateWithGemini(key: string, prompt: string, mode: AiOutputMode) {
-  const client = new GoogleGenerativeAI(key);
-  const model = client.getGenerativeModel({
-    model: "gemini-1.5-pro",
-    systemInstruction: buildSystemPrompt(mode),
-  });
-
-  const result = await model.generateContent(prompt);
-  return result.response.text();
-}
-
-async function generateWithOpenAi(key: string, prompt: string, mode: AiOutputMode) {
-  const client = new OpenAI({ apiKey: key });
-  const response = await client.chat.completions.create({
-    model: "gpt-4.1-mini",
-    temperature: 0.4,
-    messages: [
-      {
-        role: "system",
-        content: buildSystemPrompt(mode),
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-  });
-
-  return response.choices[0]?.message?.content ?? "";
-}
-
 function isRetryableError(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
-  return ["quota", "rate", "429", "timeout", "throttle", "invalid"].some((token) => message.includes(token));
+  return ["quota", "rate", "429", "404", "not found", "timeout", "throttle", "invalid"].some((token) => message.includes(token));
+}
+
+function uniqueKeys(keys: Array<string | undefined>) {
+  return Array.from(new Set(keys.filter((key): key is string => Boolean(key))));
 }
 
 export async function generateAiContent({ mode, prompt, userId, systemPrompt, provider: providerOverride, metadata }: GenerateAiContentInput) {
@@ -85,17 +63,21 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
 
   const aiConfig = userProfile?.ai_config ?? {};
 
-  const geminiKeys = aiConfig.geminiApiKey ? [aiConfig.geminiApiKey] : env.geminiApiKeys;
-  const openAiKeys = aiConfig.openAiApiKey ? [aiConfig.openAiApiKey] : env.openAiApiKeys;
+  const geminiKeys = uniqueKeys([aiConfig.geminiApiKey, ...env.geminiApiKeys]);
+  const openAiKeys = uniqueKeys([aiConfig.openAiApiKey, ...env.openAiApiKeys]);
 
   const failures: string[] = [];
   let providers = [
-    { name: "gemini" as const, keys: geminiKeys },
-    { name: "openai" as const, keys: openAiKeys },
+    { name: "gemini" as const, keys: geminiKeys, models: env.geminiModels },
+    { name: "openai" as const, keys: openAiKeys, models: env.openAiModels },
   ];
 
   if (providerOverride) {
     providers = providers.filter(p => p.name === providerOverride);
+  }
+
+  if (providers.every((provider) => provider.keys.length === 0)) {
+    throw new Error("No AI provider keys configured. Set GEMINI_API_KEYS or OPENAI_API_KEYS in .env locally and in Vercel environment variables.");
   }
 
   const finalSystemPrompt = systemPrompt || buildSystemPrompt(mode);
@@ -106,52 +88,58 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
     }
 
     const orderedKeys = rotate(provider.keys, providerCursor[provider.name]);
+    const orderedModels = rotate(provider.models, modelCursor[provider.name]);
 
-    for (const key of orderedKeys) {
-      try {
-        let raw = "";
-        if (provider.name === "gemini") {
-          const client = new GoogleGenerativeAI(key);
-          const model = client.getGenerativeModel({
-            model: "gemini-1.5-pro",
-            systemInstruction: finalSystemPrompt,
+    for (const modelName of orderedModels) {
+      for (const key of orderedKeys) {
+        try {
+          let raw = "";
+          if (provider.name === "gemini") {
+            const client = new GoogleGenerativeAI(key);
+            const model = client.getGenerativeModel({
+              model: modelName,
+              systemInstruction: finalSystemPrompt,
+            });
+            const result = await model.generateContent(prompt);
+            raw = result.response.text();
+          } else {
+            const client = new OpenAI({ apiKey: key });
+            const response = await client.chat.completions.create({
+              model: modelName,
+              temperature: 0.4,
+              messages: [
+                { role: "system", content: finalSystemPrompt },
+                { role: "user", content: prompt },
+              ],
+            });
+            raw = response.choices[0]?.message?.content ?? "";
+          }
+          const sanitized = sanitizeAiOutput(raw, mode);
+          const validated = validateAiOutput(mode, sanitized);
+
+          providerCursor[provider.name] = (providerCursor[provider.name] + 1) % provider.keys.length;
+          modelCursor[provider.name] = (modelCursor[provider.name] + 1) % provider.models.length;
+
+          await logUserAction({
+            userId,
+            actionType: "ai_generation",
+            metadata: {
+              provider: provider.name,
+              model: modelName,
+              mode,
+              ...metadata,
+            },
           });
-          const result = await model.generateContent(prompt);
-          raw = result.response.text();
-        } else {
-          const client = new OpenAI({ apiKey: key });
-          const response = await client.chat.completions.create({
-            model: "gpt-4.1-mini",
-            temperature: 0.4,
-            messages: [
-              { role: "system", content: finalSystemPrompt },
-              { role: "user", content: prompt },
-            ],
-          });
-          raw = response.choices[0]?.message?.content ?? "";
-        }
-        const sanitized = sanitizeAiOutput(raw, mode);
-        const validated = validateAiOutput(mode, sanitized);
 
-        providerCursor[provider.name] = (providerCursor[provider.name] + 1) % provider.keys.length;
+          return validated;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown AI error";
+          failures.push(`${provider.name}/${modelName}: ${message}`);
+          console.error(`[AI] ${provider.name}/${modelName} generation failed:`, message);
 
-        await logUserAction({
-          userId,
-          actionType: "ai_generation",
-          metadata: {
-            provider: provider.name,
-            mode,
-            ...metadata,
-          },
-        });
-
-        return validated;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown AI error";
-        failures.push(`${provider.name}: ${message}`);
-
-        if (!isRetryableError(error)) {
-          break;
+          if (!isRetryableError(error)) {
+            continue;
+          }
         }
       }
     }
@@ -167,5 +155,5 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
     },
   });
 
-  throw new Error("AI generation failed after retry and provider fallback");
+  throw new Error(`AI generation failed after retry and provider fallback: ${failures.join(" | ") || "no provider keys attempted"}`);
 }

@@ -10,10 +10,17 @@ function parseNumber(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+const configuredGeminiModels = parseKeyList(process.env.GEMINI_MODELS);
+const configuredOpenAiModels = parseKeyList(process.env.OPENAI_MODELS);
+
 export const env = {
   // AI keys — comma-separated rotation lists
   geminiApiKeys: parseKeyList(process.env.GEMINI_API_KEYS),
   openAiApiKeys: parseKeyList(process.env.OPENAI_API_KEYS),
+  geminiModels: configuredGeminiModels.length
+    ? configuredGeminiModels
+    : ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-2.0-flash-lite"],
+  openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4.1-mini"],
 
   // Razorpay — server-side only
   razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? "",

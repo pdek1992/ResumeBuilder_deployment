@@ -10,9 +10,6 @@ import { getRequestMetadata } from "@/lib/security/request";
 import { RESUME_JSON_PROMPT } from "@/lib/ai/prompts";
 import { PDFParse } from "pdf-parse";
 
-// Resolve pdf.worker.mjs issue for Next.js/Vercel
-PDFParse.setWorker("https://unpkg.com/pdfjs-dist@5.4.296/build/pdf.worker.min.mjs");
-
 export async function POST(request: Request) {
   try {
     await assertSafeOrigin();
@@ -52,6 +49,7 @@ export async function POST(request: Request) {
 
     const parser = new PDFParse({ data: buffer });
     const pdfData = await parser.getText();
+    await parser.destroy();
     const textContent = pdfData.text;
 
     if (!textContent || textContent.trim().length === 0) {
