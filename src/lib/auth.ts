@@ -33,7 +33,11 @@ export async function getCurrentUser() {
   } = await supabase.auth.getUser();
 
   if (error) {
-    console.error("[AUTH DEBUG] supabase.auth.getUser() returned error:", error.message);
+    if (error.message.toLowerCase().includes("auth session missing")) {
+      console.log("[AUTH DEBUG] No Supabase auth session cookie found.");
+    } else {
+      console.error("[AUTH DEBUG] supabase.auth.getUser() returned error:", error.message);
+    }
   }
 
   return user;
