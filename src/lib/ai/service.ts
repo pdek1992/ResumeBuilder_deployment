@@ -62,11 +62,15 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
   assertServerEnv(["jwtSecret"]);
 
   const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
-  const { data: userProfile } = await getSupabaseAdminClient()
+  const { data: userProfile, error: userProfileError } = await getSupabaseAdminClient()
     .from("users")
     .select("ai_config")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
+
+  if (userProfileError && !userProfileError.message.toLowerCase().includes("ai_config")) {
+    console.error("[AI] Failed to load user AI settings:", userProfileError.message);
+  }
 
   const aiConfig = userProfile && typeof userProfile === 'object' && userProfile.ai_config 
     ? userProfile.ai_config 

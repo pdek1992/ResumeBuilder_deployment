@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { ensureAppUserProfile } from "@/lib/auth/profile-sync";
 
 export async function GET(request: NextRequest) {
   const next = request.nextUrl.searchParams.get("next") ?? "/dashboard";
@@ -41,6 +42,18 @@ export async function GET(request: NextRequest) {
     if (upsertError) {
       console.error("Failed to upsert user profile on login:", upsertError);
     }
+
+    await ensureAppUserProfile({
+      userId: session.user.id,
+      email: session.user.email,
+      mobile: metadata.mobile,
+      authProvider: metadata.auth_provider ?? session.user.app_metadata?.provider,
+      firstName: metadata.first_name,
+      lastName: metadata.last_name,
+      fullName: session.user.user_metadata?.full_name,
+      consentGiven: Boolean(metadata.consent_given),
+      consentTimestamp: metadata.consent_timestamp,
+    });
   } catch (err) {
     console.error("Critical error during user profile setup (check SUPABASE_SERVICE_ROLE_KEY):", err);
   }

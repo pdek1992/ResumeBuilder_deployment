@@ -1,6 +1,7 @@
 import { compressJson, decompressJson } from "@/lib/compression";
 import { calculateAtsScore, createDefaultResumeData } from "@/lib/resume/defaults";
 import { defaultTemplates } from "@/lib/resume/templates";
+import { ensureAppUserProfile } from "@/lib/auth/profile-sync";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { ResumeData, ResumeRecord, TemplateRecord } from "@/lib/types";
@@ -29,82 +30,56 @@ export async function getResumeForUser(userId: string, resumeId: string) {
 }
 
 export async function ensurePublicUserExists(userId: string) {
+  await ensureAppUserProfile({ userId });
+}
+
+function shouldRetryWithoutContent(error: { code?: string; message?: string }) {
+  return error.code === "PGRST204" || error.message?.toLowerCase().includes("content");
+}
+
+function isForeignKeyError(error: { code?: string }) {
+  return error.code === "23503";
+}
+
+async function insertResumeRecord(userId: string, title: string, payload: ResumeData, includeContent = true) {
   const supabase = getSupabaseAdminClient();
-  
-  // Try to find by ID first
-  const { data: existing } = await supabase.from("users").select("id").eq("id", userId).maybeSingle();
-  if (existing) return;
+  const insertPayload: Record<string, unknown> = {
+    user_id: userId,
+    template_id: defaultTemplates[0].id,
+    title,
+    raw_json_compressed: compressJson(payload),
+    parsed_sections: payload,
+    current_draft_state: {
+      activeSection: "personal",
+    },
+    ats_score: calculateAtsScore(payload),
+    is_locked: false,
+  };
 
-  // Fetch from Auth to get email and name
-  const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
-  if (authError || !authUser?.user) {
-    console.error("[SYNC] Could not fetch user from auth:", authError);
-    // If we can't get auth info, we insert a minimal stub to avoid FK error
-    const { error: stubError } = await supabase.from("users").upsert({
-      id: userId,
-      email: `sync_fallback_${userId}@resumebuilder.internal`,
-      first_name: "User",
-      last_name: "",
-      is_admin: false,
-      ai_config: {},
-    }, { onConflict: 'id' });
-    
-    if (stubError) throw new Error(`User sync failed: ${stubError.message}`);
-    return;
+  if (includeContent) {
+    insertPayload.content = payload;
   }
 
-  const email = authUser.user.email ?? "";
-  const name = authUser.user.user_metadata?.full_name ?? "";
-  const parts = name.split(" ");
-  
-  const { error: syncError } = await supabase.from("users").upsert({
-    id: userId,
-    email: email,
-    first_name: parts[0] || "User",
-    last_name: parts.slice(1).join(" ") || "",
-    is_admin: false,
-    ai_config: {},
-  }, { onConflict: 'id' });
-
-  if (syncError) {
-    console.error("[SYNC] Public user upsert failed:", syncError);
-    throw new Error(`User synchronization failed: ${syncError.message}`);
-  }
+  return supabase.from("resumes").insert(insertPayload).select("*").single();
 }
 
 export async function createResumeDraft(userId: string, title = "Untitled Resume", initialData?: ResumeData) {
-  try {
+  await ensurePublicUserExists(userId);
+  const payload = initialData ?? createDefaultResumeData();
+  let { data, error } = await insertResumeRecord(userId, title, payload);
+
+  if (error && isForeignKeyError(error)) {
     await ensurePublicUserExists(userId);
-  } catch (err) {
-    console.error("[RESUME_CREATE] Non-fatal user sync error:", err);
-    // Continue anyway, the trigger in DB might have already handled it
+    ({ data, error } = await insertResumeRecord(userId, title, payload));
   }
 
-  const supabase = getSupabaseAdminClient();
-  const payload = initialData ?? createDefaultResumeData();
-  
-  const { data, error } = await supabase
-    .from("resumes")
-    .insert({
-      user_id: userId,
-      template_id: defaultTemplates[0].id,
-      title,
-      raw_json_compressed: compressJson(payload),
-      parsed_sections: payload,
-      current_draft_state: {
-        activeSection: "personal",
-      },
-      ats_score: calculateAtsScore(payload),
-      is_locked: false,
-    })
-    .select("*")
-    .single();
+  if (error && shouldRetryWithoutContent(error)) {
+    ({ data, error } = await insertResumeRecord(userId, title, payload, false));
+  }
 
   if (error) {
-    // If it's still an FK error, it means public.users table is DEFINITELY missing the user
-    // and both the trigger and the lazy sync failed.
     if (error.code === '23503') {
-      console.error("[RESUME_CREATE] CRITICAL FK ERROR: User does not exist in public.users table even after sync attempt.");
+      console.error("[RESUME_CREATE] CRITICAL FK ERROR: User/profile row does not exist even after sync attempt.", error);
     }
     throw error;
   }
@@ -140,20 +115,34 @@ export async function saveResumeDraft({
     throw new Error("Resume is locked and cannot be edited");
   }
 
-  const { data: updated, error } = await supabase
+  const updatePayload: Record<string, unknown> = {
+    template_id: templateId ?? existing.template_id,
+    title: title ?? existing.title,
+    content: data,
+    raw_json_compressed: compressJson(data),
+    parsed_sections: data,
+    current_draft_state: currentDraftState ?? existing.current_draft_state,
+    ats_score: atsScore,
+  };
+
+  let { data: updated, error } = await supabase
     .from("resumes")
-    .update({
-      template_id: templateId ?? existing.template_id,
-      title: title ?? existing.title,
-      raw_json_compressed: compressJson(data),
-      parsed_sections: data,
-      current_draft_state: currentDraftState ?? existing.current_draft_state,
-      ats_score: atsScore,
-    })
+    .update(updatePayload)
     .eq("id", resumeId)
     .eq("user_id", userId)
     .select("*")
     .single();
+
+  if (error && shouldRetryWithoutContent(error)) {
+    delete updatePayload.content;
+    ({ data: updated, error } = await supabase
+      .from("resumes")
+      .update(updatePayload)
+      .eq("id", resumeId)
+      .eq("user_id", userId)
+      .select("*")
+      .single());
+  }
 
   if (error) {
     throw error;
@@ -200,20 +189,32 @@ export async function duplicateResume(userId: string, resumeId: string) {
     throw new Error("Resume not found");
   }
 
-  const { data, error } = await supabase
+  const duplicatePayload: Record<string, unknown> = {
+    user_id: userId,
+    template_id: existing.template_id,
+    title: `${existing.title} (Copy)`,
+    content: (existing as ResumeRecord & { content?: unknown }).content ?? decompressJson(existing.raw_json_compressed, createDefaultResumeData()),
+    raw_json_compressed: existing.raw_json_compressed,
+    parsed_sections: existing.parsed_sections,
+    current_draft_state: existing.current_draft_state,
+    ats_score: existing.ats_score,
+    is_locked: false,
+  };
+
+  let { data, error } = await supabase
     .from("resumes")
-    .insert({
-      user_id: userId,
-      template_id: existing.template_id,
-      title: `${existing.title} (Copy)`,
-      raw_json_compressed: existing.raw_json_compressed,
-      parsed_sections: existing.parsed_sections,
-      current_draft_state: existing.current_draft_state,
-      ats_score: existing.ats_score,
-      is_locked: false,
-    })
+    .insert(duplicatePayload)
     .select("*")
     .single();
+
+  if (error && shouldRetryWithoutContent(error)) {
+    delete duplicatePayload.content;
+    ({ data, error } = await supabase
+      .from("resumes")
+      .insert(duplicatePayload)
+      .select("*")
+      .single());
+  }
 
   if (error) {
     throw error;

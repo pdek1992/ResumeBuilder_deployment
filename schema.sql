@@ -32,6 +32,14 @@ CREATE TABLE IF NOT EXISTS public.users (
   ai_config JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
+-- Compatibility with older deployments where resumes.user_id references profiles(id)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY,
+  email TEXT NOT NULL,
+  mobile TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Add is_admin if upgrading an existing DB that doesn't have it
 DO $$
 BEGIN
@@ -40,6 +48,17 @@ BEGIN
     WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'is_admin'
   ) THEN
     ALTER TABLE public.users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+  END IF;
+END $$;
+
+-- Add ai_config if upgrading an existing DB that doesn't have it
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'ai_config'
+  ) THEN
+    ALTER TABLE public.users ADD COLUMN ai_config JSONB NOT NULL DEFAULT '{}'::jsonb;
   END IF;
 END $$;
 
@@ -64,6 +83,7 @@ CREATE TABLE IF NOT EXISTS public.resumes (
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   template_id TEXT NOT NULL REFERENCES public.templates(id),
   title TEXT NOT NULL,
+  content JSONB NOT NULL DEFAULT '{}'::jsonb,
   raw_json_compressed TEXT NOT NULL,
   parsed_sections JSONB NOT NULL DEFAULT '{}'::jsonb,
   current_draft_state JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -265,6 +285,7 @@ EXECUTE FUNCTION public.prevent_locked_name_change();
 -- ROW LEVEL SECURITY
 -- -----------------------------------------------
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to bypass RLS for admin checks
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -295,6 +316,18 @@ FOR UPDATE USING (auth.uid() = id);
 -- Admin full-access policy on users
 DROP POLICY IF EXISTS users_admin_all ON public.users;
 CREATE POLICY users_admin_all ON public.users
+FOR ALL USING (public.is_admin());
+
+DROP POLICY IF EXISTS profiles_select_own ON public.profiles;
+CREATE POLICY profiles_select_own ON public.profiles
+FOR SELECT USING (auth.uid() = id OR public.is_admin());
+
+DROP POLICY IF EXISTS profiles_update_own ON public.profiles;
+CREATE POLICY profiles_update_own ON public.profiles
+FOR UPDATE USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS profiles_admin_all ON public.profiles;
+CREATE POLICY profiles_admin_all ON public.profiles
 FOR ALL USING (public.is_admin());
 
 -- Templates
@@ -521,6 +554,11 @@ BEGIN
     -- raw_json_compressed
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'raw_json_compressed') THEN
         ALTER TABLE public.resumes ADD COLUMN raw_json_compressed TEXT;
+    END IF;
+
+    -- content (legacy deployments require this column)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'content') THEN
+        ALTER TABLE public.resumes ADD COLUMN content JSONB NOT NULL DEFAULT '{}'::jsonb;
     END IF;
 
     -- ats_score

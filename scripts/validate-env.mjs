@@ -39,11 +39,15 @@ const required = [
 ];
 
 const recommended = [
-  "GEMINI_API_KEYS",
-  "OPENAI_API_KEYS",
+  "GEMINI_MODELS",
   "RAZORPAY_KEY_ID",
   "RAZORPAY_KEY_SECRET",
   "NEXT_PUBLIC_APP_URL",
+];
+
+const apiKeyGroups = [
+  { name: "GEMINI_API_KEYS", numberedPrefix: "GEMINI_API_KEY" },
+  { name: "OPENAI_API_KEYS", numberedPrefix: "OPENAI_API_KEY" },
 ];
 
 function mask(value) {
@@ -61,6 +65,25 @@ function validateUrl(name, value) {
   } catch {
     return `${name} is not a valid URL`;
   }
+}
+
+function parseKeyList(value) {
+  return (value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function collectNumberedKeys(prefix) {
+  const keys = [];
+  let index = 1;
+
+  while (process.env[`${prefix}_${index}`]) {
+    keys.push(process.env[`${prefix}_${index}`]);
+    index += 1;
+  }
+
+  return keys;
 }
 
 const failures = [];
@@ -82,6 +105,10 @@ if (process.env.NEXT_PUBLIC_APP_URL) {
 console.log("Environment health:");
 for (const name of [...required, ...recommended]) {
   console.log(`- ${name}: ${mask(process.env[name])}`);
+}
+for (const group of apiKeyGroups) {
+  const keys = [...parseKeyList(process.env[group.name]), ...collectNumberedKeys(group.numberedPrefix)];
+  console.log(`- ${group.name}/${group.numberedPrefix}_N: ${keys.length ? `${keys.length} configured` : "missing"}`);
 }
 
 if (failures.length > 0) {

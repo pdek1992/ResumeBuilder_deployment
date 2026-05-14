@@ -5,6 +5,7 @@ import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { logUserAction } from "@/lib/logging";
 import { sendTelegramAlert } from "@/lib/telegram";
+import { ensureAppUserProfile } from "@/lib/auth/profile-sync";
 
 export async function POST(request: Request) {
   try {
@@ -70,6 +71,18 @@ export async function POST(request: Request) {
         throw new Error("Failed to create user profile in database");
       }
     }
+
+    await ensureAppUserProfile({
+      userId: user.id,
+      email: user.email,
+      mobile: profile.mobile ?? user.user_metadata?.mobile,
+      authProvider: profile.auth_provider ?? user.user_metadata?.auth_provider,
+      firstName: profile.first_name ?? user.user_metadata?.first_name,
+      lastName: profile.last_name ?? user.user_metadata?.last_name,
+      fullName: user.user_metadata?.full_name,
+      consentGiven: Boolean(profile.consent_given ?? false),
+      consentTimestamp: profile.consent_timestamp ?? null,
+    });
 
     await logUserAction({
       userId: user.id,
