@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.next
+.vercel
+node_modules
+*.log
+tmp-*.png
+gh-pages
+PRASHANT_D_KADAM_Resume_2025.pdf
