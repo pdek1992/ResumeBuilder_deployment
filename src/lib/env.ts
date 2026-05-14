@@ -35,22 +35,11 @@ export const env = {
   openAiApiKeys: Array.from(new Set([...collectNumberedKeys("OPENAI_API_KEY"), ...openAiLegacyKeys])),
   nvidiaApiKeys: parseKeyList(process.env.NVIDIA_API_KEYS || "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"),
   geminiModels: (process.env.GEMINI_MODELS?.split(",") || [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-001",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-latest",
-    "gemini-2.0-flash-lite-preview-02-05",
-    "gemini-2.0-flash-lite",
+    "gemini-3.1-flash-lite",
   ]).map((m) => m.trim()),
   openAiModels: (process.env.OPENAI_MODELS?.split(",") || [
-    "gpt-4o-mini",
-    "gpt-4o",
-    "gpt-4-turbo",
     "gpt-3.5-turbo",
-  ]).map((m) => m.trim()),
+  ]).map((m) => m.trim()),    
   nvidiaModels: configuredNvidiaModels.length
     ? configuredNvidiaModels
     : ["nvidia/nemotron-3-super-120b-a12b", "meta/llama-3.3-70b-instruct", "meta/llama-3.1-8b-instruct"],
