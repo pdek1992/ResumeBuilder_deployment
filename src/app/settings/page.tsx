@@ -4,6 +4,7 @@ import { buildWhatsappSupportLink } from "@/lib/whatsapp";
 import { requireUserProfile } from "@/lib/auth";
 import { DeleteAccountCard } from "@/components/auth/delete-account-card";
 import { AISettingsCard } from "@/components/settings/ai-settings-card";
+import { ConsentCard } from "@/components/settings/consent-card";
 import { TwoFactorSettingsCard } from "@/components/settings/two-factor-card";
 import { PasskeySettingsCard } from "@/components/settings/passkey-card";
 import { LegacyFlowShell } from "@/components/marketing/legacy-shell";
@@ -76,9 +77,11 @@ export default async function SettingsPage() {
             </Link>
           </div>
 
+          <ConsentCard consentGiven={profile.consent_given} />
+
           <DeleteAccountCard requiresPassword={profile.auth_provider === "password"} />
           
-          <AISettingsCard initialConfig={profile.ai_config} />
+          <AISettingsCard initialConfig={profile.ai_config ?? {}} />
 
           <TwoFactorSettingsCard />
 

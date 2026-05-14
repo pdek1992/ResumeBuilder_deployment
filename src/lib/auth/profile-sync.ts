@@ -71,6 +71,12 @@ export async function ensureAppUserProfile(input: ProfileSyncInput) {
           last_login: new Date().toISOString(),
           ...(syncInput.mobile ? { mobile: syncInput.mobile } : {}),
           ...(syncInput.authProvider ? { auth_provider: normalizeAuthProvider(syncInput.authProvider) } : {}),
+          ...(typeof syncInput.consentGiven === "boolean"
+            ? {
+                consent_given: syncInput.consentGiven,
+                consent_timestamp: syncInput.consentTimestamp ?? new Date().toISOString(),
+              }
+            : {}),
         })
         .eq("id", syncInput.userId)
     : await admin.from("users").insert({

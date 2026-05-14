@@ -45,6 +45,12 @@ export async function POST(request: Request) {
         last_login: new Date().toISOString(),
         ...(profile.mobile && { mobile: profile.mobile }),
         ...(profile.auth_provider && { auth_provider: profile.auth_provider }),
+        ...(typeof profile.consent_given === "boolean"
+          ? {
+              consent_given: profile.consent_given,
+              consent_timestamp: profile.consent_timestamp ?? new Date().toISOString(),
+            }
+          : {}),
       }).eq("id", user.id);
 
       if (updateError) {
@@ -80,7 +86,7 @@ export async function POST(request: Request) {
       firstName: profile.first_name ?? user.user_metadata?.first_name,
       lastName: profile.last_name ?? user.user_metadata?.last_name,
       fullName: user.user_metadata?.full_name,
-      consentGiven: Boolean(profile.consent_given ?? false),
+      consentGiven: typeof profile.consent_given === "boolean" ? profile.consent_given : null,
       consentTimestamp: profile.consent_timestamp ?? null,
     });
 

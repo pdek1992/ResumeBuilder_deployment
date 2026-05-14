@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function AISettingsCard({ initialConfig }: { initialConfig: Record<string, any> }) {
-  const [geminiApiKey, setGeminiApiKey] = useState(initialConfig.geminiApiKey ?? "");
-  const [openAiApiKey, setOpenAiApiKey] = useState(initialConfig.openAiApiKey ?? "");
+export function AISettingsCard({ initialConfig = {} }: { initialConfig?: Record<string, any> | null }) {
+  const [geminiApiKey, setGeminiApiKey] = useState(initialConfig?.geminiApiKey ?? "");
+  const [openAiApiKey, setOpenAiApiKey] = useState(initialConfig?.openAiApiKey ?? "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
