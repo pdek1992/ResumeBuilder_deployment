@@ -19,7 +19,7 @@ export const env = {
   openAiApiKeys: parseKeyList(process.env.OPENAI_API_KEYS),
   geminiModels: configuredGeminiModels.length
     ? configuredGeminiModels
-    : ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-001", "gemini-2.0-flash-lite"],
+    : ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite"],
   openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4.1-mini"],
 
   // Razorpay — server-side only
