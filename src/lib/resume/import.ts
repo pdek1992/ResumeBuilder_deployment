@@ -1,5 +1,4 @@
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
 
 export async function extractResumeTextFromFile(file: File) {
   const arrayBuffer = await file.arrayBuffer();
@@ -7,10 +6,14 @@ export async function extractResumeTextFromFile(file: File) {
   const lowerName = file.name.toLowerCase();
 
   if (lowerName.endsWith(".pdf")) {
+    const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: buffer });
-    const parsed = await parser.getText();
-    await parser.destroy();
-    return parsed.text;
+    try {
+      const parsed = await parser.getText();
+      return parsed.text;
+    } finally {
+      await parser.destroy();
+    }
   }
 
   if (lowerName.endsWith(".docx")) {
