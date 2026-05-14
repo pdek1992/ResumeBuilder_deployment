@@ -48,7 +48,8 @@ function rotate<T>(items: T[], startIndex: number) {
 
 function isRetryableError(error: unknown) {
   const message = error instanceof Error ? error.message.toLowerCase() : "";
-  return ["quota", "rate", "429", "404", "not found", "timeout", "throttle", "invalid"].some((token) => message.includes(token));
+  // 429, 503, 504, timeouts are retryable with different keys or after a delay
+  return ["quota", "rate", "429", "timeout", "throttle", "503", "504", "service unavailable", "overloaded"].some((token) => message.includes(token));
 }
 
 function uniqueKeys(keys: Array<string | undefined>) {
@@ -91,12 +92,19 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
       continue;
     }
 
-    const orderedKeys = rotate(provider.keys, providerCursor[provider.name]);
-    const orderedModels = rotate(provider.models, modelCursor[provider.name]);
+    // Use random starting points for rotation to better distribute load across keys/models
+    const keyStartIndex = Math.floor(Math.random() * provider.keys.length);
+    const modelStartIndex = Math.floor(Math.random() * provider.models.length);
+    
+    const orderedKeys = rotate(provider.keys, keyStartIndex);
+    const orderedModels = rotate(provider.models, modelStartIndex);
 
     for (const modelName of orderedModels) {
       for (const key of orderedKeys) {
+        const maskedKey = `${key.slice(0, 4)}...${key.slice(-4)}`;
         try {
+          console.log(`[AI] Attempting ${provider.name}/${modelName} (Key: ${maskedKey})`);
+          
           let raw = "";
           if (provider.name === "gemini") {
             const client = new GoogleGenerativeAI(key);
@@ -133,8 +141,9 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
           const sanitized = sanitizeAiOutput(raw, mode);
           const validated = validateAiOutput(mode, sanitized);
 
-          providerCursor[provider.name] = (providerCursor[provider.name] + 1) % provider.keys.length;
-          modelCursor[provider.name] = (modelCursor[provider.name] + 1) % provider.models.length;
+          // Update cursors for non-random tracking
+          providerCursor[provider.name] = (keyStartIndex + 1) % provider.keys.length;
+          modelCursor[provider.name] = (modelStartIndex + 1) % provider.models.length;
 
           await logUserAction({
             userId,
@@ -150,12 +159,16 @@ export async function generateAiContent({ mode, prompt, userId, systemPrompt, pr
           return validated;
         } catch (error) {
           const message = error instanceof Error ? error.message : "Unknown AI error";
-          failures.push(`${provider.name}/${modelName}: ${message}`);
-          console.error(`[AI] ${provider.name}/${modelName} generation failed:`, message);
+          const isRetryable = isRetryableError(error);
+          
+          failures.push(`${provider.name}/${modelName} [${maskedKey}]: ${message}`);
+          console.error(`[AI] ${provider.name}/${modelName} failed:`, message);
 
-          if (!isRetryableError(error)) {
-            continue;
+          if (!isRetryable) {
+            console.warn(`[AI] Non-retryable error for ${modelName}, skipping to next model.`);
+            break; // Skip all other keys for this model and go to next model
           }
+          // Continue to next key for the same model if it's a quota/rate error
         }
       }
     }

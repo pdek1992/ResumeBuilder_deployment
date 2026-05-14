@@ -19,8 +19,8 @@ export const env = {
   openAiApiKeys: parseKeyList(process.env.OPENAI_API_KEYS),
   geminiModels: configuredGeminiModels.length
     ? configuredGeminiModels
-    : ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite"],
-  openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4.1-mini"],
+    : ["gemini-2.0-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-flash-latest", "gemini-1.5-pro-latest", "gemini-1.5-flash-8b-latest"],
+  openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4o"],
 
   // Razorpay — server-side only
   razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? "",
