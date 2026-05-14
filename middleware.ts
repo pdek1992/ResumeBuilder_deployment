@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 function generateRandomToken() {
-  return crypto.randomUUID().replace(/-/g, "");
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function applySecurityHeaders(response: NextResponse) {
@@ -19,7 +21,7 @@ function applySecurityHeaders(response: NextResponse) {
   );
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   try {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-current-path", `${request.nextUrl.pathname}${request.nextUrl.search}`);
@@ -35,7 +37,7 @@ export async function middleware(request: NextRequest) {
     if (!existingCsrf) {
       response.cookies.set("vrb_csrf", generateRandomToken(), {
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: request.nextUrl.protocol === "https:",
         path: "/",
         httpOnly: false, // Required for client-side apiFetch to read it
       });
@@ -46,9 +48,7 @@ export async function middleware(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Middleware Critical Error:", error);
-    const response = NextResponse.next();
-    applySecurityHeaders(response);
-    return response;
+    return NextResponse.next();
   }
 }
 
