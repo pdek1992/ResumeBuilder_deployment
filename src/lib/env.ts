@@ -25,7 +25,7 @@ export const env = {
   openAiModels: configuredOpenAiModels.length ? configuredOpenAiModels : ["gpt-4o-mini", "gpt-4o"],
   nvidiaModels: configuredNvidiaModels.length
     ? configuredNvidiaModels
-    : ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-8b-instruct", "nvidia/llama-3.1-nemotron-70b-instruct"],
+    : ["nvidia/nemotron-3-super-120b-a12b", "meta/llama-3.3-70b-instruct", "meta/llama-3.1-8b-instruct"],
 
   // Razorpay — server-side only
   razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? "",
