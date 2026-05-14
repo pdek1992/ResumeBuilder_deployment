@@ -538,6 +538,11 @@ BEGIN
         ALTER TABLE public.resumes ADD COLUMN current_draft_state JSONB NOT NULL DEFAULT '{}'::jsonb;
     END IF;
     
+    -- user_id foreign key check
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'resumes_user_id_fkey' AND table_name = 'resumes') THEN
+        ALTER TABLE public.resumes ADD CONSTRAINT resumes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    END IF;
+
     -- is_locked
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'resumes' AND column_name = 'is_locked') THEN
         ALTER TABLE public.resumes ADD COLUMN is_locked BOOLEAN NOT NULL DEFAULT FALSE;

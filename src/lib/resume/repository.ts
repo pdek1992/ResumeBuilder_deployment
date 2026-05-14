@@ -73,9 +73,16 @@ export async function ensurePublicUserExists(userId: string) {
 }
 
 export async function createResumeDraft(userId: string, title = "Untitled Resume", initialData?: ResumeData) {
-  await ensurePublicUserExists(userId);
+  try {
+    await ensurePublicUserExists(userId);
+  } catch (err) {
+    console.error("[RESUME_CREATE] Non-fatal user sync error:", err);
+    // Continue anyway, the trigger in DB might have already handled it
+  }
+
   const supabase = getSupabaseAdminClient();
   const payload = initialData ?? createDefaultResumeData();
+  
   const { data, error } = await supabase
     .from("resumes")
     .insert({
@@ -94,6 +101,11 @@ export async function createResumeDraft(userId: string, title = "Untitled Resume
     .single();
 
   if (error) {
+    // If it's still an FK error, it means public.users table is DEFINITELY missing the user
+    // and both the trigger and the lazy sync failed.
+    if (error.code === '23503') {
+      console.error("[RESUME_CREATE] CRITICAL FK ERROR: User does not exist in public.users table even after sync attempt.");
+    }
     throw error;
   }
 
