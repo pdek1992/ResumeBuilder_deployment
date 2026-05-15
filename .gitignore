@@ -77,3 +77,15 @@ tsconfig.tsbuildinfo
 .turbo/
 .vercel/
 .vercel
+
+# -----------------------------------------------
+# Legacy / Unnecessary Files
+# -----------------------------------------------
+PRASHANT_D_KADAM_Resume_2025.pdf
+404.html
+index.html
+legacy.css
+extract_templates.ps1
+update-telegram.cjs
+test-results/
+gh-pages/
