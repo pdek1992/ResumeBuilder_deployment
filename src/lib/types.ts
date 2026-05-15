@@ -182,6 +182,7 @@ export type TemplateRecord = {
 export type UserProfile = {
   id: string;
   email: string;
+  username: string;
   mobile: string | null;
   password_hash?: string | null;
   auth_provider: AuthProvider;

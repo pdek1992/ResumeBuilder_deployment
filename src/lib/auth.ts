@@ -66,7 +66,11 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     console.log(`[AUTH DEBUG] No record found in users table for ${user.id}`);
   }
 
-  return data ? ({ ai_config: {}, ...data } as UserProfile) : null;
+  return data ? ({ 
+    ai_config: {}, 
+    username: data.email?.split("@")[0] || "user",
+    ...data 
+  } as UserProfile) : null;
 }
 
 export async function requireUserProfile(nextPath = "/dashboard") {
