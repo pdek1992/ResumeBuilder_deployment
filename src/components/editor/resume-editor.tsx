@@ -460,7 +460,7 @@ export function ResumeEditor({
           </button>
         </div>
 
-        <div className={`mx-auto max-w-[1400px] px-4 py-6 transition-all duration-500 md:px-6 md:py-8 ${isChatOpen ? "mr-[420px]" : ""}`}>
+        <div className={`mx-auto w-full max-w-[1800px] px-4 py-6 transition-all duration-500 md:px-6 md:py-8 ${isChatOpen ? "mr-[420px]" : ""}`}>
           <div className="mb-6 rounded-[2.2rem] border border-white/80 bg-white/70 px-4 py-3 shadow-[0_20px_60px_rgba(37,99,235,0.12)] backdrop-blur md:px-6">
             <div className="flex items-center justify-between gap-3">
               <LogoLockup href="/dashboard" />
@@ -514,7 +514,7 @@ export function ResumeEditor({
           )}
 
           <div className="flex flex-col xl:flex-row gap-8 items-start">
-            <div className="w-full xl:w-[58%] space-y-8">
+            <div className="w-full xl:w-[45%] space-y-8">
             <EditorCard className="pb-0">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="flex flex-wrap gap-3">
@@ -1221,7 +1221,7 @@ export function ResumeEditor({
               </div>
             </EditorCard>
             </div>
-            <div className="w-full xl:w-[42%] xl:sticky xl:top-6">
+            <div className="w-full xl:w-[55%] xl:sticky xl:top-6">
               <ResumePreview
                 resume={{
                   ...resume,

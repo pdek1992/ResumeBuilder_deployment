@@ -47,11 +47,13 @@ export async function createPaymentRecord({
   orderId,
   amount,
   paymentType,
+  metadata = {},
 }: {
   userId: string;
   orderId: string;
   amount: number;
   paymentType: PaymentType;
+  metadata?: Record<string, any>;
 }) {
   const supabase = getSupabaseAdminClient();
   const canonical = await supabase
@@ -62,6 +64,7 @@ export async function createPaymentRecord({
       amount,
       payment_type: paymentType,
       status: "created",
+      metadata_json: metadata,
     })
     .select("*")
     .single();
@@ -183,7 +186,7 @@ export async function markPaymentFailed(orderId: string, reason: string) {
   }
 }
 
-export async function getActiveResumePass(userId: string) {
+export async function getActiveResumePass(userId: string, resumeId?: string) {
   const supabase = getSupabaseAdminClient();
   const { data } = await supabase
     .from("payments")
@@ -192,11 +195,22 @@ export async function getActiveResumePass(userId: string) {
     .eq("payment_type", "resume_download")
     .eq("status", "paid")
     .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
-  return data;
+  if (!data || data.length === 0) return null;
+
+  if (resumeId) {
+    const exactMatch = data.find((p: any) => p.metadata_json?.resumeId === resumeId);
+    if (exactMatch) return exactMatch;
+    
+    // Support legacy passes that didn't have resumeId
+    const legacyMatch = data.find((p: any) => !p.metadata_json?.resumeId);
+    if (legacyMatch) return legacyMatch;
+    
+    return null;
+  }
+
+  return data[0];
 }
 
 export async function hasCoverLetterAccess(userId: string) {

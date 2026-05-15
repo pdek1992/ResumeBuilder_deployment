@@ -14,7 +14,11 @@ export async function getSupabaseServerClient() {
       setAll(cookieValues) {
         try {
           cookieValues.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
+            cookieStore.set(name, value, {
+              ...options,
+              sameSite: "strict",
+              secure: process.env.NODE_ENV === "production",
+            });
           });
         } catch (e) {
           // This will throw during render, but we can ignore it here as the 

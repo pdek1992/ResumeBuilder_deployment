@@ -8,13 +8,14 @@ type ResumePreviewProps = {
   resume: ResumeData;
   template: TemplateRecord;
   className?: string;
+  isPrintMode?: boolean;
 };
 
 function PreviewHeading({ children, accent }: { children: ReactNode; accent: string }) {
   return <h3 className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: accent }}>{children}</h3>;
 }
 
-export function ResumePreview({ resume, template, className }: ResumePreviewProps) {
+export function ResumePreview({ resume, template, className, isPrintMode }: ResumePreviewProps) {
   const fullName = [resume.personal.firstName, resume.personal.lastName].filter(Boolean).join(" ") || "Your Name";
   const accent = resume.style.accent || template.config_json.accent;
   const layout = template.config_json.layout || "standard";
@@ -34,12 +35,12 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
       <div className="flex items-start justify-between gap-6">
         <div className="flex-1">
           <h1 className={cn(
-            "font-display text-[32px] font-black leading-tight tracking-tight md:text-[42px]",
+            "font-display text-[32px] font-black leading-tight tracking-tight break-words md:text-[42px]",
             (layout === "sidebar-dark" || layout === "modular-card") ? "text-slate-950" : "text-white"
           )}>{fullName}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
             <p className={cn(
-              "text-[14px] font-bold uppercase tracking-widest",
+              "text-[14px] font-bold uppercase tracking-widest break-words",
               (layout === "sidebar-dark" || layout === "modular-card") ? "text-primary" : "text-white/90"
             )}>{resume.personal.headline || resume.ats.targetRole || "Professional Headline"}</p>
           </div>
@@ -67,7 +68,7 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
   const renderSummary = () => (
     <div className={cn(layout === "modular-card" && "rounded-2xl border border-slate-100 bg-slate-50/50 p-6")}>
       <PreviewHeading accent={accent}>Professional Summary</PreviewHeading>
-      <p className="mt-3 text-[12.5px] leading-6 text-slate-600">
+      <p className="mt-3 text-[12.5px] leading-6 text-slate-600 whitespace-pre-wrap break-words">
         {resume.summary || "This appears prominently in the preview and final PDF."}
       </p>
     </div>
@@ -86,7 +87,7 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
             <p className="mt-1 text-[11px] text-slate-500">{[item.company, item.location].filter(Boolean).join(" | ")}</p>
             <ul className="mt-2 ml-4 list-disc space-y-1 text-[11.5px] leading-5 text-slate-600">
               {item.highlights.filter(Boolean).map((highlight, index) => (
-                <li key={`${item.id}-${index}`}>{highlight}</li>
+                <li key={`${item.id}-${index}`} className="break-words whitespace-pre-wrap">{highlight}</li>
               ))}
             </ul>
           </div>
@@ -115,33 +116,13 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
     </div>
   );
 
-  return (
-    <section
-      data-print-hide-preview="true"
-      className={cn("rounded-[3rem] border border-white/70 bg-white/82 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur", className)}
-    >
-      <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-5 md:px-8">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
-            <Eye className="h-5 w-5 text-slate-700" />
-          </span>
-          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Elite Preview</p>
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-          Fidelity Active
-        </div>
-      </div>
-
-      <div className="px-5 py-6 md:px-8">
-        <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div className="mx-auto aspect-[1/1.414] max-w-[760px] bg-white p-8 md:p-12">
-            <div className={cn(
-              "min-h-full overflow-hidden rounded-[1.2rem] bg-white shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
-              layout === "sidebar-dark" && "flex"
-            )}>
-              {layout === "sidebar-dark" && (
-                <div className="w-[30%] shrink-0 p-8 text-white" style={{ backgroundColor: template.config_json.sidebarTint || accent }}>
+  const innerContent = (
+    <div className={cn(
+      isPrintMode ? "w-full min-h-[297mm] bg-white overflow-hidden" : "min-h-full overflow-hidden rounded-[1.2rem] bg-white shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
+      layout === "sidebar-dark" && "flex"
+    )}>
+      {layout === "sidebar-dark" && (
+        <div className="w-[30%] shrink-0 p-8 text-white" style={{ backgroundColor: template.config_json.sidebarTint || accent }}>
                   <div className="mb-8">
                     <img src={template.icon || "/icons/icon-resume.png"} alt="Icon" className="h-12 w-12 opacity-40 brightness-0 invert" />
                   </div>
@@ -178,7 +159,7 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
                             <div key={item.id}>
                               <p className="text-[13px] font-black text-slate-900">{item.name}</p>
                               {item.highlights.filter(Boolean).map((highlight, index) => (
-                                <p key={index} className="mt-1 text-[11.5px] leading-5 text-slate-600">{highlight}</p>
+                                <p key={index} className="mt-1 text-[11.5px] leading-5 text-slate-600 break-words whitespace-pre-wrap">{highlight}</p>
                               ))}
                             </div>
                           ))}
@@ -196,7 +177,7 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
                               <p className="mt-1 text-[11px] text-slate-500">{[item.organization, [item.startDate, item.endDate].filter(Boolean).join(" — ")].filter(Boolean).join(" | ")}</p>
                               <ul className="mt-2 ml-4 list-disc space-y-1 text-[11.5px] leading-5 text-slate-600">
                                 {item.highlights.filter(Boolean).map((highlight, index) => (
-                                  <li key={`${item.id}-${index}`}>{highlight}</li>
+                                  <li key={`${item.id}-${index}`} className="break-words whitespace-pre-wrap">{highlight}</li>
                                 ))}
                               </ul>
                             </div>
@@ -274,6 +255,34 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
                 </div>
               </div>
             </div>
+  );
+
+  if (isPrintMode) {
+    return innerContent;
+  }
+
+  return (
+    <section
+      data-print-hide-preview="true"
+      className={cn("rounded-[3rem] border border-white/70 bg-white/82 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur", className)}
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-6 py-5 md:px-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+            <Eye className="h-5 w-5 text-slate-700" />
+          </span>
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Elite Preview</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-emerald-600">
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          Fidelity Active
+        </div>
+      </div>
+
+      <div className="px-5 py-6 md:px-8">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <div className="mx-auto aspect-[1/1.414] max-w-[760px] bg-white p-8 md:p-12">
+            {innerContent}
           </div>
         </div>
 

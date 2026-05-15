@@ -1,12 +1,12 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { renderToBuffer } from "@react-pdf/renderer";
 
 import { fail } from "@/lib/api-response";
 import { verifyDownloadToken } from "@/lib/downloads/tokens";
 import { getActiveResumePass } from "@/lib/payments/access";
-import { ResumePdfDocument } from "@/lib/pdf/document";
+import { generatePdfHtml } from "@/lib/pdf/html-renderer";
+import { getBrowser } from "@/lib/pdf/pdf-engine";
 import { createDefaultResumeData } from "@/lib/resume/defaults";
 import { getResumeForUser, listTemplates } from "@/lib/resume/repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       return fail("Authentication required", 401);
     }
 
-    const pass = await getActiveResumePass(user.id);
+    const pass = await getActiveResumePass(user.id, payload.resumeId);
 
     if (!pass) {
       return fail("Export access expired", 403);
@@ -47,7 +47,25 @@ export async function GET(request: Request) {
 
     const template = templates.find((item) => item.id === resume.template_id) ?? templates[0];
     const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
-    const buffer = await renderToBuffer(ResumePdfDocument({ resume: parsedResume, template }));
+    
+    // Generate the PDF using Puppeteer
+    const html = generatePdfHtml(parsedResume, template);
+    const browser = await getBrowser();
+    
+    let pdfBuffer: Buffer;
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: "networkidle0" as any });
+      
+      const buffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+      });
+      pdfBuffer = Buffer.from(buffer);
+    } finally {
+      await browser.close();
+    }
 
     await logUserAction({
       userId: user.id,
@@ -57,7 +75,7 @@ export async function GET(request: Request) {
       },
     });
 
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(pdfBuffer as any, {
       headers: {
         "content-type": "application/pdf",
         "content-disposition": `attachment; filename="${slugify(resume.title || "resume")}.pdf"`,

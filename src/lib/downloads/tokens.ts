@@ -17,7 +17,7 @@ export async function createDownloadToken(payload: DownloadTokenPayload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("5m")
+    .setExpirationTime("1m")
     .sign(getSecret());
 }
 

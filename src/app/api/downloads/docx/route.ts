@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
     if (!user || user.id !== payload.userId) return fail("Authentication required", 401);
 
-    const pass = await getActiveResumePass(user.id);
+    const pass = await getActiveResumePass(user.id, payload.resumeId);
     if (!pass) return fail("Export access expired", 403);
 
     const [resume, templates] = await Promise.all([getResumeForUser(user.id, payload.resumeId), listTemplates()]);

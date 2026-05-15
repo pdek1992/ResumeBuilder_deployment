@@ -56,6 +56,9 @@ export async function POST(request: Request) {
       orderId: order.id,
       amount: amountInRupees,
       paymentType: body.paymentType,
+      metadata: {
+        resumeId: body.resumeId ?? "",
+      },
     });
 
     await logUserAction({
