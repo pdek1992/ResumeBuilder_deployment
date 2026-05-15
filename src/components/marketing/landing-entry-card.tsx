@@ -25,21 +25,21 @@ export function LandingEntryCard({ signedIn }: { signedIn: boolean }) {
   }
 
   return (
-    <section className="rounded-[2.5rem] bg-white p-6 shadow-sm md:p-12 lg:p-16 h-full flex flex-col justify-center">
-      <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-6">
+    <section className="rounded-[2.5rem] bg-white p-5 shadow-sm md:p-8 lg:p-10 h-full flex flex-col justify-center">
+      <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-4">
         Step 1: Identity
       </p>
-      <h1 className="font-display text-[3rem] md:text-[4rem] font-black leading-[1.05] tracking-tight text-gray-900">
+      <h1 className="font-display text-[2.5rem] md:text-[3.5rem] font-black leading-[1.05] tracking-tight text-gray-900">
         Your Next Career
         <br />
         Move Starts <span className="text-blue-600 underline decoration-blue-200 underline-offset-[12px] decoration-4">Now</span>
       </h1>
-      <p className="mt-8 max-w-2xl text-[16px] leading-relaxed text-gray-500 font-medium">
+      <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-gray-500 font-medium">
         Create a premium, ATS-optimized resume in minutes. &#8377;100 gives you
         24h unlimited access, multiple templates, and AI-powered refinements.
       </p>
 
-      <div className="mt-12">
+      <div className="mt-6">
         <label
           htmlFor="landing-mobile"
           className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400"
@@ -53,9 +53,9 @@ export function LandingEntryCard({ signedIn }: { signedIn: boolean }) {
           value={mobile}
           onChange={(event) => setMobile(event.target.value)}
           placeholder="9823340379"
-          className="mt-3 w-full rounded-full border-0 bg-gray-50/80 px-8 py-5 text-[18px] font-bold text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
+          className="mt-2 w-full rounded-full border-0 bg-gray-50/80 px-6 py-4 text-[18px] font-bold text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
         />
-        <p className="mt-4 px-4 text-[9px] font-black uppercase tracking-widest text-gray-400">
+        <p className="mt-3 px-4 text-[9px] font-black uppercase tracking-widest text-gray-400">
           Used for draft recovery &amp; 24h access support.
           <span className="text-blue-600"> 10-digit number required.</span>
         </p>
@@ -64,13 +64,13 @@ export function LandingEntryCard({ signedIn }: { signedIn: boolean }) {
       <button
         type="button"
         onClick={handleStart}
-        className="mt-10 w-full rounded-full bg-blue-600 py-5 text-[13px] font-black uppercase tracking-widest text-white transition hover:bg-blue-700 shadow-md shadow-blue-600/20"
+        className="mt-6 w-full rounded-full bg-blue-600 py-4 text-[13px] font-black uppercase tracking-widest text-white transition hover:bg-blue-700 shadow-md shadow-blue-600/20"
       >
         Start Building &mdash; &#8377;100
       </button>
 
       {!signedIn && (
-        <div className="mt-8 flex flex-col gap-4">
+        <div className="mt-6 flex flex-col gap-4">
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gray-100" />
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
@@ -88,7 +88,7 @@ export function LandingEntryCard({ signedIn }: { signedIn: boolean }) {
       )}
 
       {signedIn && (
-        <div className="mt-8">
+        <div className="mt-6">
           <Link
             href="/dashboard"
             className="block w-full rounded-full border-2 border-gray-100 bg-white py-4 text-center text-[12px] font-bold uppercase tracking-widest text-gray-500 transition hover:border-gray-200 hover:text-gray-700"

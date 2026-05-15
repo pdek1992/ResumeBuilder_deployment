@@ -11,6 +11,7 @@ export default async function DashboardPage() {
   return (
     <LegacyFlowShell
       signedIn
+      profileName={profile.first_name || profile.username}
       rightColumn={
         <section className="rounded-[3rem] border border-white/70 bg-white/82 px-6 py-8 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur md:px-10 md:py-10">
           <p className="text-[12px] font-black uppercase tracking-[0.32em] text-primary">Workspace</p>

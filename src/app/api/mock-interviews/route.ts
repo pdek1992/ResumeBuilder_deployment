@@ -98,10 +98,11 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`🎙️ *Mock Interview Generated*\nUser: \`${user.id}\`\nCompany: \`${body.companyName}\`\nQuestions: 20`);
+    await sendTelegramAlert(`🎙️ *Mock Interview Generated*\nUser: \`${user.email || user.id}\`\nCompany: \`${body.companyName}\`\nQuestions: 20`);
 
     return ok(parsed);
   } catch (error) {
     return fail(error, 400);
   }
 }
+

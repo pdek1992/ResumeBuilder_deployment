@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       format: body.format,
     });
 
-    await sendTelegramAlert(`📥 *Export Initiated*\nUser: \`${user.id}\`\nFormat: \`${body.format.toUpperCase()}\`\nResume: \`${body.resumeId}\``);
+    await sendTelegramAlert(`📥 *Export Initiated*\nUser: \`${user.email || user.id}\`\nFormat: \`${body.format.toUpperCase()}\`\nResume: \`${body.resumeId}\``);
 
     return ok({
       url: absoluteUrl(`/api/downloads/${body.format}?token=${encodeURIComponent(token)}`),
@@ -43,3 +43,4 @@ export async function POST(request: Request) {
     return fail(error, 400);
   }
 }
+

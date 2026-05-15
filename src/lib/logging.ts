@@ -3,7 +3,7 @@ import { getRequestMetadata } from "@/lib/security/request";
 import { sendTelegramAlert } from "@/lib/telegram";
 import type { AccessLogPayload } from "@/lib/types";
 
-export async function logUserAction({ userId, actionType, metadata }: AccessLogPayload) {
+export async function logUserAction({ userId, email, actionType, metadata }: AccessLogPayload) {
   const supabase = getSupabaseAdminClient();
   const requestMetadata = await getRequestMetadata();
 
@@ -23,7 +23,7 @@ export async function logUserAction({ userId, actionType, metadata }: AccessLogP
   await sendTelegramAlert([
     `*Resume Builder Alert*`,
     `Action: \`${actionType}\``,
-    `User: \`${userId}\``,
+    `User/Email: \`${email || userId}\``,
     `Time: \`${new Date().toISOString()}\``,
     `IP: \`${requestMetadata.ipAddress}\``,
     metadata ? `Metadata: \`${JSON.stringify(metadata).slice(0, 500)}\`` : undefined,

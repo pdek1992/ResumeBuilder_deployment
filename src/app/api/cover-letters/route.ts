@@ -78,10 +78,11 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`📝 *Cover Letter Generated*\nUser: \`${user.id}\`\nCompany: \`${body.companyName}\`\nResume: \`${body.resumeId}\``);
+    await sendTelegramAlert(`📝 *Cover Letter Generated*\nUser: \`${user.email || user.id}\`\nCompany: \`${body.companyName}\`\nResume: \`${body.resumeId}\``);
 
     return ok({ content });
   } catch (error) {
     return fail(error, 400);
   }
 }
+

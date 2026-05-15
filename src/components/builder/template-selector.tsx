@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 import { apiFetch } from "@/lib/client-api";
 import type { TemplateRecord } from "@/lib/types";
@@ -64,7 +65,7 @@ export function TemplateSelector({
 
       {error ? <p className="mt-6 text-sm text-rose-600">{error}</p> : null}
 
-      <div className="mt-10 space-y-8">
+      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {templates.map((template) => {
           const active = template.id === selectedTemplateId;
 
@@ -74,23 +75,25 @@ export function TemplateSelector({
               type="button"
               onClick={() => handleSelect(template.id)}
               disabled={pendingId !== null}
-              className="block w-full rounded-[2.8rem] border border-slate-100 bg-white p-5 text-left shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition hover:shadow-[0_24px_58px_rgba(15,23,42,0.08)] disabled:opacity-70"
+              className={cn(
+                "block w-full rounded-[2.8rem] border border-slate-100 bg-white p-5 text-left shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition hover:shadow-[0_24px_58px_rgba(15,23,42,0.08)] disabled:opacity-70",
+                active && "ring-4 ring-primary"
+              )}
             >
-              <div className="rounded-[2.2rem] border border-slate-100 bg-white p-5">
-                <div className="overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[#fbfdff] p-4 shadow-[inset_0_0_40px_rgba(148,163,184,0.08)]">
+              <div className="rounded-[2.2rem] border border-slate-100 bg-white p-3 md:p-5">
+                <div className="overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[#fbfdff] p-2 md:p-4 shadow-[inset_0_0_40px_rgba(148,163,184,0.08)] aspect-[1/1.4] relative">
                   <Image
                     src={template.preview_image}
                     alt={template.template_name}
-                    width={900}
-                    height={1200}
-                    className="mx-auto h-auto w-full max-w-[620px]"
+                    fill
+                    className="object-contain"
                   />
                 </div>
               </div>
-              <div className="px-4 pb-2 pt-8 text-center">
-                <h3 className="font-display text-[2.1rem] font-black tracking-tight text-slate-950">{template.template_name}</h3>
-                <p className="mt-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-400">
-                  {pendingId === template.id ? "Applying Template" : active ? "Current Template" : "Select Template"}
+              <div className="px-2 pb-2 pt-6 text-center">
+                <h3 className="font-display text-[1.4rem] font-black tracking-tight text-slate-950">{template.template_name}</h3>
+                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">
+                  {pendingId === template.id ? "Applying..." : active ? "Current" : "Select"}
                 </p>
               </div>
             </button>

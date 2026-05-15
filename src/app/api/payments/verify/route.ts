@@ -66,10 +66,11 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`✅ *Payment Successful*\nUser: \`${user.id}\`\nAmount: ₹100\nType: \`${payment.payment_type}\`\nID: \`${body.razorpay_payment_id}\``);
+    await sendTelegramAlert(`✅ *Payment Successful*\nUser: \`${user.email || user.id}\`\nAmount: ₹100\nType: \`${payment.payment_type}\`\nID: \`${body.razorpay_payment_id}\``);
 
     return ok({ payment });
   } catch (error) {
     return fail(error, 400);
   }
 }
+

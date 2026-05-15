@@ -72,8 +72,27 @@ CREATE TABLE IF NOT EXISTS public.templates (
   config_json JSONB NOT NULL,
   description TEXT NOT NULL,
   tags TEXT[] NOT NULL DEFAULT '{}',
-  active BOOLEAN NOT NULL DEFAULT TRUE
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  icon TEXT
 );
+
+-- Migration for existing templates table
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'templates' AND column_name = 'tags'
+  ) THEN
+    ALTER TABLE public.templates ADD COLUMN tags TEXT[] NOT NULL DEFAULT '{}';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'templates' AND column_name = 'icon'
+  ) THEN
+    ALTER TABLE public.templates ADD COLUMN icon TEXT;
+  END IF;
+END $$;
 
 -- -----------------------------------------------
 -- RESUMES
@@ -397,31 +416,48 @@ FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 -- -----------------------------------------------
 -- TEMPLATE SEED DATA (idempotent upsert)
 -- -----------------------------------------------
-INSERT INTO public.templates (id, template_name, preview_image, config_json, description, active) VALUES
-  ('minimal-ats', 'ATS Minimal', '/templates/minimal-ats.png', '{"accent":"#0f6c7c","headerBackground":"#0f6c7c","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"split"}', 'Clean ATS-safe layout with a strong recruiter scan path.', TRUE),
-  ('modern-professional', 'Modern Professional', '/templates/modern-professional.png', '{"accent":"#334155","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"split"}', 'Professional layout with elegant hierarchy for corporate roles.', TRUE),
-  ('executive', 'Executive', '/templates/executive.png', '{"accent":"#1d4ed8","headerBackground":"#eff6ff","pageBackground":"#ffffff","sidebarTint":"#eef2ff","density":"airy","typography":"editorial-serif","columns":"single"}', 'Premium executive profile with crisp spacing and clear hierarchy.', TRUE),
-  ('hybrid', 'Hybrid', '/templates/hybrid.png', '{"accent":"#0f766e","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#f0fdfa","density":"balanced","typography":"modern-sans","columns":"split"}', 'Balanced hybrid resume for experienced candidates.', TRUE),
-  ('creative', 'Creative', '/templates/creative.png', '{"accent":"#7c3aed","headerBackground":"#f5f3ff","pageBackground":"#ffffff","sidebarTint":"#faf5ff","density":"balanced","typography":"editorial-serif","columns":"split"}', 'Contemporary layout with stronger visual character.', TRUE),
-  ('modern-columns', 'Modern Columns', '/templates/modern-columns.png', '{"accent":"#2563eb","headerBackground":"#eff6ff","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"compact","typography":"modern-sans","columns":"split"}', 'Structured dual-column layout with concise scannability.', TRUE),
-  ('sleek-dark', 'Sleek Dark', '/templates/sleek-dark.png', '{"accent":"#111827","headerBackground":"#111827","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"single"}', 'Dark-accent premium layout for standout senior applications.', TRUE),
-  ('luxury-gold', 'Luxury Gold', '/templates/luxury-gold.png', '{"accent":"#a16207","headerBackground":"#fffbeb","pageBackground":"#ffffff","sidebarTint":"#fefce8","density":"airy","typography":"editorial-serif","columns":"single"}', 'Reserved luxury styling with refined color contrast.', TRUE),
-  ('impactful', 'Impactful', '/templates/impactful.png', '{"accent":"#dc2626","headerBackground":"#fef2f2","pageBackground":"#ffffff","sidebarTint":"#fff7ed","density":"compact","typography":"modern-sans","columns":"single"}', 'Bold recruiter-facing layout optimized for quantified accomplishments.', TRUE),
-  ('infographic', 'Infographic', '/templates/infographic.png', '{"accent":"#9333ea","headerBackground":"#faf5ff","pageBackground":"#ffffff","sidebarTint":"#fdf4ff","density":"balanced","typography":"modern-sans","columns":"split"}', 'Graphic-leaning presentation with controlled flair.', TRUE),
-  ('startup', 'Startup', '/templates/startup.png', '{"accent":"#ea580c","headerBackground":"#fff7ed","pageBackground":"#ffffff","sidebarTint":"#fffbeb","density":"compact","typography":"modern-sans","columns":"split"}', 'Fast-moving startup style with metrics emphasis.', TRUE),
-  ('classic-academic', 'Classic Academic', '/templates/classic-academic.png', '{"accent":"#1e3a8a","headerBackground":"#eff6ff","pageBackground":"#ffffff","sidebarTint":"#ffffff","density":"airy","typography":"editorial-serif","columns":"single"}', 'Traditional academic format with disciplined hierarchy.', TRUE),
-  ('ultra-minimalist', 'Ultra Minimalist', '/templates/ultra-minimalist.png', '{"accent":"#475569","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#ffffff","density":"airy","typography":"modern-sans","columns":"single"}', 'Quiet minimalist design for conservative hiring funnels.', TRUE),
-  ('creative-designer', 'Creative Designer', '/templates/creative-designer.png', '{"accent":"#0d9488","headerBackground":"#ecfeff","pageBackground":"#ffffff","sidebarTint":"#f0fdfa","density":"balanced","typography":"editorial-serif","columns":"split"}', 'A more expressive visual system for design-forward candidates.', TRUE),
-  ('deep-charcoal', 'Deep Charcoal', '/templates/deep-charcoal.png', '{"accent":"#0f172a","headerBackground":"#e2e8f0","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"single"}', 'Serious and understated with deep neutral contrast.', TRUE),
-  ('corporate-minimal', 'Corporate Minimal', '/templates/corporate-minimal.png', '{"accent":"#2563eb","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"single"}', 'Corporate-safe format with modern whitespace.', TRUE),
-  ('pastel-professional', 'Pastel Professional', '/templates/pastel-professional.png', '{"accent":"#7c3aed","headerBackground":"#faf5ff","pageBackground":"#ffffff","sidebarTint":"#fdf4ff","density":"airy","typography":"editorial-serif","columns":"single"}', 'Soft but polished styling for people-facing roles.', TRUE),
-  ('vibrant-startup', 'Vibrant Startup', '/templates/vibrant-startup.png', '{"accent":"#db2777","headerBackground":"#fdf2f8","pageBackground":"#ffffff","sidebarTint":"#fff1f2","density":"compact","typography":"modern-sans","columns":"split"}', 'High-energy startup template with colorful section anchors.', TRUE)
+INSERT INTO public.templates (id, template_name, preview_image, config_json, description, tags, active, icon) VALUES
+  ('elite-modular-card', 'Elite Modular Card', '/templates/elite-modular-card.png', '{"accent":"#2563eb","headerBackground":"#f8fafc","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"single","layout":"modular-card"}', 'Premium modular card-based layout for a modern interactive look.', ARRAY['Elite', 'Modular', 'Premium'], TRUE, '/icons/icon-resume.png'),
+  ('elite-sidebar-circles', 'Elite Sidebar Circles', '/templates/elite-sidebar-circles.png', '{"accent":"#0284c7","headerBackground":"#ffffff","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"split","layout":"sidebar-circles"}', 'Clean sidebar layout with circular indicators and elegant hierarchy.', ARRAY['Elite', 'Sidebar', 'Visual'], TRUE, '/icons/icon-connections.png'),
+  ('elite-banner-soft', 'Elite Soft Banner', '/templates/elite-banner-soft.png', '{"accent":"#65a30d","headerBackground":"#ecfccb","pageBackground":"#ffffff","density":"airy","typography":"modern-sans","columns":"split","layout":"banner-soft"}', 'Sophisticated layout with a soft banner and clean two-column content.', ARRAY['Elite', 'Banner', 'Professional'], TRUE, '/icons/icon-communication.png'),
+  ('elite-grid-labels', 'Elite Grid Labels', '/templates/elite-grid-labels.png', '{"accent":"#1e293b","headerBackground":"#ffffff","pageBackground":"#ffffff","density":"compact","typography":"editorial-serif","columns":"single","layout":"grid-labels"}', 'Structured grid-based layout with prominent section labels.', ARRAY['Elite', 'Grid', 'Modern'], TRUE, '/icons/icon-target.png'),
+  ('elite-sidebar-dark', 'Elite Dark Sidebar', '/templates/elite-sidebar-dark.png', '{"accent":"#14532d","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#14532d","density":"balanced","typography":"modern-sans","columns":"split","layout":"sidebar-dark"}', 'Professional layout with a bold dark sidebar for high contrast.', ARRAY['Elite', 'Sidebar', 'Bold'], TRUE, '/icons/icon-resume.png'),
+  ('elite-corporate-pro', 'Elite Corporate Pro', '/templates/elite-corporate-pro.png', '{"accent":"#0f172a","headerBackground":"#f1f5f9","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"single","layout":"standard"}', 'A high-end corporate layout with refined spacing and strong hierarchy.', ARRAY['Elite', 'Corporate', 'High-End'], TRUE, '/icons/icon-analytics.png'),
+  ('elite-creative-bold', 'Elite Creative Bold', '/templates/elite-creative-bold.png', '{"accent":"#7e22ce","headerBackground":"#faf5ff","pageBackground":"#ffffff","density":"airy","typography":"editorial-serif","columns":"split","layout":"standard"}', 'Dynamic and expressive layout for creative professionals.', ARRAY['Elite', 'Creative', 'Bold'], TRUE, '/icons/icon-ai-brain.png'),
+  ('elite-dynamic-grid', 'Elite Dynamic Grid', '/templates/elite-dynamic-grid.png', '{"accent":"#0369a1","headerBackground":"#ffffff","pageBackground":"#ffffff","density":"compact","typography":"modern-sans","columns":"single","layout":"grid-labels"}', 'Modern grid-based system for high-impact visual presentation.', ARRAY['Elite', 'Grid', 'Dynamic'], TRUE, '/icons/icon-github-ai.png'),
+  ('elite-elegant-serif', 'Elite Elegant Serif', '/templates/elite-elegant-serif.png', '{"accent":"#4338ca","headerBackground":"#eef2ff","pageBackground":"#ffffff","density":"airy","typography":"editorial-serif","columns":"single","layout":"standard"}', 'Timeless elegance with a focus on typography and whitespace.', ARRAY['Elite', 'Elegant', 'Classic'], TRUE, '/icons/icon-resume.png'),
+  ('elite-minimal-clean', 'Elite Minimal Clean', '/templates/elite-minimal-clean.png', '{"accent":"#374151","headerBackground":"#ffffff","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"single","layout":"standard"}', 'Ultra-clean minimalist layout for a distraction-free experience.', ARRAY['Elite', 'Minimal', 'Clean'], TRUE, '/icons/icon-upload.png'),
+  ('elite-modern-accent', 'Elite Modern Accent', '/templates/elite-modern-accent.png', '{"accent":"#be185d","headerBackground":"#fdf2f8","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"split","layout":"standard"}', 'Contemporary layout with bold accent elements and modern feel.', ARRAY['Elite', 'Modern', 'Accent'], TRUE, '/icons/icon-target.png'),
+  ('elite-premium-executive', 'Elite Premium Executive', '/templates/elite-premium-executive.png', '{"accent":"#1e1b4b","headerBackground":"#e0e7ff","pageBackground":"#ffffff","density":"airy","typography":"editorial-serif","columns":"single","layout":"standard"}', 'The ultimate executive template for C-suite and senior leaders.', ARRAY['Elite', 'Executive', 'Premium'], TRUE, '/icons/icon-resume.png'),
+  ('elite-sharp-modern', 'Elite Sharp Modern', '/templates/elite-sharp-modern.png', '{"accent":"#15803d","headerBackground":"#f0fdf4","pageBackground":"#ffffff","density":"compact","typography":"technical-mono","columns":"single","layout":"standard"}', 'Precise, sharp layout with clear lines and professional impact.', ARRAY['Elite', 'Sharp', 'Modern'], TRUE, '/icons/icon-github-ai.png'),
+  ('elite-soft-minimal', 'Elite Soft Minimal', '/templates/elite-soft-minimal.png', '{"accent":"#0891b2","headerBackground":"#ecfeff","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"single","layout":"standard"}', 'Gentle minimalist approach with soft colors and clean layout.', ARRAY['Elite', 'Minimal', 'Soft'], TRUE, '/icons/icon-communication.png'),
+  ('elite-bold-header', 'Elite Bold Header', '/templates/elite-bold-header.png', '{"accent":"#b91c1c","headerBackground":"#fef2f2","pageBackground":"#ffffff","density":"balanced","typography":"modern-sans","columns":"single","layout":"standard"}', 'Command attention with a bold header and structured content flow.', ARRAY['Elite', 'Bold', 'Impactful'], TRUE, '/icons/icon-target.png'),
+  ('minimal-ats', 'ATS Minimal', '/templates/minimal-ats.png', '{"accent":"#0f6c7c","headerBackground":"#0f6c7c","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"split"}', 'Clean ATS-safe layout with a strong recruiter scan path.', ARRAY['ATS', 'Minimal', 'Professional'], TRUE, NULL),
+  ('modern-professional', 'Modern Professional', '/templates/modern-professional.png', '{"accent":"#334155","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"split"}', 'Professional layout with elegant hierarchy for corporate roles.', ARRAY['Modern', 'Professional', 'Corporate'], TRUE, NULL),
+  ('executive', 'Executive', '/templates/executive.png', '{"accent":"#1d4ed8","headerBackground":"#eff6ff","pageBackground":"#ffffff","sidebarTint":"#eef2ff","density":"airy","typography":"editorial-serif","columns":"single"}', 'Premium executive profile with crisp spacing and clear hierarchy.', ARRAY['Executive', 'Premium', 'Classic'], TRUE, NULL),
+  ('hybrid', 'Hybrid', '/templates/hybrid.png', '{"accent":"#0f766e","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#f0fdfa","density":"balanced","typography":"modern-sans","columns":"split"}', 'Balanced hybrid resume for experienced candidates.', ARRAY['Hybrid', 'Experienced', 'Balanced'], TRUE, NULL),
+  ('creative', 'Creative', '/templates/creative.png', '{"accent":"#7c3aed","headerBackground":"#f5f3ff","pageBackground":"#ffffff","sidebarTint":"#faf5ff","density":"balanced","typography":"editorial-serif","columns":"split"}', 'Contemporary layout with stronger visual character.', ARRAY['Creative', 'Visual', 'Contemporary'], TRUE, NULL),
+  ('modern-columns', 'Modern Columns', '/templates/modern-columns.png', '{"accent":"#2563eb","headerBackground":"#eff6ff","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"compact","typography":"modern-sans","columns":"split"}', 'Structured dual-column layout with concise scannability.', ARRAY['Modern', 'Columns', 'Scannable'], TRUE, NULL),
+  ('sleek-dark', 'Sleek Dark', '/templates/sleek-dark.png', '{"accent":"#111827","headerBackground":"#111827","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"single"}', 'Dark-accent premium layout for standout senior applications.', ARRAY['Sleek', 'Dark', 'Premium'], TRUE, NULL),
+  ('luxury-gold', 'Luxury Gold', '/templates/luxury-gold.png', '{"accent":"#a16207","headerBackground":"#fffbeb","pageBackground":"#ffffff","sidebarTint":"#fefce8","density":"airy","typography":"editorial-serif","columns":"single"}', 'Reserved luxury styling with refined color contrast.', ARRAY['Luxury', 'Gold', 'Refined'], TRUE, NULL),
+  ('impactful', 'Impactful', '/templates/impactful.png', '{"accent":"#dc2626","headerBackground":"#fef2f2","pageBackground":"#ffffff","sidebarTint":"#fff7ed","density":"compact","typography":"modern-sans","columns":"single"}', 'Bold recruiter-facing layout optimized for quantified accomplishments.', ARRAY['Impactful', 'Bold', 'Achievements'], TRUE, NULL),
+  ('infographic', 'Infographic', '/templates/infographic.png', '{"accent":"#9333ea","headerBackground":"#faf5ff","pageBackground":"#ffffff","sidebarTint":"#fdf4ff","density":"balanced","typography":"modern-sans","columns":"split"}', 'Graphic-leaning presentation with controlled flair.', ARRAY['Infographic', 'Creative', 'Visual'], TRUE, NULL),
+  ('startup', 'Startup', '/templates/startup.png', '{"accent":"#ea580c","headerBackground":"#fff7ed","pageBackground":"#ffffff","sidebarTint":"#fffbeb","density":"compact","typography":"modern-sans","columns":"split"}', 'Fast-moving startup style with metrics emphasis.', ARRAY['Startup', 'Metrics', 'Fast'], TRUE, NULL),
+  ('classic-academic', 'Classic Academic', '/templates/classic-academic.png', '{"accent":"#1e3a8a","headerBackground":"#eff6ff","pageBackground":"#ffffff","sidebarTint":"#ffffff","density":"airy","typography":"editorial-serif","columns":"single"}', 'Traditional academic format with disciplined hierarchy.', ARRAY['Academic', 'Classic', 'Traditional'], TRUE, NULL),
+  ('ultra-minimalist', 'Ultra Minimalist', '/templates/ultra-minimalist.png', '{"accent":"#475569","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#ffffff","density":"airy","typography":"modern-sans","columns":"single"}', 'Quiet minimalist design for conservative hiring funnels.', ARRAY['Minimalist', 'Clean', 'Conservative'], TRUE, NULL),
+  ('creative-designer', 'Creative Designer', '/templates/creative-designer.png', '{"accent":"#0d9488","headerBackground":"#ecfeff","pageBackground":"#ffffff","sidebarTint":"#f0fdfa","density":"balanced","typography":"editorial-serif","columns":"split"}', 'A more expressive visual system for design-forward candidates.', ARRAY['Designer', 'Creative', 'Visual'], TRUE, NULL),
+  ('deep-charcoal', 'Deep Charcoal', '/templates/deep-charcoal.png', '{"accent":"#0f172a","headerBackground":"#e2e8f0","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"single"}', 'Serious and understated with deep neutral contrast.', ARRAY['Serious', 'Contrast', 'Neutral'], TRUE, NULL),
+  ('corporate-minimal', 'Corporate Minimal', '/templates/corporate-minimal.png', '{"accent":"#2563eb","headerBackground":"#ffffff","pageBackground":"#ffffff","sidebarTint":"#f8fafc","density":"balanced","typography":"modern-sans","columns":"single"}', 'Corporate-safe format with modern whitespace.', ARRAY['Corporate', 'Minimal', 'Safe'], TRUE, NULL),
+  ('pastel-professional', 'Pastel Professional', '/templates/pastel-professional.png', '{"accent":"#7c3aed","headerBackground":"#faf5ff","pageBackground":"#ffffff","sidebarTint":"#fdf4ff","density":"airy","typography":"editorial-serif","columns":"single"}', 'Soft but polished styling for people-facing roles.', ARRAY['Pastel', 'Soft', 'Professional'], TRUE, NULL),
+  ('vibrant-startup', 'Vibrant Startup', '/templates/vibrant-startup.png', '{"accent":"#db2777","headerBackground":"#fdf2f8","pageBackground":"#ffffff","sidebarTint":"#fff1f2","density":"compact","typography":"modern-sans","columns":"split"}', 'High-energy startup template with colorful section anchors.', ARRAY['Vibrant', 'Startup', 'Color'], TRUE, NULL)
 ON CONFLICT (id) DO UPDATE SET
   template_name = EXCLUDED.template_name,
   preview_image = EXCLUDED.preview_image,
   config_json = EXCLUDED.config_json,
   description = EXCLUDED.description,
-  active = EXCLUDED.active;
+  tags = EXCLUDED.tags,
+  active = EXCLUDED.active,
+  icon = EXCLUDED.icon;
 
 -- -----------------------------------------------
 -- ADMIN USER SEED (idempotent)

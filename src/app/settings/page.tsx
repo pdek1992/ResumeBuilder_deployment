@@ -3,10 +3,7 @@ import Link from "next/link";
 import { buildWhatsappSupportLink } from "@/lib/whatsapp";
 import { requireUserProfile } from "@/lib/auth";
 import { DeleteAccountCard } from "@/components/auth/delete-account-card";
-import { AISettingsCard } from "@/components/settings/ai-settings-card";
 import { ConsentCard } from "@/components/settings/consent-card";
-import { TwoFactorSettingsCard } from "@/components/settings/two-factor-card";
-import { PasskeySettingsCard } from "@/components/settings/passkey-card";
 import { LegacyFlowShell } from "@/components/marketing/legacy-shell";
 
 const fieldClassName =
@@ -27,6 +24,7 @@ export default async function SettingsPage() {
   return (
     <LegacyFlowShell
       signedIn
+      profileName={profile.first_name || profile.username}
       rightColumn={
         <section className="rounded-[3rem] border border-white/70 bg-white/82 px-6 py-8 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur md:px-10 md:py-10">
           <p className="text-[12px] font-black uppercase tracking-[0.32em] text-primary">Settings</p>
@@ -80,12 +78,6 @@ export default async function SettingsPage() {
           <ConsentCard consentGiven={profile.consent_given} />
 
           <DeleteAccountCard requiresPassword={profile.auth_provider === "password"} />
-          
-          <AISettingsCard initialConfig={profile.ai_config ?? {}} />
-
-          <TwoFactorSettingsCard />
-
-          <PasskeySettingsCard />
         </section>
       }
     />

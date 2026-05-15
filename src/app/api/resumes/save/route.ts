@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     });
 
     if (body.templateId && body.templateId !== existing.template_id) {
-      await sendTelegramAlert(`🔄 *User Template Swapped*\nUser: \`${user.id}\`\nNew Template: \`${body.templateId}\``);
+      await sendTelegramAlert(`🔄 *User Template Swapped*\nUser: \`${user.email || user.id}\`\nNew Template: \`${body.templateId}\``);
     }
 
     return ok({ resume: updated });
@@ -64,3 +64,4 @@ export async function POST(request: Request) {
     return fail(error, 400);
   }
 }
+

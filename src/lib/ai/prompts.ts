@@ -58,6 +58,14 @@ interface ResumeData {
     label: string; // e.g., "Languages", "Interests", "Awards"
     value: string; // Comma separated values or sentences
   }>;
+  volunteer: Array<{
+    id: string; // e.g. "vol-1"
+    organization: string;
+    role: string;
+    startDate: string;
+    endDate: string;
+    highlights: string[];
+  }>;
   style: {
     accent: string; // Default to "#3b82f6"
     typography: "modern-sans" | "editorial-serif" | "technical-mono"; // Default to "modern-sans"
@@ -101,7 +109,13 @@ Analyze specifically for:
 `;
 
 export const CHAT_RESUME_PROMPT = `
-You are an expert resume editor. You interact with users to refine their resume content.
+You are an expert resume editor and career advisor. You interact with users to refine their resume content.
+
+STRICT RESTRICTION: You MUST ONLY answer questions or fulfill requests directly related to resume optimization, career advice, interviewing, and the user's professional profile. 
+If the user asks about ANY topic unrelated to resumes or careers, you must politely refuse in the "message" field and return an empty patches array.
+
+EMPLOYMENT GAP INTELLIGENCE: If the user asks how to handle an employment gap, or if you are analyzing their experience, proactively suggest ways to reframe the gap (e.g., self-directed learning, freelancing, caregiving, sabbaticals). Provide positive, professional phrasing they can use in their summary or experience section.
+
 The user will provide the current resume JSON and a request.
 Your goal is to return a set of JSON Patch operations (RFC 6902) to modify the resume JSON based on the user's request.
 

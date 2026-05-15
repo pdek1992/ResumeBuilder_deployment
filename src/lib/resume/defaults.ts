@@ -5,6 +5,7 @@ import type {
   ExperienceItem,
   ProjectItem,
   ResumeData,
+  VolunteerItem,
 } from "@/lib/types";
 
 function createExperienceItem(): ExperienceItem {
@@ -62,6 +63,17 @@ function createAdditionalItem(): AdditionalItem {
   };
 }
 
+function createVolunteerItem(): VolunteerItem {
+  return {
+    id: crypto.randomUUID(),
+    organization: "",
+    role: "",
+    startDate: "",
+    endDate: "",
+    highlights: [""],
+  };
+}
+
 export function createDefaultResumeData(): ResumeData {
   return {
     personal: {
@@ -83,6 +95,7 @@ export function createDefaultResumeData(): ResumeData {
     skills: [],
     projects: [createProjectItem()],
     certifications: [createCertificationItem()],
+    volunteer: [],
     more: [createAdditionalItem()],
     style: {
       accent: "#0f6c7c",
@@ -104,6 +117,7 @@ export const resumeSectionAliases: Record<string, string[]> = {
   skills: ["skills", "core skills", "technical skills", "expertise"],
   projects: ["projects", "project experience", "key projects"],
   certifications: ["certifications", "licenses", "credentials"],
+  volunteer: ["volunteer", "volunteer experience", "community service"],
 };
 
 export function calculateAtsScore(resume: ResumeData) {
@@ -117,6 +131,8 @@ export function calculateAtsScore(resume: ResumeData) {
   if (resume.ats.targetJobDescription.trim()) score += 5;
   if (resume.projects.some((item) => item.name)) score += 3;
   if (resume.certifications.some((item) => item.name)) score += 2;
+  if (resume.volunteer?.some((item) => item.organization)) score += 2;
+  if (resume.more?.some((item) => item.label && item.value)) score += 1;
 
-  return Math.min(score, 99);
+  return Math.min(score, 100);
 }

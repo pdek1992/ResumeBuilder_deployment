@@ -194,10 +194,11 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`📄 *Resume Imported*\nUser: \`${user.id}\`\nTitle: \`${resume.title}\``);
+    await sendTelegramAlert(`📄 *Resume Imported*\nUser: \`${user.email || user.id}\`\nTitle: \`${resume.title}\``);
 
     return ok({ resume });
   } catch (error) {
     return failImport(getErrorMessage(error), 400, error);
   }
 }
+

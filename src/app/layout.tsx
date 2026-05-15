@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
 import "@/app/globals.css";
+import { SupportButton } from "@/components/ui/support-button";
 
 const sansFont = localFont({
   src: [
@@ -55,6 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className={`${sansFont.variable} ${displayFont.variable} bg-background text-foreground`}>
         {children}
+        <SupportButton />
       </body>
     </html>
   );

@@ -11,5 +11,5 @@ export default async function BuilderImportPage() {
     redirect("/settings");
   }
 
-  return <LegacyFlowShell signedIn rightColumn={<ImportStep />} />;
+  return <LegacyFlowShell signedIn profileName={profile.first_name || profile.username} rightColumn={<ImportStep />} />;
 }

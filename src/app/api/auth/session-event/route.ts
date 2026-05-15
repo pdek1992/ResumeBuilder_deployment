@@ -98,10 +98,11 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`🔐 *User ${body.event === "signup" ? "Registered" : "Logged In"}*\nUser: \`${user.id}\`\nEmail: \`${user.email}\`\nMobile: \`${profile.mobile ?? "Not provided"}\``);
+    await sendTelegramAlert(`🔐 *User ${body.event === "signup" ? "Registered" : "Logged In"}*\nUser: \`${user.email || user.id}\`\nEmail: \`${user.email}\`\nMobile: \`${profile.mobile ?? "Not provided"}\``);
 
     return ok({ success: true });
   } catch (error) {
     return fail(error, 400);
   }
 }
+

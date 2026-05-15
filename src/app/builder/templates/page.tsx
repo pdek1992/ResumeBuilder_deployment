@@ -26,5 +26,5 @@ export default async function TemplatePage({
     redirect("/dashboard");
   }
 
-  return <LegacyFlowShell signedIn rightColumn={<TemplateSelector resumeId={resumeId} templates={templates} selectedTemplateId={resume.template_id} />} />;
+  return <LegacyFlowShell signedIn profileName={profile.first_name || profile.username} rightColumn={<TemplateSelector resumeId={resumeId} templates={templates} selectedTemplateId={resume.template_id} />} />;
 }

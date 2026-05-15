@@ -47,6 +47,7 @@ export type ResumeSectionKey =
   | "skills"
   | "projects"
   | "certifications"
+  | "volunteer"
   | "more";
 
 export type TypographyStyle = "modern-sans" | "editorial-serif" | "technical-mono";
@@ -60,6 +61,7 @@ export type ResumeThemeConfig = {
   previewClassName?: string;
   typography: TypographyStyle;
   columns: "single" | "split";
+  layout?: "standard" | "modular-card" | "sidebar-circles" | "banner-soft" | "grid-labels" | "sidebar-dark";
 };
 
 export type PersonalInfo = {
@@ -115,6 +117,15 @@ export type CertificationItem = {
   link: string;
 };
 
+export type VolunteerItem = {
+  id: string;
+  organization: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  highlights: string[];
+};
+
 export type AdditionalItem = {
   id: string;
   label: string;
@@ -129,6 +140,7 @@ export type ResumeData = {
   skills: string[];
   projects: ProjectItem[];
   certifications: CertificationItem[];
+  volunteer: VolunteerItem[];
   more: AdditionalItem[];
   style: {
     accent: string;
@@ -164,6 +176,7 @@ export type TemplateRecord = {
   description: string;
   tags: string[];
   active: boolean;
+  icon?: string;
 };
 
 export type UserProfile = {
@@ -186,6 +199,7 @@ export type UserProfile = {
 
 export type AccessLogPayload = {
   userId: string;
+  email?: string;
   actionType: AccessActionType;
   metadata?: Record<string, unknown>;
 };

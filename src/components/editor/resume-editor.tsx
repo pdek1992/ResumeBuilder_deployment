@@ -14,7 +14,7 @@ import { LogoLockup } from "@/components/ui/logo-lockup";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import { ResumeChatSidebar } from "./resume-chat-sidebar";
 
-const sectionOrder = ["personal", "experience", "education", "skills", "projects", "certifications", "more"] as const;
+const sectionOrder = ["personal", "experience", "education", "skills", "projects", "certifications", "volunteer", "more"] as const;
 const accentOptions = ["#3067ea", "#0f6c7c", "#92400e", "#7c3aed", "#be123c", "#334155"];
 const fieldClassName =
   "mt-3 w-full rounded-[1.9rem] border-2 border-transparent bg-slate-50 px-6 py-5 text-[17px] font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white";
@@ -405,6 +405,13 @@ export function ResumeEditor({
     }));
   }
 
+  function setVolunteerField(id: string, key: keyof ResumeData["volunteer"][number], value: unknown) {
+    setResume((current) => ({
+      ...current,
+      volunteer: current.volunteer.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
+    }));
+  }
+
   function handleProfilePhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -506,7 +513,8 @@ export function ResumeEditor({
             </div>
           )}
 
-          <div className="space-y-8">
+          <div className="flex flex-col xl:flex-row gap-8 items-start">
+            <div className="w-full xl:w-[65%] space-y-8">
             <EditorCard className="pb-0">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="flex flex-wrap gap-3">
@@ -798,8 +806,20 @@ export function ResumeEditor({
                   <div className="space-y-5">
                     {resume.certifications.map((item, index) => (
                       <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
-                        <label className={labelClassName}>Certification</label>
-                        <input value={item.name} onChange={(event) => setCertificationField(item.id, "name", event.target.value)} className={fieldClassName} />
+                        <div className="grid gap-5 md:grid-cols-2">
+                          <div>
+                            <label className={labelClassName}>Certification Name</label>
+                            <input value={item.name} onChange={(event) => setCertificationField(item.id, "name", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Issuer</label>
+                            <input value={item.issuer} onChange={(event) => setCertificationField(item.id, "issuer", event.target.value)} className={fieldClassName} />
+                          </div>
+                        </div>
+                        <div className="mt-5">
+                          <label className={labelClassName}>Issued On</label>
+                          <input value={item.issuedOn} onChange={(event) => setCertificationField(item.id, "issuedOn", event.target.value)} className={fieldClassName} placeholder="e.g. Jan 2024" />
+                        </div>
                         {index === resume.certifications.length - 1 ? (
                           <button
                             type="button"
@@ -819,6 +839,76 @@ export function ResumeEditor({
                         ) : null}
                       </div>
                     ))}
+                  </div>
+                ) : null}
+
+                {activeSection === "volunteer" ? (
+                  <div className="space-y-5">
+                    {resume.volunteer?.map((item, index) => (
+                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
+                        <div className="grid gap-5 md:grid-cols-2">
+                          <div>
+                            <label className={labelClassName}>Organization</label>
+                            <input value={item.organization} onChange={(event) => setVolunteerField(item.id, "organization", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Role</label>
+                            <input value={item.role} onChange={(event) => setVolunteerField(item.id, "role", event.target.value)} className={fieldClassName} />
+                          </div>
+                        </div>
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
+                          <div>
+                            <label className={labelClassName}>Start Date</label>
+                            <input value={item.startDate} onChange={(event) => setVolunteerField(item.id, "startDate", event.target.value)} className={fieldClassName} placeholder="MMM YYYY" />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>End Date</label>
+                            <input value={item.endDate} onChange={(event) => setVolunteerField(item.id, "endDate", event.target.value)} className={fieldClassName} placeholder="MMM YYYY or Present" />
+                          </div>
+                        </div>
+                        <div className="mt-5">
+                          <label className={labelClassName}>Highlights</label>
+                          <textarea
+                            value={item.highlights.join("\n")}
+                            onChange={(event) => setVolunteerField(item.id, "highlights", event.target.value.split("\n").filter(Boolean))}
+                            className={`${fieldClassName} min-h-[160px]`}
+                          />
+                        </div>
+                        {index === (resume.volunteer?.length ?? 0) - 1 || !resume.volunteer?.length ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setResume((current) => ({
+                                ...current,
+                                volunteer: [
+                                  ...(current.volunteer || []),
+                                  { id: crypto.randomUUID(), organization: "", role: "", startDate: "", endDate: "", highlights: [""] },
+                                ],
+                              }))
+                            }
+                            className="mt-6 rounded-full border border-slate-200 bg-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-500"
+                          >
+                            Add Volunteer Experience
+                          </button>
+                        ) : null}
+                      </div>
+                    ))}
+                    {(!resume.volunteer || resume.volunteer.length === 0) && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setResume((current) => ({
+                            ...current,
+                            volunteer: [
+                              { id: crypto.randomUUID(), organization: "", role: "", startDate: "", endDate: "", highlights: [""] },
+                            ],
+                          }))
+                        }
+                        className="rounded-full border border-slate-200 bg-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-500"
+                      >
+                        Add Volunteer Experience
+                      </button>
+                    )}
                   </div>
                 ) : null}
 
@@ -875,6 +965,68 @@ export function ResumeEditor({
                       </p>
                       <button disabled className="mt-6 rounded-full border border-slate-200 bg-white px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">
                         + Add Additional JD
+                      </button>
+                    </div>
+
+                    <div className="space-y-5">
+                      <p className="ml-4 text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Additional Sections (Languages, Awards, etc.)</p>
+                      {resume.more?.map((item) => (
+                        <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
+                          <div className="grid gap-5 md:grid-cols-2">
+                            <div>
+                              <label className={labelClassName}>Section Name</label>
+                              <input
+                                value={item.label}
+                                onChange={(event) =>
+                                  setResume((current) => ({
+                                    ...current,
+                                    more: current.more.map((m) => (m.id === item.id ? { ...m, label: event.target.value } : m)),
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="e.g. Languages"
+                              />
+                            </div>
+                            <div>
+                              <label className={labelClassName}>Value</label>
+                              <input
+                                value={item.value}
+                                onChange={(event) =>
+                                  setResume((current) => ({
+                                    ...current,
+                                    more: current.more.map((m) => (m.id === item.id ? { ...m, value: event.target.value } : m)),
+                                  }))
+                                }
+                                className={fieldClassName}
+                                placeholder="e.g. English (Native), Hindi (Fluent)"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setResume((current) => ({
+                                ...current,
+                                more: current.more.filter((m) => m.id !== item.id),
+                              }))
+                            }
+                            className="mt-4 text-[10px] font-black uppercase tracking-widest text-rose-500"
+                          >
+                            Remove Section
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setResume((current) => ({
+                            ...current,
+                            more: [...current.more, { id: crypto.randomUUID(), label: "", value: "" }],
+                          }))
+                        }
+                        className="rounded-full border border-slate-200 bg-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-500"
+                      >
+                        + Add Custom Section
                       </button>
                     </div>
                   </div>
@@ -954,17 +1106,6 @@ export function ResumeEditor({
               </div>
               {saveError ? <p className="mt-4 text-sm text-rose-600">{saveError}</p> : null}
             </EditorCard>
-
-            <ResumePreview
-              resume={{
-                ...resume,
-                style: {
-                  ...resume.style,
-                  accent: resume.style.accent || selectedTemplate.config_json.accent,
-                },
-              }}
-              template={selectedTemplate}
-            />
 
             <EditorCard className="space-y-5" data-print-block="true">
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -1079,6 +1220,19 @@ export function ResumeEditor({
                 </a>
               </div>
             </EditorCard>
+            </div>
+            <div className="w-full xl:w-[35%] xl:sticky xl:top-6">
+              <ResumePreview
+                resume={{
+                  ...resume,
+                  style: {
+                    ...resume.style,
+                    accent: resume.style.accent || selectedTemplate.config_json.accent,
+                  },
+                }}
+                template={selectedTemplate}
+              />
+            </div>
           </div>
         </div>
       </main>
