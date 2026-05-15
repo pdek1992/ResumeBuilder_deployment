@@ -58,14 +58,6 @@ interface ResumeData {
     label: string; // e.g., "Languages", "Interests", "Awards"
     value: string; // Comma separated values or sentences
   }>;
-  volunteer: Array<{
-    id: string; // e.g. "vol-1"
-    organization: string;
-    role: string;
-    startDate: string;
-    endDate: string;
-    highlights: string[];
-  }>;
   style: {
     accent: string; // Default to "#3b82f6"
     typography: "modern-sans" | "editorial-serif" | "technical-mono"; // Default to "modern-sans"
@@ -79,6 +71,7 @@ interface ResumeData {
 }
 
 Ensure all arrays are present, even if empty. Ensure string fields are present, even if empty string.
+  If the user mentions volunteering, you can suggest adding it to "Experience" or "More" section.
 `;
 
 export const RESUME_ANALYSIS_PROMPT = `

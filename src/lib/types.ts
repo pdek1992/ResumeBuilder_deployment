@@ -60,7 +60,7 @@ export type ResumeThemeConfig = {
   previewClassName?: string;
   typography: TypographyStyle;
   columns: "single" | "split";
-  layout?: "standard" | "modular-card" | "sidebar-circles" | "banner-soft" | "grid-labels" | "sidebar-dark";
+  layout?: "standard" | "modular-card" | "sidebar-circles" | "banner-soft" | "grid-labels" | "sidebar-dark" | "sleek-dark" | "modern-columns";
 };
 
 export type PersonalInfo = {

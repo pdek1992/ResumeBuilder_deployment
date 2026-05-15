@@ -214,7 +214,7 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "compact",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "modern-columns",
   }),
   template("sleek-dark", "Sleek Dark", "/templates/sleek-dark.png", "Dark-accent premium layout for standout senior applications.", ["Sleek", "Dark", "Premium"], {
     accent: "#111827",
@@ -224,7 +224,7 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "sleek-dark",
   }),
   template("luxury-gold", "Luxury Gold", "/templates/luxury-gold.png", "Reserved luxury styling with refined color contrast.", ["Luxury", "Gold", "Refined"], {
     accent: "#a16207",

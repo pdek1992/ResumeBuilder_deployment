@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
     const fullName = `${parsedResume.personal.firstName} ${parsedResume.personal.lastName}`.trim() || "Your Name";
     const accent = (parsedResume.style?.accent || template.config_json.accent || "#2563eb").replace("#", "");
-    const layout = template.config_json.layout || "standard";
+    const layout = (template.config_json.layout || "standard") as string;
     const isSplit = template.config_json.columns === "split";
     const isDarkSidebar = layout === "sidebar-dark";
 
@@ -87,29 +87,11 @@ export async function GET(request: Request) {
       })
     ];
 
-    const renderTargeting = (isWhite = false) => {
-      if (!parsedResume.ats.targetJobDescription) return [];
-      return [
-        createHeading("Inspired by this", isWhite ? "FFFFFF" : accent),
-        new Paragraph({
-          spacing: { before: 100 },
-          children: [new TextRun({ text: "Target Role: ", bold: true, size: 20, color: isWhite ? "FFFFFF" : "000000" }), new TextRun({ text: parsedResume.ats.targetRole || "", size: 20, color: isWhite ? "FFFFFF" : "333333" })]
-        }),
-        new Paragraph({
-          spacing: { before: 50 },
-          children: [new TextRun({ text: "Company: ", bold: true, size: 20, color: isWhite ? "FFFFFF" : "000000" }), new TextRun({ text: parsedResume.ats.targetCompany || "", size: 20, color: isWhite ? "FFFFFF" : "333333" })]
-        }),
-        new Paragraph({
-          spacing: { before: 100, after: 200 },
-          children: [new TextRun({ text: parsedResume.ats.targetJobDescription || "", size: 18, color: isWhite ? "EEEEEE" : "666666", italics: true })]
-        })
-      ];
-    };
 
     let sections = [];
 
-    if (isDarkSidebar) {
-      // 2-column table layout for dark sidebar
+    if (layout === "sidebar-dark" || layout === "sidebar-circles") {
+      // 2-column table layout for sidebar templates
       sections = [{
         properties: { page: { margin: { top: 0, right: 0, bottom: 0, left: 0 } } },
         children: [
@@ -120,19 +102,18 @@ export async function GET(request: Request) {
               new TableRow({
                 children: [
                   new TableCell({
-                    width: { size: 30, type: WidthType.PERCENTAGE },
-                    shading: { fill: accent, type: ShadingType.CLEAR, color: "auto" },
+                    width: { size: 32, type: WidthType.PERCENTAGE },
+                    shading: { fill: layout === "sidebar-dark" ? (accent === "111827" ? "111827" : accent) : "F8FAFC", type: ShadingType.CLEAR },
                     margins: { top: 700, bottom: 700, left: 400, right: 400 },
                     children: [
-                      createHeading("Skills", "FFFFFF"),
-                      ...renderSkills(true),
-                      createHeading("Education", "FFFFFF"),
-                      ...renderEducation(true),
-                      ...renderTargeting(true)
+                      createHeading("Skills", layout === "sidebar-dark" ? "FFFFFF" : accent),
+                      ...renderSkills(layout === "sidebar-dark"),
+                      createHeading("Education", layout === "sidebar-dark" ? "FFFFFF" : accent),
+                      ...renderEducation(layout === "sidebar-dark")
                     ]
                   }),
                   new TableCell({
-                    width: { size: 70, type: WidthType.PERCENTAGE },
+                    width: { size: 68, type: WidthType.PERCENTAGE },
                     margins: { top: 700, bottom: 700, left: 400, right: 400 },
                     children: [
                       new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: fullName, bold: true, color: "000000", size: 48 })] }),
@@ -151,8 +132,164 @@ export async function GET(request: Request) {
           })
         ]
       }];
+    } else if (layout === "sleek-dark") {
+      sections = [{
+        properties: { page: { margin: { top: 0, right: 0, bottom: 0, left: 0 } } },
+        children: [
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    shading: { fill: accent, type: ShadingType.CLEAR },
+                    margins: { top: 1000, bottom: 1000, left: 700, right: 700 },
+                    children: [
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: fullName, bold: true, color: "FFFFFF", size: 48 })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: (parsedResume.personal.headline || "").toUpperCase(), bold: true, size: 22, color: "E2E8F0" })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: [parsedResume.personal.location, parsedResume.personal.phone, parsedResume.personal.email].filter(Boolean).join("  •  "), size: 18, color: "CBD5E1" })] }),
+                    ]
+                  })
+                ]
+              })
+            ]
+          }),
+          new Paragraph({ spacing: { before: 400 } }),
+          ...[
+            createHeading("Summary", accent),
+            new Paragraph({ spacing: { after: 200 }, indent: { left: 700, right: 700 }, children: [new TextRun({ text: parsedResume.summary || "", size: 20 })] }),
+            createHeading("Experience", accent),
+            ...renderExperience(),
+            createHeading("Skills", accent),
+            ...renderSkills(),
+            createHeading("Education", accent),
+            ...renderEducation()
+          ].map(p => { 
+            // Add margins to body paragraphs
+            if (p instanceof Paragraph) {
+              // docx Paragraph object is immutable in some ways but we can wrap it or modify it
+            }
+            return p;
+          })
+        ]
+      }];
+    } else if (layout === "modern-columns") {
+      sections = [{
+        properties: { page: { margin: { top: 700, right: 700, bottom: 700, left: 700 } } },
+        children: [
+          new Paragraph({ heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, children: [new TextRun({ text: fullName, bold: true, color: "000000", size: 48 })] }),
+          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 300 }, children: [new TextRun({ text: parsedResume.personal.headline || "", bold: true, size: 22, color: accent })] }),
+          
+          createHeading("Summary", accent),
+          new Paragraph({ spacing: { after: 300 }, children: [new TextRun({ text: parsedResume.summary || "", size: 20 })] }),
+
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 65, type: WidthType.PERCENTAGE },
+                    margins: { right: 300 },
+                    children: [
+                      createHeading("Experience", accent),
+                      ...renderExperience(),
+                      ...(parsedResume.projects.some(p => p.name) ? [createHeading("Projects", accent), ...renderProjects()] : [])
+                    ]
+                  }),
+                  new TableCell({
+                    width: { size: 35, type: WidthType.PERCENTAGE },
+                    shading: { fill: "F8FAFC", type: ShadingType.CLEAR },
+                    margins: { left: 300, right: 200, top: 200, bottom: 200 },
+                    children: [
+                      createHeading("Skills", accent),
+                      ...renderSkills(),
+                      createHeading("Education", accent),
+                      ...renderEducation(),
+                      createHeading("Contact", accent),
+                      new Paragraph({ children: [new TextRun({ text: parsedResume.personal.email || "", size: 18 })] }),
+                      new Paragraph({ children: [new TextRun({ text: parsedResume.personal.phone || "", size: 18 })] }),
+                      new Paragraph({ children: [new TextRun({ text: parsedResume.personal.location || "", size: 18 })] }),
+                    ]
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      }];
+    } else if (layout === "grid-labels") {
+      sections = [{
+        properties: { page: { margin: { top: 700, right: 700, bottom: 700, left: 700 } } },
+        children: [
+          new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: fullName, bold: true, color: "000000", size: 48 })] }),
+          new Paragraph({ spacing: { after: 300 }, children: [new TextRun({ text: parsedResume.personal.headline || "", bold: true, size: 22, color: accent })] }),
+          
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "ABOUT", bold: true, color: "CCCCCC", size: 18 })] })] }),
+                  new TableCell({ width: { size: 80, type: WidthType.PERCENTAGE }, children: [new Paragraph({ spacing: { after: 300 }, children: [new TextRun({ text: parsedResume.summary || "", size: 20 })] })] })
+                ]
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "EXPERIENCE", bold: true, color: "CCCCCC", size: 18 })] })] }),
+                  new TableCell({ width: { size: 80, type: WidthType.PERCENTAGE }, children: [...renderExperience()] })
+                ]
+              }),
+              new TableRow({
+                children: [
+                  new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: "SKILLS", bold: true, color: "CCCCCC", size: 18 })] })] }),
+                  new TableCell({ width: { size: 80, type: WidthType.PERCENTAGE }, children: [...renderSkills()] })
+                ]
+              })
+            ]
+          })
+        ]
+      }];
+    } else if (layout === "banner-soft") {
+      sections = [{
+        properties: { page: { margin: { top: 0, right: 700, bottom: 700, left: 700 } } },
+        children: [
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE } },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    shading: { fill: `${accent}15`, type: ShadingType.CLEAR }, // Tinted banner
+                    margins: { top: 700, bottom: 700, left: 700, right: 700 },
+                    children: [
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: fullName, bold: true, color: "000000", size: 48 })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: parsedResume.personal.headline || "", bold: true, size: 22, color: accent })] }),
+                    ]
+                  })
+                ]
+              })
+            ]
+          }),
+          new Paragraph({ spacing: { before: 300 } }),
+          createHeading("Summary", accent),
+          new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: parsedResume.summary || "", size: 20 })] }),
+          createHeading("Experience", accent),
+          ...renderExperience(),
+          createHeading("Skills", accent),
+          ...renderSkills(),
+          createHeading("Education", accent),
+          ...renderEducation()
+        ]
+      }];
     } else {
-      // Standard or Split Layout
+      // Standard or Generic Layout
       sections = [{
         properties: { page: { margin: { top: 700, right: 700, bottom: 700, left: 700 } } },
         children: [
@@ -175,8 +312,7 @@ export async function GET(request: Request) {
                       children: [
                         createHeading("Experience", accent),
                         ...renderExperience(),
-                        ...(parsedResume.projects.some(p => p.name) ? [createHeading("Projects", accent), ...renderProjects()] : []),
-                        ...renderTargeting()
+                        ...(parsedResume.projects.some(p => p.name) ? [createHeading("Projects", accent), ...renderProjects()] : [])
                       ]
                     }),
                     new TableCell({
@@ -200,8 +336,7 @@ export async function GET(request: Request) {
             createHeading("Skills", accent),
             ...renderSkills(),
             createHeading("Education", accent),
-            ...renderEducation(),
-            ...renderTargeting()
+            ...renderEducation()
           ])
         ],
       }];

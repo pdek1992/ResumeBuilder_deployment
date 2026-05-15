@@ -11,7 +11,14 @@ type ResumePreviewProps = {
   isPrintMode?: boolean;
 };
 
-function PreviewHeading({ children, accent }: { children: ReactNode; accent: string }) {
+function PreviewHeading({ children, accent, layout }: { children: ReactNode; accent: string; layout?: string }) {
+  if (layout === "sleek-dark") {
+    return (
+      <div className="mb-4 bg-slate-900 px-4 py-2">
+        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-white">{children}</h3>
+      </div>
+    );
+  }
   return <h3 className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: accent }}>{children}</h3>;
 }
 
@@ -71,7 +78,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
   const renderSummary = () => (
     <div className={cn(layout === "modular-card" && "rounded-2xl border p-6")} style={layout === "modular-card" ? { backgroundColor: `${accent}08`, borderColor: `${accent}20` } : {}}>
-      <PreviewHeading accent={accent}>Professional Summary</PreviewHeading>
+      <PreviewHeading accent={accent} layout={layout}>Professional Summary</PreviewHeading>
       <p className="mt-3 text-[12.5px] leading-6 text-slate-600 whitespace-pre-wrap break-words">
         {resume.summary || "This appears prominently in the preview and final PDF."}
       </p>
@@ -80,7 +87,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
   const renderExperience = () => (
     <div className={cn(layout === "modular-card" && "rounded-2xl border p-6")} style={layout === "modular-card" ? { backgroundColor: `${accent}08`, borderColor: `${accent}20` } : {}}>
-      <PreviewHeading accent={accent}>Experience</PreviewHeading>
+      <PreviewHeading accent={accent} layout={layout}>Experience</PreviewHeading>
       <div className="mt-4 space-y-5">
         {(resume.experience.filter((item) => item.title || item.company).length ? resume.experience : []).map((item) => (
           <div key={item.id} className="relative">
@@ -102,7 +109,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
   const renderSkills = () => (
     <div className={cn(layout === "grid-labels" && "rounded-xl bg-slate-900 p-6 text-white")}>
-      <PreviewHeading accent={layout === "grid-labels" ? "#fff" : accent}>Skills</PreviewHeading>
+      <PreviewHeading accent={layout === "grid-labels" ? "#fff" : accent} layout={layout}>Skills</PreviewHeading>
       <div className={cn("mt-4", layout === "grid-labels" ? "flex flex-wrap gap-2" : "space-y-1")}>
         {resume.skills.length > 0 ? (
           resume.skills.map((skill) => (
@@ -119,11 +126,32 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
       </div>
     </div>
   );
+  
+  const renderEducation = () => (
+    <div className={cn(
+      layout === "modular-card" && "rounded-3xl border p-8",
+      layout === "sidebar-dark" && "text-white"
+    )} style={layout === "modular-card" ? { backgroundColor: `${accent}05`, borderColor: `${accent}15` } : {}}>
+      <PreviewHeading accent={layout === "sidebar-dark" ? "#fff" : accent} layout={layout}>Education</PreviewHeading>
+      <div className="mt-6 space-y-6">
+        {resume.education.map(item => (
+          <div key={item.id}>
+            <div className="flex justify-between items-start gap-4">
+               <p className={cn("text-[13.5px] font-black leading-tight", layout === "sidebar-dark" ? "text-white" : "text-slate-950")}>{item.degree || "Degree"}</p>
+               <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] shrink-0", layout === "sidebar-dark" ? "text-white/40" : "text-slate-400")}>{item.endDate}</p>
+            </div>
+            <p className={cn("mt-1.5 text-[11.5px] font-bold uppercase tracking-wide", layout === "sidebar-dark" ? "text-white/60" : "text-slate-500")}>{item.school || "University"}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const innerContent = (
     <div className={cn(
       isPrintMode ? "w-full min-h-[297mm] bg-white overflow-hidden" : "min-h-full overflow-hidden rounded-[1.2rem] bg-white shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
-      (layout === "sidebar-dark" || layout === "sidebar-circles") && "flex"
+      (layout === "sidebar-dark" || layout === "sidebar-circles") && "flex",
+      layout === "sleek-dark" && "bg-slate-50"
     )}>
       {/* SIDEBAR COMPONENT */}
       {(layout === "sidebar-dark" || layout === "sidebar-circles") && (
@@ -152,31 +180,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
           <div className="space-y-12 flex-1">
             {renderSkills()}
-            <div>
-              <PreviewHeading accent={layout === "sidebar-dark" ? "#fff" : accent}>Education</PreviewHeading>
-              <div className="mt-6 space-y-6">
-                {resume.education.map(item => (
-                  <div key={item.id}>
-                    <p className={cn("text-[13px] font-bold", layout === "sidebar-dark" ? "text-white" : "text-slate-900")}>{item.degree}</p>
-                    <p className={cn("mt-1 text-[11px]", layout === "sidebar-dark" ? "text-white/70" : "text-slate-500")}>{item.school}</p>
-                    <p className={cn("mt-1 text-[10px] font-medium tracking-wider uppercase", layout === "sidebar-dark" ? "text-white/40" : "text-slate-400")}>{item.endDate}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {resume.certifications.length > 0 && (
-              <div>
-                <PreviewHeading accent={layout === "sidebar-dark" ? "#fff" : accent}>Certifications</PreviewHeading>
-                <div className="mt-6 space-y-4">
-                  {resume.certifications.map(item => (
-                    <div key={item.id} className={cn("text-[11px]", layout === "sidebar-dark" ? "text-white/70" : "text-slate-500")}>
-                      <span className={cn("font-bold", layout === "sidebar-dark" ? "text-white" : "text-slate-900")}>{item.name}</span>
-                      {item.issuer && <span className="block opacity-60 italic">{item.issuer}</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {renderEducation()}
           </div>
           
           <div className="mt-auto pt-8 border-t opacity-20" style={{ borderColor: layout === "sidebar-dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
@@ -187,6 +191,23 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
       {/* MAIN CONTENT COMPONENT */}
       <div className="flex-1 flex flex-col min-h-full">
+        {layout === "sleek-dark" && (
+          <div className="px-12 py-12 text-center text-white" style={{ backgroundColor: accent }}>
+            {resume.personal.profilePhotoUrl && (
+              <div className="mx-auto mb-6 h-32 w-32 overflow-hidden rounded-full border-4 border-white/30 shadow-2xl">
+                <img src={resume.personal.profilePhotoUrl} alt={fullName} className="h-full w-full object-cover" />
+              </div>
+            )}
+            <h1 className="text-4xl font-black tracking-tight">{fullName}</h1>
+            <p className="mt-4 text-[14px] font-bold uppercase tracking-[0.4em] text-white/70">{resume.personal.headline || resume.ats.targetRole}</p>
+            <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-[11px] font-medium text-white/60">
+              {resume.personal.location && <span>{resume.personal.location}</span>}
+              {resume.personal.email && <span>{resume.personal.email}</span>}
+              {resume.personal.phone && <span>{resume.personal.phone}</span>}
+            </div>
+          </div>
+        )}
+
         {layout === "banner-soft" && (
           <div className="p-10 text-center" style={{ backgroundColor: `${accent}15` }}>
              {resume.personal.profilePhotoUrl && (
@@ -220,117 +241,125 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
         <div className={cn(
           "flex-1 px-8 py-10 md:px-12",
-          layout === "grid-labels" && "md:grid md:grid-cols-[160px_1fr] md:gap-x-12 md:gap-y-16"
+          layout === "grid-labels" && "md:grid md:grid-cols-[160px_1fr] md:gap-x-12 md:gap-y-16",
+          layout === "modern-columns" && "space-y-12"
         )}>
-          {layout !== "banner-soft" && layout !== "sidebar-dark" && layout !== "sidebar-circles" && renderPersonal()}
+          {layout === "modern-columns" && (
+            <div className="text-center mb-12">
+               {resume.personal.profilePhotoUrl && (
+                 <div className="mx-auto mb-6 h-32 w-32 overflow-hidden rounded-full border-4 shadow-xl" style={{ borderColor: accent }}>
+                   <img src={resume.personal.profilePhotoUrl} alt={fullName} className="h-full w-full object-cover" />
+                 </div>
+               )}
+               <h1 className="text-4xl font-black text-slate-900 tracking-tight">{fullName}</h1>
+               <p className="mt-2 text-[14px] font-bold uppercase tracking-widest" style={{ color: accent }}>{resume.personal.headline || resume.ats.targetRole}</p>
+            </div>
+          )}
 
-          <div className={cn("space-y-12", layout === "grid-labels" && "md:contents")}>
-            {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">About</div>}
-            {renderSummary()}
-            
-            {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Experience</div>}
-            {renderExperience()}
+          {layout !== "banner-soft" && layout !== "sidebar-dark" && layout !== "sidebar-circles" && layout !== "sleek-dark" && layout !== "modern-columns" && renderPersonal()}
 
-            {resume.projects.some((item) => item.name) && (
-              <div className={cn(
-                layout === "modular-card" && "rounded-3xl border p-8 shadow-sm",
-                layout === "grid-labels" && "md:contents"
-              )} style={layout === "modular-card" ? { backgroundColor: `${accent}05`, borderColor: `${accent}15` } : {}}>
-                {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Projects</div>}
-                <div>
-                  <PreviewHeading accent={accent}>Projects</PreviewHeading>
-                  <div className="mt-6 space-y-6">
-                    {resume.projects.map((item) => (
-                      <div key={item.id} className="group">
-                        <p className="text-[14px] font-black text-slate-900 group-hover:text-primary transition-colors">{item.name}</p>
-                        <div className="mt-2 space-y-2">
-                          {item.highlights.filter(Boolean).map((highlight, index) => (
-                            <p key={index} className="text-[11.5px] leading-relaxed text-slate-600 break-words whitespace-pre-wrap flex gap-3">
-                              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
-                              {highlight}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {(resume.ats.targetCompany || resume.ats.targetRole) && (
-              <div className={cn(
-                layout === "modular-card" && "rounded-3xl border p-8 shadow-sm",
-                layout === "grid-labels" && "md:contents"
-              )} style={layout === "modular-card" ? { backgroundColor: `${accent}05`, borderColor: `${accent}15` } : {}}>
-                {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Inspired by</div>}
-                <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100" style={{ borderLeft: `4px solid ${accent}` }}>
-                  <PreviewHeading accent={accent}>Inspired by this</PreviewHeading>
-                  <div className="mt-4">
-                    <p className="text-[14px] font-black text-slate-900">{resume.ats.targetRole || "Target Designation"}</p>
-                    <p className="mt-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{resume.ats.targetCompany || "Target Company"}</p>
-                    {resume.ats.targetJobDescription && (
-                      <div className="mt-4 rounded-xl bg-white/50 p-4 text-[11.5px] leading-relaxed text-slate-600 italic">
-                        "{resume.ats.targetJobDescription.substring(0, 200)}..."
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {(!isSplit || ["sidebar-dark", "sidebar-circles", "banner-soft"].includes(layout)) && (
-              <div className={cn(layout === "grid-labels" && "md:contents")}>
-                {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Extras</div>}
-                <div className="space-y-12">
+          {layout === "modern-columns" ? (
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 border-b border-slate-100 pb-12">
+                <div className="space-y-8">
                   {renderSkills()}
-                  <div className={cn(layout === "modular-card" && "rounded-3xl border p-8")} style={layout === "modular-card" ? { backgroundColor: `${accent}05`, borderColor: `${accent}15` } : {}}>
-                    <PreviewHeading accent={accent}>Education</PreviewHeading>
-                    <div className="mt-6 space-y-8">
-                      {resume.education.map(item => (
-                        <div key={item.id}>
-                          <div className="flex justify-between items-start">
-                             <p className="text-[14px] font-black text-slate-950 leading-tight">{item.degree}</p>
-                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{item.endDate}</p>
+                  <div>
+                    <PreviewHeading accent={accent} layout={layout}>Contact</PreviewHeading>
+                    <div className="mt-4 space-y-2 text-[11.5px] text-slate-600">
+                       {resume.personal.email && <p>Email: {resume.personal.email}</p>}
+                       {resume.personal.phone && <p>Phone: {resume.personal.phone}</p>}
+                       {resume.personal.location && <p>Location: {resume.personal.location}</p>}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                   {resume.projects.some(p => p.name) && (
+                     <div className="rounded-2xl border-2 p-6" style={{ borderColor: `${accent}20` }}>
+                        <PreviewHeading accent={accent} layout={layout}>Projects</PreviewHeading>
+                        <div className="mt-4 space-y-4">
+                           {resume.projects.map(p => (
+                             <div key={p.id}>
+                                <p className="text-[13px] font-bold text-slate-900">{p.name}</p>
+                                <p className="text-[11px] text-slate-500 mt-1 italic">{p.role}</p>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                   )}
+                </div>
+              </div>
+              <div className="space-y-12">
+                 {renderExperience()}
+                 {renderEducation()}
+              </div>
+            </div>
+          ) : (
+            <div className={cn("space-y-12", layout === "grid-labels" && "md:contents")}>
+              {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">About</div>}
+              {renderSummary()}
+              
+              {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Experience</div>}
+              {renderExperience()}
+
+              {resume.projects.some((item) => item.name) && (
+                <div className={cn(
+                  layout === "modular-card" && "rounded-3xl border p-8 shadow-sm",
+                  layout === "grid-labels" && "md:contents"
+                )} style={layout === "modular-card" ? { backgroundColor: `${accent}05`, borderColor: `${accent}15` } : {}}>
+                  {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Projects</div>}
+                  <div>
+                    <PreviewHeading accent={accent} layout={layout}>Projects</PreviewHeading>
+                    <div className="mt-6 space-y-6">
+                      {resume.projects.map((item) => (
+                        <div key={item.id} className="group">
+                          <p className="text-[14px] font-black text-slate-900 group-hover:text-primary transition-colors">{item.name}</p>
+                          <div className="mt-2 space-y-2">
+                            {item.highlights.filter(Boolean).map((highlight, index) => (
+                              <p key={index} className="text-[11.5px] leading-relaxed text-slate-600 break-words whitespace-pre-wrap flex gap-3">
+                                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
+                                {highlight}
+                              </p>
+                            ))}
                           </div>
-                          <p className="mt-2 text-[12px] font-bold text-slate-500 uppercase tracking-wide">{item.school}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          {/* Fallback column for other split layouts */}
-          {isSplit && !["sidebar-dark", "sidebar-circles", "banner-soft", "grid-labels"].includes(layout) && (
-            <div className="space-y-12 border-slate-100 md:border-l md:pl-10">
-              {renderSkills()}
-              <div>
-                <PreviewHeading accent={accent}>Education</PreviewHeading>
-                <div className="mt-8 space-y-8">
-                  {resume.education.map(item => (
-                    <div key={item.id} className="text-[11.5px] leading-relaxed text-slate-600">
-                      <p className="font-bold text-slate-900">{item.degree}</p>
-                      <p className="text-[10.5px] text-slate-500 italic">{item.school}</p>
+
+              {(!isSplit || ["sidebar-dark", "sidebar-circles", "banner-soft"].includes(layout)) && (
+                <div className={cn(layout === "grid-labels" && "md:contents")}>
+                  {layout === "grid-labels" && <div className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-300 md:pt-1">Extras</div>}
+                  <div className="space-y-12">
+                    {renderSkills()}
+                    {renderEducation()}
+                  </div>
+                </div>
+              )}
+
+              {isSplit && !["sidebar-dark", "sidebar-circles", "banner-soft", "grid-labels", "modern-columns"].includes(layout) && (
+                <div className="space-y-12 border-slate-100 md:border-l md:pl-10">
+                  {renderSkills()}
+                  <div>
+                    <PreviewHeading accent={accent} layout={layout}>Education</PreviewHeading>
+                    <div className="mt-8 space-y-8">
+                      {resume.education.map(item => (
+                        <div key={item.id} className="text-[11.5px] leading-relaxed text-slate-600">
+                          <p className="font-bold text-slate-900">{item.degree}</p>
+                          <p className="text-[10.5px] text-slate-500 italic">{item.school}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-
-              {resume.more?.filter((item) => item.label && item.value).map((item) => (
-                <div key={item.id}>
-                  <PreviewHeading accent={accent}>{item.label}</PreviewHeading>
-                  <p className="mt-4 text-[11.5px] leading-relaxed text-slate-600 bg-slate-50 rounded-2xl p-4 border border-slate-100">{item.value}</p>
-                </div>
-              ))}
+              )}
             </div>
           )}
         </div>
       </div>
-
-            </div>
+    </div>
   );
 
   if (isPrintMode) {
@@ -357,7 +386,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
       <div className="px-5 py-6 md:px-8">
         <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-        <div className="mx-auto aspect-[1/1.414] max-w-[640px] bg-white p-6 md:p-10 shadow-2xl">
+        <div className="mx-auto aspect-[1/1.414] max-w-[600px] bg-white p-6 md:p-10 shadow-2xl">
             {innerContent}
           </div>
         </div>
