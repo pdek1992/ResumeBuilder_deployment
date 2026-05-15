@@ -61,31 +61,32 @@ function skillPercent(index: number) {
 
 export function ResumePreview({ resume, template, className, isPrintMode }: ResumePreviewProps) {
   const fullName = [resume.personal.firstName, resume.personal.lastName].filter(Boolean).join(" ") || "Your Name";
-  const accent = resume.style.accent || template.config_json.accent;
+  const accent = template.config_json.accent || resume.style.accent;
   const layout = template.config_json.layout || "standard";
   const renderConfig = getTemplateRenderConfig(layout, template.config_json, accent);
   const isSplit = renderConfig.hasSidebar || template.config_json.columns === "split";
   const headingStyle = renderConfig.sectionHeadingStyle;
   const sectionSpacing = renderConfig.sectionSpacingClass;
   const bodyTextClass = renderConfig.bodyTextClass;
-  const isSidebarLayout = renderConfig.hasSidebar && ["sidebar-dark", "sidebar-circles"].includes(layout);
+  const isDarkSidebar = layout === "sidebar-dark" || layout === "sidebar-dark-right";
+  const isSidebarLayout = renderConfig.hasSidebar && (isDarkSidebar || layout === "sidebar-circles");
 
   const renderPersonal = () => (
     <div className={cn(
       "px-8 py-10 md:px-12",
       layout === "banner-soft" && "rounded-b-[3rem] shadow-2xl",
-      layout === "sidebar-dark" && "bg-transparent !px-0 !py-0",
+      isDarkSidebar && "bg-transparent !px-0 !py-0",
       layout === "modular-card" && "rounded-[2.5rem] border border-slate-100 shadow-sm mb-8",
       !layout.includes("sidebar") && "mb-8"
     )} style={{ 
-      backgroundColor: (layout === "sidebar-dark" || layout === "modular-card") ? "transparent" : `${accent}15`,
+      backgroundColor: (isDarkSidebar || layout === "modular-card") ? "transparent" : `${accent}15`,
       borderColor: layout === "modular-card" ? accent : undefined,
       color: "inherit"
     }}>
       <div className="flex items-start justify-between gap-6">
         <div className="flex-1">
           <div className="flex items-center gap-6">
-            {resume.personal.profilePhotoUrl && !["sidebar-dark", "sidebar-circles"].includes(layout) && (
+            {resume.personal.profilePhotoUrl && ![layout === "sidebar-dark-right" ? "sidebar-dark-right" : "sidebar-dark", "sidebar-circles"].includes(layout) && (
               <div className={cn(
                 "h-24 w-24 shrink-0 overflow-hidden shadow-2xl border-4 border-white",
                 layout === "banner-soft" ? "rounded-[2rem]" : "rounded-3xl"
@@ -109,7 +110,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
             ))}
           </div>
         </div>
-        {template.icon && layout !== "sidebar-dark" && !resume.personal.profilePhotoUrl && (
+        {template.icon && !isDarkSidebar && !resume.personal.profilePhotoUrl && (
           <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm md:flex">
             <img src={template.icon} alt="" className={cn("h-12 w-12 contrast-125", (layout === "modular-card" ? "opacity-100" : "opacity-40 invert brightness-0"))} />
           </div>
@@ -238,17 +239,17 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
   const renderEducation = () => (
     <div className={cn(
       layout === "modular-card" && "rounded-3xl border p-8",
-      layout === "sidebar-dark" && "text-white"
+      isDarkSidebar && "text-white"
     )} style={layout === "modular-card" ? { backgroundColor: `${accent}05`, borderColor: `${accent}15` } : {}}>
-      <PreviewHeading accent={layout === "sidebar-dark" ? "#fff" : accent} layout={layout} headingStyle={headingStyle}>Education</PreviewHeading>
+      <PreviewHeading accent={isDarkSidebar ? "#fff" : accent} layout={layout} headingStyle={headingStyle}>Education</PreviewHeading>
       <div className="mt-6 space-y-6">
         {resume.education.map(item => (
           <div key={item.id}>
             <div className="flex justify-between items-start gap-4">
-               <p className={cn("text-[13.5px] font-black leading-tight", layout === "sidebar-dark" ? "text-white" : "text-slate-950")}>{item.degree || "Degree"}</p>
-               <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] shrink-0", layout === "sidebar-dark" ? "text-white/40" : "text-slate-400")}>{item.endDate}</p>
+               <p className={cn("text-[13.5px] font-black leading-tight", isDarkSidebar ? "text-white" : "text-slate-950")}>{item.degree || "Degree"}</p>
+               <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] shrink-0", isDarkSidebar ? "text-white/40" : "text-slate-400")}>{item.endDate}</p>
             </div>
-            <p className={cn("mt-1.5 text-[11.5px] font-bold uppercase tracking-wide", layout === "sidebar-dark" ? "text-white/60" : "text-slate-500")}>{item.school || "University"}</p>
+            <p className={cn("mt-1.5 text-[11.5px] font-bold uppercase tracking-wide", isDarkSidebar ? "text-white/60" : "text-slate-500")}>{item.school || "University"}</p>
           </div>
         ))}
       </div>
@@ -302,7 +303,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
   const innerContent = (
     <div className={cn(
-      isPrintMode ? "h-[297mm] w-[210mm] bg-white overflow-hidden print:shadow-none" : "min-h-full overflow-hidden rounded-[1.2rem] bg-white shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
+      isPrintMode ? "h-[297mm] w-[210mm] bg-white overflow-hidden print:shadow-none" : "h-full w-full overflow-hidden bg-white shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
       isSidebarLayout && "flex",
       layout === "sleek-dark" && "bg-slate-50"
     )}
@@ -314,8 +315,9 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
       {isSidebarLayout && (
         <div className={cn(
           "shrink-0 p-8 flex flex-col",
-          layout === "sidebar-dark" ? "bg-slate-900 text-white" : "bg-slate-50 border-r border-slate-100"
-        )} style={{ width: renderConfig.sidebarWidthClass.includes("32") ? "32%" : undefined, backgroundColor: layout === "sidebar-dark" ? renderConfig.sidebarBg : `${accent}05` }}>
+          renderConfig.sidebarSide === "right" && "order-2",
+          isDarkSidebar ? "bg-slate-900 text-white" : "bg-slate-50 border-r border-slate-100"
+        )} style={{ width: renderConfig.sidebarWidthClass.includes("32") ? "32%" : undefined, backgroundColor: isDarkSidebar ? renderConfig.sidebarBg : `${accent}05` }}>
           
           <div className="mb-10">
             {resume.personal.profilePhotoUrl ? (
@@ -330,7 +332,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
                 "mx-auto flex items-center justify-center bg-white shadow-sm",
                 layout === "sidebar-circles" ? "h-20 w-20 rounded-full" : "h-24 w-24 rounded-2xl bg-white/10"
               )}>
-                <img src={template.icon || "/icons/icon-resume.png"} alt="Icon" className={cn("h-10 w-10", layout === "sidebar-dark" ? "opacity-20 brightness-0 invert" : "opacity-10")} />
+                <img src={template.icon || "/icons/icon-resume.png"} alt="Icon" className={cn("h-10 w-10", isDarkSidebar ? "opacity-20 brightness-0 invert" : "opacity-10")} />
               </div>
             )}
           </div>
@@ -340,14 +342,14 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
             {renderEducation()}
           </div>
           
-          {!isPrintMode && <div className="mt-auto pt-8 border-t opacity-20" style={{ borderColor: layout === "sidebar-dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
+          {!isPrintMode && <div className="mt-auto pt-8 border-t opacity-20" style={{ borderColor: isDarkSidebar ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
              <p className="text-[10px] font-black uppercase tracking-[0.2em]">High Fidelity Resume</p>
           </div>}
         </div>
       )}
 
       {/* MAIN CONTENT COMPONENT */}
-      <div className="flex-1 flex flex-col min-h-full">
+      <div className={cn("flex-1 flex flex-col min-h-full", renderConfig.sidebarSide === "right" && "order-1")}>
         {layout === "sleek-dark" && (
           <div className="px-12 py-12 text-center text-white" style={{ backgroundColor: accent }}>
             {resume.personal.profilePhotoUrl && (
@@ -383,7 +385,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
           </div>
         )}
 
-        {layout === "sidebar-dark" && (
+        {isDarkSidebar && (
           <div className="px-10 py-12">
              <h1 className="text-[42px] font-black tracking-tighter text-slate-950 leading-none">{fullName}</h1>
              <p className="mt-4 text-[16px] font-bold uppercase tracking-[0.4em] text-slate-400">{resume.personal.headline || resume.ats.targetRole}</p>
@@ -413,7 +415,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
             </div>
           )}
 
-          {layout !== "banner-soft" && layout !== "sidebar-dark" && layout !== "sidebar-circles" && layout !== "sleek-dark" && layout !== "modern-columns" && renderPersonal()}
+          {layout !== "banner-soft" && !isDarkSidebar && layout !== "sidebar-circles" && layout !== "sleek-dark" && layout !== "modern-columns" && renderPersonal()}
 
           {layout === "modern-columns" ? (
             <div className="space-y-12">
@@ -454,7 +456,7 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
             <div className={cn(sectionSpacing, layout === "grid-labels" && "md:contents")}>
               {renderConfig.mainSections.map(renderSectionByKey)}
 
-              {isSplit && !["sidebar-dark", "sidebar-circles", "banner-soft", "grid-labels", "modern-columns"].includes(layout) && (
+              {isSplit && ![isDarkSidebar ? layout : "sidebar-dark", "sidebar-circles", "banner-soft", "grid-labels", "modern-columns"].includes(layout) && (
                 <div className={cn(sectionSpacing, "border-slate-100 md:border-l md:pl-10")}>
                   {renderSkills()}
                   <div>
@@ -500,8 +502,8 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
       </div>
 
       <div className="px-5 py-6 md:px-8">
-        <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-        <div className="mx-auto aspect-[1/1.414] max-w-[600px] bg-white p-6 md:p-10 shadow-2xl">
+        <div className="overflow-auto rounded-[2rem] border border-slate-100 bg-slate-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <div className="mx-auto aspect-[1/1.414] max-w-[760px] bg-white shadow-2xl">
             {innerContent}
           </div>
         </div>

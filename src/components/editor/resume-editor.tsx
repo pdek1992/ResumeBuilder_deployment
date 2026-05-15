@@ -1180,7 +1180,8 @@ export function ResumeEditor({
                   ...resume,
                   style: {
                     ...resume.style,
-                    accent: resume.style.accent || selectedTemplate.config_json.accent,
+                    accent: selectedTemplate.config_json.accent || resume.style.accent,
+                    typography: selectedTemplate.config_json.typography || resume.style.typography,
                   },
                 }}
                 template={selectedTemplate}

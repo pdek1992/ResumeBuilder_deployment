@@ -69,7 +69,7 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "sidebar-dark",
+    layout: "sidebar-dark-right",
   }, "/icons/icon-resume.png"),
 
   template("elite-corporate-pro", "Elite Corporate Pro", "/templates/elite-corporate-pro.png", "A high-end corporate layout with refined spacing and strong hierarchy.", ["Elite", "Corporate", "High-End"], {
@@ -83,13 +83,14 @@ export const defaultTemplates: TemplateRecord[] = [
   }, "/icons/icon-analytics.png"),
 
   template("elite-creative-bold", "Elite Creative Bold", "/templates/elite-creative-bold.png", "Dynamic and expressive layout for creative professionals.", ["Elite", "Creative", "Bold"], {
-    accent: "#7e22ce",
-    headerBackground: "#faf5ff",
+    accent: "#1d74b7",
+    headerBackground: "#eff6ff",
     pageBackground: "#ffffff",
+    sidebarTint: "#1d74b7",
     density: "airy",
     typography: "editorial-serif",
     columns: "split",
-    layout: "creative-bold",
+    layout: "sidebar-dark",
   }, "/icons/icon-ai-brain.png"),
 
   template("elite-dynamic-grid", "Elite Dynamic Grid", "/templates/elite-dynamic-grid.png", "Modern grid-based system for high-impact visual presentation.", ["Elite", "Grid", "Dynamic"], {
@@ -143,13 +144,14 @@ export const defaultTemplates: TemplateRecord[] = [
   }, "/icons/icon-resume.png"),
 
   template("elite-sharp-modern", "Elite Sharp Modern", "/templates/elite-sharp-modern.png", "Precise, sharp layout with clear lines and professional impact.", ["Elite", "Sharp", "Modern"], {
-    accent: "#15803d",
-    headerBackground: "#f0fdf4",
+    accent: "#5b21b6",
+    headerBackground: "#f5f3ff",
     pageBackground: "#ffffff",
+    sidebarTint: "#5b21b6",
     density: "compact",
     typography: "technical-mono",
-    columns: "single",
-    layout: "impactful-bold",
+    columns: "split",
+    layout: "sidebar-dark",
   }, "/icons/icon-github-ai.png"),
 
   template("elite-soft-minimal", "Elite Soft Minimal", "/templates/elite-soft-minimal.png", "Gentle minimalist approach with soft colors and clean layout.", ["Elite", "Minimal", "Soft"], {
@@ -163,13 +165,14 @@ export const defaultTemplates: TemplateRecord[] = [
   }, "/icons/icon-communication.png"),
 
   template("elite-bold-header", "Elite Bold Header", "/templates/elite-bold-header.png", "Command attention with a bold header and structured content flow.", ["Elite", "Bold", "Impactful"], {
-    accent: "#b91c1c",
-    headerBackground: "#fef2f2",
+    accent: "#2563eb",
+    headerBackground: "#eff6ff",
     pageBackground: "#ffffff",
+    sidebarTint: "#dbeafe",
     density: "balanced",
     typography: "modern-sans",
-    columns: "single",
-    layout: "bold-header-accent",
+    columns: "split",
+    layout: "sidebar-circles",
   }, "/icons/icon-target.png"),
 
   // ── Standard Tier ─────────────────────────────────────────────────────────
@@ -180,19 +183,19 @@ export const defaultTemplates: TemplateRecord[] = [
     sidebarTint: "#f8fafc",
     density: "balanced",
     typography: "modern-sans",
-    columns: "split",
-    layout: "sidebar-dark",
+    columns: "single",
+    layout: "sleek-dark",
   }),
 
   template("modern-professional", "Modern Professional", "/templates/modern-professional.png", "Professional layout with elegant hierarchy for general corporate roles.", ["Modern", "Professional", "Corporate"], {
-    accent: "#334155",
+    accent: "#475569",
     headerBackground: "#ffffff",
     pageBackground: "#ffffff",
-    sidebarTint: "#f8fafc",
+    sidebarTint: "#475569",
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "hybrid-pro",
+    layout: "sidebar-dark",
   }),
 
   template("executive", "Executive", "/templates/executive.png", "Premium executive profile with crisp spacing and decisive section rhythm.", ["Executive", "Premium", "Classic"], {
@@ -218,14 +221,14 @@ export const defaultTemplates: TemplateRecord[] = [
   }),
 
   template("creative", "Creative", "/templates/creative.png", "Contemporary layout with stronger visual character for portfolio-heavy roles.", ["Creative", "Visual", "Contemporary"], {
-    accent: "#7c3aed",
-    headerBackground: "#f5f3ff",
+    accent: "#d78388",
+    headerBackground: "#fdf2f8",
     pageBackground: "#ffffff",
-    sidebarTint: "#faf5ff",
+    sidebarTint: "#d78388",
     density: "balanced",
     typography: "editorial-serif",
     columns: "split",
-    layout: "creative-bold",
+    layout: "sidebar-dark",
   }),
 
   template("modern-columns", "Modern Columns", "/templates/modern-columns.png", "Structured dual-column layout with concise scannability.", ["Modern", "Columns", "Scannable"], {
@@ -309,11 +312,11 @@ export const defaultTemplates: TemplateRecord[] = [
     accent: "#475569",
     headerBackground: "#ffffff",
     pageBackground: "#ffffff",
-    sidebarTint: "#ffffff",
+    sidebarTint: "#f3f4f6",
     density: "airy",
     typography: "modern-sans",
-    columns: "single",
-    layout: "ultra-clean",
+    columns: "split",
+    layout: "sidebar-circles",
   }),
 
   template("creative-designer", "Creative Designer", "/templates/creative-designer.png", "A more expressive visual system for design-forward candidates.", ["Designer", "Creative", "Visual"], {
@@ -339,25 +342,25 @@ export const defaultTemplates: TemplateRecord[] = [
   }),
 
   template("corporate-minimal", "Corporate Minimal", "/templates/corporate-minimal.png", "Corporate-safe format with modern whitespace and compact headings.", ["Corporate", "Minimal", "Safe"], {
-    accent: "#2563eb",
-    headerBackground: "#ffffff",
+    accent: "#111827",
+    headerBackground: "#f4f1e8",
     pageBackground: "#ffffff",
-    sidebarTint: "#f8fafc",
+    sidebarTint: "#f4f1e8",
     density: "balanced",
     typography: "modern-sans",
-    columns: "single",
-    layout: "corporate-minimal",
+    columns: "split",
+    layout: "sidebar-circles",
   }),
 
   template("pastel-professional", "Pastel Professional", "/templates/pastel-professional.png", "Soft but polished styling for people-facing roles.", ["Pastel", "Soft", "Professional"], {
-    accent: "#7c3aed",
-    headerBackground: "#faf5ff",
-    pageBackground: "#ffffff",
-    sidebarTint: "#fdf4ff",
+    accent: "#0d9488",
+    headerBackground: "#e0f2fe",
+    pageBackground: "#f8f4e8",
+    sidebarTint: "#cffafe",
     density: "airy",
     typography: "editorial-serif",
-    columns: "single",
-    layout: "pastel-soft",
+    columns: "split",
+    layout: "infographic-split",
   }),
 
   template("vibrant-startup", "Vibrant Startup", "/templates/vibrant-startup.png", "High-energy startup template with colorful section anchors.", ["Vibrant", "Startup", "Color"], {
@@ -371,3 +374,25 @@ export const defaultTemplates: TemplateRecord[] = [
     layout: "vibrant-accent",
   }),
 ];
+
+const defaultTemplateById = new Map(defaultTemplates.map((item) => [item.id, item]));
+
+export function hydrateTemplateRecord(templateRecord: TemplateRecord): TemplateRecord {
+  const defaultTemplate = defaultTemplateById.get(templateRecord.id);
+
+  if (!defaultTemplate) {
+    return templateRecord;
+  }
+
+  return {
+    ...defaultTemplate,
+    ...templateRecord,
+    preview_image: templateRecord.preview_image || defaultTemplate.preview_image,
+    icon: templateRecord.icon || defaultTemplate.icon,
+    tags: templateRecord.tags?.length ? templateRecord.tags : defaultTemplate.tags,
+    config_json: {
+      ...defaultTemplate.config_json,
+      ...(templateRecord.config_json ?? {}),
+    },
+  };
+}

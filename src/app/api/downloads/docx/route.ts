@@ -49,11 +49,12 @@ export async function GET(request: Request) {
     const template = templates.find((item) => item.id === resume.template_id) ?? templates[0];
     const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
     const fullName = `${parsedResume.personal.firstName} ${parsedResume.personal.lastName}`.trim() || "Your Name";
-    const accent = toDocxHex(parsedResume.style?.accent || template.config_json.accent || "#2563eb");
+    const accent = toDocxHex(template.config_json.accent || parsedResume.style?.accent || "#2563eb");
     const layout = (template.config_json.layout || "standard") as string;
     const renderConfig = getTemplateRenderConfig(layout, template.config_json, `#${accent}`);
     const isSplit = renderConfig.hasSidebar || template.config_json.columns === "split";
-    const sidebarFill = layout === "sidebar-dark" ? toDocxHex(renderConfig.sidebarBg, accent) : tintHex(accent);
+    const isDarkSidebar = layout === "sidebar-dark" || layout === "sidebar-dark-right";
+    const sidebarFill = isDarkSidebar ? toDocxHex(renderConfig.sidebarBg, accent) : tintHex(accent);
 
     const createHeading = (text: string, color: string = accent) => new Paragraph({
       heading: HeadingLevel.HEADING_1,
@@ -123,7 +124,7 @@ export async function GET(request: Request) {
 
     let sections = [];
 
-    if (layout === "sidebar-dark" || layout === "sidebar-circles") {
+    if (isDarkSidebar || layout === "sidebar-circles") {
       // 2-column table layout for sidebar templates
       sections = [{
         properties: { page: { margin: { top: 0, right: 0, bottom: 0, left: 0 } } },
@@ -139,10 +140,10 @@ export async function GET(request: Request) {
                     shading: { fill: sidebarFill, type: ShadingType.CLEAR },
                     margins: { top: 700, bottom: 700, left: 400, right: 400 },
                     children: [
-                      createHeading("Skills", layout === "sidebar-dark" ? "FFFFFF" : accent),
-                      ...renderSkills(layout === "sidebar-dark"),
-                      createHeading("Education", layout === "sidebar-dark" ? "FFFFFF" : accent),
-                      ...renderEducation(layout === "sidebar-dark")
+                      createHeading("Skills", isDarkSidebar ? "FFFFFF" : accent),
+                      ...renderSkills(isDarkSidebar),
+                      createHeading("Education", isDarkSidebar ? "FFFFFF" : accent),
+                      ...renderEducation(isDarkSidebar)
                     ]
                   }),
                   new TableCell({

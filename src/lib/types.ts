@@ -67,6 +67,7 @@ export type ResumeThemeConfig = {
     | "banner-soft"
     | "grid-labels"
     | "sidebar-dark"
+    | "sidebar-dark-right"
     | "sleek-dark"
     | "modern-columns"
     | "executive-serif"

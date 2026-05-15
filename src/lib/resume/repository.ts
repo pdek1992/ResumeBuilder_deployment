@@ -1,6 +1,6 @@
 import { compressJson, decompressJson } from "@/lib/compression";
 import { calculateAtsScore, createDefaultResumeData } from "@/lib/resume/defaults";
-import { defaultTemplates } from "@/lib/resume/templates";
+import { defaultTemplates, hydrateTemplateRecord } from "@/lib/resume/templates";
 import { ensureAppUserProfile } from "@/lib/auth/profile-sync";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -231,5 +231,5 @@ export async function listTemplates() {
     return defaultTemplates;
   }
 
-  return data as TemplateRecord[];
+  return (data as TemplateRecord[]).map(hydrateTemplateRecord);
 }

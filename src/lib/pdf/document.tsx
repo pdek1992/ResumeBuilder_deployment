@@ -45,8 +45,9 @@ function Section({ title, children, accent, layout }: { title: string; children:
 }
 
 export function ResumePdfDocument({ resume, template }: { resume: ResumeData; template: TemplateRecord }) {
-  const accent = resume.style.accent || template.config_json.accent;
+  const accent = template.config_json.accent || resume.style.accent;
   const layout = template.config_json.layout || "standard";
+  const isDarkSidebar = layout === "sidebar-dark" || layout === "sidebar-dark-right";
   const headerBackground = template.config_json.headerBackground || accent;
   const isSplit = template.config_json.columns === "split";
   const fullName = `${resume.personal.firstName} ${resume.personal.lastName}`.trim() || "Your Name";
@@ -54,7 +55,7 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
   const renderPersonal = (isDarkHeader = false) => (
     <View style={[
       layout === "banner-soft" ? styles.headerBannerSoft : styles.header,
-      { backgroundColor: (isDarkHeader || layout === "modular-card") ? "transparent" : headerBackground, marginBottom: (isDarkHeader || layout === "sidebar-dark") ? 0 : 24, padding: layout === "sidebar-dark" ? 0 : 32 }
+      { backgroundColor: (isDarkHeader || layout === "modular-card") ? "transparent" : headerBackground, marginBottom: (isDarkHeader || isDarkSidebar) ? 0 : 24, padding: isDarkSidebar ? 0 : 32 }
     ]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <View style={{ flex: 1 }}>
@@ -68,7 +69,7 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
             </Text>
           </View>
         </View>
-        {template.icon && !isDarkHeader && layout !== "sidebar-dark" && (
+        {template.icon && !isDarkHeader && !isDarkSidebar && (
           <View style={{ width: 70, height: 70, backgroundColor: layout === "modular-card" ? "#f8fafc" : "rgba(255,255,255,0.1)", borderRadius: 15, justifyContent: "center", alignItems: "center" }}>
             <Image src={template.icon} style={[styles.icon, { width: 40, height: 40, opacity: layout === "modular-card" ? 1 : 0.4 }]} />
           </View>
@@ -124,7 +125,7 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
   return (
     <Document title={fullName}>
       <Page size="A4" style={styles.page}>
-        {layout === "sidebar-dark" ? (
+        {isDarkSidebar ? (
           <View style={{ flexDirection: "row", minHeight: "100%" }}>
             <View style={[styles.sidebarDark, { backgroundColor: template.config_json.sidebarTint || accent }]}>
               {template.icon && <Image src={template.icon} style={styles.sidebarIcon} />}

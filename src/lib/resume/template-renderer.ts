@@ -129,9 +129,11 @@ export function getTemplateRenderConfig(
   switch (layout) {
     // ── Sidebar layouts ──────────────────────────────────────────────────
     case "sidebar-dark":
+    case "sidebar-dark-right":
       return {
         ...base,
         hasSidebar: true,
+        sidebarSide: layout === "sidebar-dark-right" ? "right" : "left",
         sidebarBg: config.sidebarTint || accent,
         sidebarTextColor: "#ffffff",
         sidebarSections: ["skills", "education", "certifications"],
