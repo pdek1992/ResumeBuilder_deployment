@@ -47,7 +47,6 @@ export type ResumeSectionKey =
   | "skills"
   | "projects"
   | "certifications"
-  | "volunteer"
   | "more";
 
 export type TypographyStyle = "modern-sans" | "editorial-serif" | "technical-mono";
@@ -117,14 +116,6 @@ export type CertificationItem = {
   link: string;
 };
 
-export type VolunteerItem = {
-  id: string;
-  organization: string;
-  role: string;
-  startDate: string;
-  endDate: string;
-  highlights: string[];
-};
 
 export type AdditionalItem = {
   id: string;
@@ -140,7 +131,6 @@ export type ResumeData = {
   skills: string[];
   projects: ProjectItem[];
   certifications: CertificationItem[];
-  volunteer: VolunteerItem[];
   more: AdditionalItem[];
   style: {
     accent: string;

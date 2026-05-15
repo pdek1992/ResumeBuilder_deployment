@@ -13,6 +13,7 @@ import type { MockInterviewItem, ResumeData, TemplateRecord, UserProfile } from 
 import { LogoLockup } from "@/components/ui/logo-lockup";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import { ResumeChatSidebar } from "./resume-chat-sidebar";
+import { cn } from "@/lib/utils";
 
 const sectionOrder = ["personal", "experience", "education", "skills", "projects", "certifications", "customization", "more"] as const;
 const accentOptions = ["#3067ea", "#0f6c7c", "#92400e", "#7c3aed", "#be123c", "#334155"];
@@ -460,6 +461,15 @@ export function ResumeEditor({
             <div className="flex items-center justify-between gap-3">
               <LogoLockup href="/dashboard" />
               <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col items-center justify-center rounded-[1.65rem] border border-slate-100 bg-white px-5 py-2 shadow-sm transition hover:shadow-md">
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">ATS Match</p>
+                   <p className={cn(
+                     "text-[16px] font-black leading-none mt-0.5",
+                     (resume.ats.score ?? 0) >= 80 ? "text-emerald-500" : (resume.ats.score ?? 0) >= 60 ? "text-amber-500" : "text-rose-500"
+                   )}>
+                     {resume.ats.score ?? 0}%
+                   </p>
+                </div>
                 <TopPillButton href={`/builder/templates?resumeId=${resumeId}`}>Switch Style</TopPillButton>
                 <TopPillButton onClick={() => setIsChatOpen(!isChatOpen)}>
                   {isChatOpen ? "Close Chat" : "✨ AI Chat"}
@@ -985,25 +995,42 @@ export function ResumeEditor({
 
             <EditorCard>
               <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="flex flex-wrap items-center gap-4">
-                  <span className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Accent</span>
-                  {accentOptions.map((accent) => (
-                    <button
-                      key={accent}
-                      type="button"
-                      onClick={() => setResume((current) => ({ ...current, style: { ...current.style, accent } }))}
-                      className="h-7 w-7 rounded-full"
-                      style={{
-                        backgroundColor: accent,
-                        boxShadow: resume.style.accent === accent ? "0 0 0 4px rgba(15,23,42,0.12)" : "none",
-                      }}
-                    />
-                  ))}
-                  <input
-                    value={resume.style.accent}
-                    onChange={(event) => setResume((current) => ({ ...current, style: { ...current.style, accent: event.target.value } }))}
-                    className="ml-2 w-[120px] rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600"
-                  />
+                <div className="flex flex-wrap items-center gap-5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Accent Theme</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {accentOptions.map((accent) => (
+                      <button
+                        key={accent}
+                        type="button"
+                        onClick={() => setResume((current) => ({ ...current, style: { ...current.style, accent } }))}
+                        className="group relative h-9 w-9 rounded-full transition-transform hover:scale-110 active:scale-95"
+                        style={{
+                          backgroundColor: accent,
+                        }}
+                      >
+                         {resume.style.accent === accent && (
+                           <span className="absolute inset-0 flex items-center justify-center">
+                             <div className="h-2 w-2 rounded-full bg-white shadow-sm" />
+                           </span>
+                         )}
+                         <span className="absolute -inset-1 rounded-full border-2 border-transparent transition-colors group-hover:border-slate-100" style={resume.style.accent === accent ? { borderColor: `${accent}40` } : {}} />
+                      </button>
+                    ))}
+                    <div className="ml-2 flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50/50 p-1 pl-4">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Custom</span>
+                       <input
+                        type="color"
+                        value={resume.style.accent}
+                        onChange={(event) => setResume((current) => ({ ...current, style: { ...current.style, accent: event.target.value } }))}
+                        className="h-8 w-12 cursor-pointer overflow-hidden rounded-full border-none bg-transparent"
+                      />
+                      <input
+                        value={resume.style.accent}
+                        onChange={(event) => setResume((current) => ({ ...current, style: { ...current.style, accent: event.target.value } }))}
+                        className="w-[85px] bg-transparent py-2 text-[12px] font-bold text-slate-600 outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Typography</span>

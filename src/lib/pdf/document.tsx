@@ -114,13 +114,6 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
     </View>
   ));
 
-  const renderVolunteer = (isDark = false) => resume.volunteer?.map(item => (
-    <View key={item.id} style={{ marginBottom: 12 }}>
-      <Text style={isDark ? { fontSize: 11, fontWeight: 700, color: "#ffffff" } : styles.itemTitle}>{item.role || "Role"}</Text>
-      <Text style={isDark ? { fontSize: 9, color: "#ffffff", opacity: 0.8, marginBottom: 6 } : styles.itemMeta}>{[item.organization, [item.startDate, item.endDate].filter(Boolean).join(" — ")].filter(Boolean).join(" | ")}</Text>
-      {item.highlights.filter(Boolean).map((h, i) => <Text key={i} style={isDark ? { marginLeft: 10, marginBottom: 3, fontSize: 9.5, lineHeight: 1.5, color: "#e2e8f0" } : styles.bullet}>• {h}</Text>)}
-    </View>
-  ));
 
   const renderCertifications = (isDark = false) => resume.certifications.map(item => (
     <Text key={item.id} style={isDark ? { marginLeft: 10, marginBottom: 3, fontSize: 9.5, lineHeight: 1.5, color: "#e2e8f0" } : styles.bullet}>
@@ -144,7 +137,6 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
               <Section title="Professional Summary" accent={accent} layout={layout}><Text style={styles.paragraph}>{resume.summary}</Text></Section>
               <Section title="Experience" accent={accent} layout={layout}>{renderExperience()}</Section>
               {resume.projects.some(p => p.name) && <Section title="Projects" accent={accent} layout={layout}>{renderProjects()}</Section>}
-              {resume.volunteer?.some(v => v.organization) && <Section title="Volunteer Experience" accent={accent} layout={layout}>{renderVolunteer()}</Section>}
               {resume.more?.map(item => <Section key={item.id} title={item.label} accent={accent} layout={layout}><Text style={styles.paragraph}>{item.value}</Text></Section>)}
             </View>
           </View>
@@ -156,7 +148,6 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
                 <Section title="Professional Summary" accent={accent} layout={layout}><Text style={styles.paragraph}>{resume.summary}</Text></Section>
                 <Section title="Experience" accent={accent} layout={layout}>{renderExperience()}</Section>
                 {resume.projects.some(p => p.name) && <Section title="Projects" accent={accent} layout={layout}>{renderProjects()}</Section>}
-                {resume.volunteer?.some(v => v.organization) && <Section title="Volunteer Experience" accent={accent} layout={layout}>{renderVolunteer()}</Section>}
                 {!isSplit && (
                   <>
                     {renderSkills()}

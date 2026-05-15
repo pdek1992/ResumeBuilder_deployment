@@ -87,6 +87,25 @@ export async function GET(request: Request) {
       })
     ];
 
+    const renderTargeting = (isWhite = false) => {
+      if (!parsedResume.ats.targetJobDescription) return [];
+      return [
+        createHeading("Inspired by this", isWhite ? "FFFFFF" : accent),
+        new Paragraph({
+          spacing: { before: 100 },
+          children: [new TextRun({ text: "Target Role: ", bold: true, size: 20, color: isWhite ? "FFFFFF" : "000000" }), new TextRun({ text: parsedResume.ats.targetRole || "", size: 20, color: isWhite ? "FFFFFF" : "333333" })]
+        }),
+        new Paragraph({
+          spacing: { before: 50 },
+          children: [new TextRun({ text: "Company: ", bold: true, size: 20, color: isWhite ? "FFFFFF" : "000000" }), new TextRun({ text: parsedResume.ats.targetCompany || "", size: 20, color: isWhite ? "FFFFFF" : "333333" })]
+        }),
+        new Paragraph({
+          spacing: { before: 100, after: 200 },
+          children: [new TextRun({ text: parsedResume.ats.targetJobDescription || "", size: 18, color: isWhite ? "EEEEEE" : "666666", italics: true })]
+        })
+      ];
+    };
+
     let sections = [];
 
     if (isDarkSidebar) {
@@ -108,7 +127,8 @@ export async function GET(request: Request) {
                       createHeading("Skills", "FFFFFF"),
                       ...renderSkills(true),
                       createHeading("Education", "FFFFFF"),
-                      ...renderEducation(true)
+                      ...renderEducation(true),
+                      ...renderTargeting(true)
                     ]
                   }),
                   new TableCell({
@@ -155,7 +175,8 @@ export async function GET(request: Request) {
                       children: [
                         createHeading("Experience", accent),
                         ...renderExperience(),
-                        ...(parsedResume.projects.some(p => p.name) ? [createHeading("Projects", accent), ...renderProjects()] : [])
+                        ...(parsedResume.projects.some(p => p.name) ? [createHeading("Projects", accent), ...renderProjects()] : []),
+                        ...renderTargeting()
                       ]
                     }),
                     new TableCell({
@@ -179,7 +200,8 @@ export async function GET(request: Request) {
             createHeading("Skills", accent),
             ...renderSkills(),
             createHeading("Education", accent),
-            ...renderEducation()
+            ...renderEducation(),
+            ...renderTargeting()
           ])
         ],
       }];

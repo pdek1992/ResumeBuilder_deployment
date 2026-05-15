@@ -5,7 +5,6 @@ import type {
   ExperienceItem,
   ProjectItem,
   ResumeData,
-  VolunteerItem,
 } from "@/lib/types";
 
 function createExperienceItem(): ExperienceItem {
@@ -63,16 +62,6 @@ function createAdditionalItem(): AdditionalItem {
   };
 }
 
-function createVolunteerItem(): VolunteerItem {
-  return {
-    id: crypto.randomUUID(),
-    organization: "",
-    role: "",
-    startDate: "",
-    endDate: "",
-    highlights: [""],
-  };
-}
 
 export function createDefaultResumeData(): ResumeData {
   return {
@@ -95,7 +84,6 @@ export function createDefaultResumeData(): ResumeData {
     skills: [],
     projects: [createProjectItem()],
     certifications: [createCertificationItem()],
-    volunteer: [],
     more: [createAdditionalItem()],
     style: {
       accent: "#0f6c7c",
@@ -120,17 +108,30 @@ export const resumeSectionAliases: Record<string, string[]> = {
 };
 
 export function calculateAtsScore(resume: ResumeData) {
-  let score = 45;
+  let score = 30; // Base score
 
-  if (resume.personal.firstName && resume.personal.lastName) score += 10;
-  if (resume.summary.trim().length > 120) score += 10;
-  if (resume.experience.some((item) => item.title && item.company)) score += 10;
-  if (resume.education.some((item) => item.school && item.degree)) score += 7;
-  if (resume.skills.length >= 5) score += 8;
-  if (resume.ats.targetJobDescription.trim()) score += 7;
-  if (resume.projects.some((item) => item.name)) score += 3;
-  if (resume.certifications.some((item) => item.name)) score += 2;
-  if (resume.more?.some((item) => item.label && item.value)) score += 1;
+  // Basic Contact Info (15 pts)
+  if (resume.personal.firstName && resume.personal.lastName) score += 5;
+  if (resume.personal.email && (resume.personal.phone || resume.personal.linkedIn)) score += 5;
+  if (resume.personal.location) score += 5;
+
+  // Professional Content (40 pts)
+  if (resume.summary.trim().length > 150) score += 10;
+  if (resume.experience.length >= 2) score += 10;
+  else if (resume.experience.length === 1) score += 5;
+  if (resume.education.length >= 1) score += 10;
+  if (resume.skills.length >= 8) score += 10;
+  else if (resume.skills.length >= 4) score += 5;
+
+  // Targeting & Alignment (30 pts) - HEAVY WEIGHT
+  if (resume.ats.targetRole) score += 10;
+  if (resume.ats.targetCompany) score += 5;
+  if (resume.ats.targetJobDescription && resume.ats.targetJobDescription.length > 100) score += 15;
+
+  // Extras (5 pts)
+  if (resume.projects.length >= 1 && resume.projects[0].name) score += 2;
+  if (resume.certifications.length >= 1 && resume.certifications[0].name) score += 2;
+  if (resume.more?.length >= 1 && resume.more[0].label) score += 1;
 
   return Math.min(score, 100);
 }
