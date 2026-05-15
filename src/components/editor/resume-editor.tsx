@@ -14,7 +14,7 @@ import { LogoLockup } from "@/components/ui/logo-lockup";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import { ResumeChatSidebar } from "./resume-chat-sidebar";
 
-const sectionOrder = ["personal", "experience", "education", "skills", "projects", "certifications", "volunteer", "more"] as const;
+const sectionOrder = ["personal", "experience", "education", "skills", "projects", "certifications", "customization", "more"] as const;
 const accentOptions = ["#3067ea", "#0f6c7c", "#92400e", "#7c3aed", "#be123c", "#334155"];
 const fieldClassName =
   "mt-3 w-full rounded-[1.9rem] border-2 border-transparent bg-slate-50 px-6 py-5 text-[17px] font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white";
@@ -405,12 +405,7 @@ export function ResumeEditor({
     }));
   }
 
-  function setVolunteerField(id: string, key: keyof ResumeData["volunteer"][number], value: unknown) {
-    setResume((current) => ({
-      ...current,
-      volunteer: current.volunteer.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
-    }));
-  }
+
 
   function handleProfilePhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -529,7 +524,7 @@ export function ResumeEditor({
                           : "bg-slate-50 text-slate-500"
                       }`}
                     >
-                      {section}
+                      {section === "customization" ? "Targeting" : section}
                     </button>
                   ))}
                 </div>
@@ -842,111 +837,43 @@ export function ResumeEditor({
                   </div>
                 ) : null}
 
-                {activeSection === "volunteer" ? (
-                  <div className="space-y-5">
-                    {resume.volunteer?.map((item, index) => (
-                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
-                        <div className="grid gap-5 md:grid-cols-2">
-                          <div>
-                            <label className={labelClassName}>Organization</label>
-                            <input value={item.organization} onChange={(event) => setVolunteerField(item.id, "organization", event.target.value)} className={fieldClassName} />
-                          </div>
-                          <div>
-                            <label className={labelClassName}>Role</label>
-                            <input value={item.role} onChange={(event) => setVolunteerField(item.id, "role", event.target.value)} className={fieldClassName} />
-                          </div>
-                        </div>
-                        <div className="mt-5 grid gap-5 md:grid-cols-2">
-                          <div>
-                            <label className={labelClassName}>Start Date</label>
-                            <input value={item.startDate} onChange={(event) => setVolunteerField(item.id, "startDate", event.target.value)} className={fieldClassName} placeholder="MMM YYYY" />
-                          </div>
-                          <div>
-                            <label className={labelClassName}>End Date</label>
-                            <input value={item.endDate} onChange={(event) => setVolunteerField(item.id, "endDate", event.target.value)} className={fieldClassName} placeholder="MMM YYYY or Present" />
-                          </div>
-                        </div>
-                        <div className="mt-5">
-                          <label className={labelClassName}>Highlights</label>
-                          <textarea
-                            value={item.highlights.join("\n")}
-                            onChange={(event) => setVolunteerField(item.id, "highlights", event.target.value.split("\n").filter(Boolean))}
-                            className={`${fieldClassName} min-h-[160px]`}
-                          />
-                        </div>
-                        {index === (resume.volunteer?.length ?? 0) - 1 || !resume.volunteer?.length ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setResume((current) => ({
-                                ...current,
-                                volunteer: [
-                                  ...(current.volunteer || []),
-                                  { id: crypto.randomUUID(), organization: "", role: "", startDate: "", endDate: "", highlights: [""] },
-                                ],
-                              }))
-                            }
-                            className="mt-6 rounded-full border border-slate-200 bg-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-500"
-                          >
-                            Add Volunteer Experience
-                          </button>
-                        ) : null}
-                      </div>
-                    ))}
-                    {(!resume.volunteer || resume.volunteer.length === 0) && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setResume((current) => ({
-                            ...current,
-                            volunteer: [
-                              { id: crypto.randomUUID(), organization: "", role: "", startDate: "", endDate: "", highlights: [""] },
-                            ],
-                          }))
-                        }
-                        className="rounded-full border border-slate-200 bg-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-500"
-                      >
-                        Add Volunteer Experience
-                      </button>
-                    )}
-                  </div>
-                ) : null}
-
-                {activeSection === "more" ? (
+                {activeSection === "customization" ? (
                   <div className="space-y-6">
                     <div className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
-                      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary mb-6">Targeting & ATS Optimization</p>
-                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="mb-6 flex items-center justify-between">
+                        <h4 className="text-[14px] font-black uppercase tracking-[0.24em] text-slate-800">Target Opportunity</h4>
+                        <span className="rounded-full bg-primary/10 px-4 py-2 text-[10px] font-bold text-primary">Inspired by this</span>
+                      </div>
+                      <div className="grid gap-5 md:grid-cols-2">
                         <div>
-                          <label className={labelClassName}>Target Role</label>
-                          <input
-                            value={resume.ats.targetRole}
-                            onChange={(event) => setResume((current) => ({ ...current, ats: { ...current.ats, targetRole: event.target.value } }))}
+                          <label className={labelClassName}>Designation / Role</label>
+                          <input 
+                            value={resume.ats.targetRole} 
+                            onChange={(event) => setResume(curr => ({ ...curr, ats: { ...curr.ats, targetRole: event.target.value } }))} 
                             className={fieldClassName}
-                            placeholder="e.g. Senior Product Manager"
+                            placeholder="e.g. Senior Software Engineer" 
                           />
                         </div>
                         <div>
-                          <label className={labelClassName}>Target Company</label>
-                          <input
-                            value={resume.ats.targetCompany}
-                            onChange={(event) => setResume((current) => ({ ...current, ats: { ...current.ats, targetCompany: event.target.value } }))}
+                          <label className={labelClassName}>Company Name</label>
+                          <input 
+                            value={resume.ats.targetCompany} 
+                            onChange={(event) => setResume(curr => ({ ...curr, ats: { ...curr.ats, targetCompany: event.target.value } }))} 
                             className={fieldClassName}
-                            placeholder="e.g. Google"
+                            placeholder="e.g. Google" 
                           />
                         </div>
                       </div>
-                      <div className="mt-6">
-                        <label className={labelClassName}>Primary Job Description</label>
+                      <div className="mt-5">
+                        <label className={labelClassName}>Job Description</label>
                         <textarea
                           value={resume.ats.targetJobDescription}
-                          onChange={(event) =>
-                            setResume((current) => ({ ...current, ats: { ...current.ats, targetJobDescription: event.target.value } }))
-                          }
-                          className={`${fieldClassName} min-h-[180px]`}
-                          placeholder="Paste the JD to improve ATS matching and interview tailoring"
+                          onChange={(event) => setResume(curr => ({ ...curr, ats: { ...curr.ats, targetJobDescription: event.target.value } }))}
+                          className={`${fieldClassName} min-h-[200px]`}
+                          placeholder="Paste the job description here to customize your resume summary and highlights..."
                         />
                       </div>
+                      
                       <div className="mt-8 flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                         <div>
                           <p className="text-sm font-bold text-slate-700">Real-time ATS Score</p>
@@ -956,20 +883,19 @@ export function ResumeEditor({
                           {atsScore}%
                         </div>
                       </div>
-                    </div>
 
-                    <div className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8 opacity-50 cursor-not-allowed">
-                      <p className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400 mb-4">Multi-Job Batch Processing (Premium)</p>
-                      <p className="text-sm text-slate-500 leading-relaxed">
-                        Compare your resume against 3-5 similar jobs simultaneously to identify aggregate gaps.
+                      <p className="mt-4 text-[11px] font-medium text-slate-400">
+                        * This information is used by the AI to tailor your summary and experience highlights when you click "AI Tailor".
                       </p>
-                      <button disabled className="mt-6 rounded-full border border-slate-200 bg-white px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                        + Add Additional JD
-                      </button>
                     </div>
+                  </div>
+                ) : null}
 
+                {activeSection === "more" ? (
+                  <div className="space-y-6">
                     <div className="space-y-5">
                       <p className="ml-4 text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Additional Sections (Languages, Awards, etc.)</p>
+
                       {resume.more?.map((item) => (
                         <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
                           <div className="grid gap-5 md:grid-cols-2">

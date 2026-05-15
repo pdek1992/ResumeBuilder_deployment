@@ -46,7 +46,7 @@ export async function generatePdfHtml(resume: ResumeData, template: TemplateReco
           }
           
           /* Remove arbitrary container max-widths for print */
-          .mx-auto.max-w-\\[760px\\] {
+          .mx-auto.max-w-\\[680px\\] {
             max-width: none !important;
             width: 100% !important;
           }

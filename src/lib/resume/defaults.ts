@@ -117,7 +117,6 @@ export const resumeSectionAliases: Record<string, string[]> = {
   skills: ["skills", "core skills", "technical skills", "expertise"],
   projects: ["projects", "project experience", "key projects"],
   certifications: ["certifications", "licenses", "credentials"],
-  volunteer: ["volunteer", "volunteer experience", "community service"],
 };
 
 export function calculateAtsScore(resume: ResumeData) {
@@ -128,10 +127,9 @@ export function calculateAtsScore(resume: ResumeData) {
   if (resume.experience.some((item) => item.title && item.company)) score += 10;
   if (resume.education.some((item) => item.school && item.degree)) score += 7;
   if (resume.skills.length >= 5) score += 8;
-  if (resume.ats.targetJobDescription.trim()) score += 5;
+  if (resume.ats.targetJobDescription.trim()) score += 7;
   if (resume.projects.some((item) => item.name)) score += 3;
   if (resume.certifications.some((item) => item.name)) score += 2;
-  if (resume.volunteer?.some((item) => item.organization)) score += 2;
   if (resume.more?.some((item) => item.label && item.value)) score += 1;
 
   return Math.min(score, 100);
