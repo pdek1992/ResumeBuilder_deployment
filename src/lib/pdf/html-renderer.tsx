@@ -1,10 +1,9 @@
-import React from "react";
-import { renderToString } from "react-dom/server";
+import { renderToStaticMarkup } from "react-dom/server";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import type { ResumeData, TemplateRecord } from "@/lib/types";
 
 export function generatePdfHtml(resume: ResumeData, template: TemplateRecord) {
-  const componentHtml = renderToString(
+  const componentHtml = renderToStaticMarkup(
     <ResumePreview resume={resume} template={template} isPrintMode={true} />
   );
 
