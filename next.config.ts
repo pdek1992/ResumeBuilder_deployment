@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
-  serverExternalPackages: ["@napi-rs/canvas"],
+  serverExternalPackages: ["@napi-rs/canvas", "@sparticuz/chromium", "puppeteer-core"],
   async headers() {
     const securityHeaders = [
       {
