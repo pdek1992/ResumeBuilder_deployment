@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
     
     // Generate the PDF using Puppeteer
-    const html = generatePdfHtml(parsedResume, template);
+    const html = await generatePdfHtml(parsedResume, template);
     const browser = await getBrowser();
     
     let pdfBuffer: Buffer;

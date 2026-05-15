@@ -1,8 +1,10 @@
-import { renderToStaticMarkup } from "react-dom/server";
+import React from "react";
 import { ResumePreview } from "@/components/builder/resume-preview";
 import type { ResumeData, TemplateRecord } from "@/lib/types";
 
-export function generatePdfHtml(resume: ResumeData, template: TemplateRecord) {
+export async function generatePdfHtml(resume: ResumeData, template: TemplateRecord) {
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  
   const componentHtml = renderToStaticMarkup(
     <ResumePreview resume={resume} template={template} isPrintMode={true} />
   );
