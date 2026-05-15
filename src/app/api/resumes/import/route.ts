@@ -34,6 +34,7 @@ const importSchema = z.object({
   skills: z.array(z.string()).default([]),
   projects: z.array(z.any()).default([]),
   certifications: z.array(z.any()).default([]),
+  volunteer: z.array(z.any()).default([]),
   more: z.array(z.any()).default([]),
   style: z
     .object({
