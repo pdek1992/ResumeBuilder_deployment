@@ -9,7 +9,7 @@ import { verifyDownloadToken } from "@/lib/downloads/tokens";
 import { logUserAction } from "@/lib/logging";
 import { getActiveResumePass } from "@/lib/payments/access";
 import { createDefaultResumeData } from "@/lib/resume/defaults";
-import { getResumeForUser } from "@/lib/resume/repository";
+import { getResumeForUser, listTemplates } from "@/lib/resume/repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
 
