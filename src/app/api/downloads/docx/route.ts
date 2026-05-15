@@ -10,8 +10,22 @@ import { logUserAction } from "@/lib/logging";
 import { getActiveResumePass } from "@/lib/payments/access";
 import { createDefaultResumeData } from "@/lib/resume/defaults";
 import { getResumeForUser, listTemplates } from "@/lib/resume/repository";
+import { getTemplateRenderConfig } from "@/lib/resume/template-renderer";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
+
+function toDocxHex(color: string | undefined, fallback = "2563EB") {
+  if (!color) return fallback;
+  const normalized = color.trim().replace("#", "").toUpperCase();
+  return /^[0-9A-F]{6}$/.test(normalized) ? normalized : fallback;
+}
+
+function tintHex(color: string, amount = 0.92) {
+  const hex = toDocxHex(color);
+  const channel = (offset: number) => Number.parseInt(hex.slice(offset, offset + 2), 16);
+  const mix = (value: number) => Math.round(value + (255 - value) * amount).toString(16).padStart(2, "0");
+  return `${mix(channel(0))}${mix(channel(2))}${mix(channel(4))}`.toUpperCase();
+}
 
 export async function GET(request: Request) {
   try {
@@ -35,10 +49,11 @@ export async function GET(request: Request) {
     const template = templates.find((item) => item.id === resume.template_id) ?? templates[0];
     const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
     const fullName = `${parsedResume.personal.firstName} ${parsedResume.personal.lastName}`.trim() || "Your Name";
-    const accent = (parsedResume.style?.accent || template.config_json.accent || "#2563eb").replace("#", "");
+    const accent = toDocxHex(parsedResume.style?.accent || template.config_json.accent || "#2563eb");
     const layout = (template.config_json.layout || "standard") as string;
-    const isSplit = template.config_json.columns === "split";
-    const isDarkSidebar = layout === "sidebar-dark";
+    const renderConfig = getTemplateRenderConfig(layout, template.config_json, `#${accent}`);
+    const isSplit = renderConfig.hasSidebar || template.config_json.columns === "split";
+    const sidebarFill = layout === "sidebar-dark" ? toDocxHex(renderConfig.sidebarBg, accent) : tintHex(accent);
 
     const createHeading = (text: string, color: string = accent) => new Paragraph({
       heading: HeadingLevel.HEADING_1,
@@ -80,12 +95,30 @@ export async function GET(request: Request) {
       new Paragraph({ spacing: { after: 150 } }),
     ]);
 
-    const renderSkills = (isWhite = false) => [
-      new Paragraph({
-        spacing: { before: 100, after: 150 },
-        children: [new TextRun({ text: parsedResume.skills.join(" • "), size: 20, color: isWhite ? "FFFFFF" : "333333" })]
-      })
-    ];
+    const renderSkills = (isWhite = false) => {
+      const color = isWhite ? "FFFFFF" : "333333";
+      if (renderConfig.skillStyle === "plain-list") {
+        return [new Paragraph({
+          spacing: { before: 100, after: 150 },
+          children: [new TextRun({ text: parsedResume.skills.join(" / "), size: 20, color })]
+        })];
+      }
+
+      return parsedResume.skills.map((skill, index) => new Paragraph({
+        spacing: { before: index === 0 ? 100 : 40, after: 40 },
+        bullet: ["dot-list", "progress-dot"].includes(renderConfig.skillStyle) ? { level: 0 } : undefined,
+        children: [
+          new TextRun({
+            text: ["pill-tags", "inline-tags", "boxed-grid", "numbered-bar"].includes(renderConfig.skillStyle)
+              ? `${skill}${renderConfig.skillStyle === "numbered-bar" ? `  ${Math.max(72, 94 - (index % 5) * 5)}%` : ""}`
+              : skill,
+            size: 20,
+            bold: ["pill-tags", "inline-tags", "boxed-grid", "numbered-bar"].includes(renderConfig.skillStyle),
+            color,
+          })
+        ]
+      }));
+    };
 
 
     let sections = [];
@@ -103,7 +136,7 @@ export async function GET(request: Request) {
                 children: [
                   new TableCell({
                     width: { size: 32, type: WidthType.PERCENTAGE },
-                    shading: { fill: layout === "sidebar-dark" ? (accent === "111827" ? "111827" : accent) : "F8FAFC", type: ShadingType.CLEAR },
+                    shading: { fill: sidebarFill, type: ShadingType.CLEAR },
                     margins: { top: 700, bottom: 700, left: 400, right: 400 },
                     children: [
                       createHeading("Skills", layout === "sidebar-dark" ? "FFFFFF" : accent),
@@ -202,7 +235,7 @@ export async function GET(request: Request) {
                   }),
                   new TableCell({
                     width: { size: 35, type: WidthType.PERCENTAGE },
-                    shading: { fill: "F8FAFC", type: ShadingType.CLEAR },
+                    shading: { fill: tintHex(accent), type: ShadingType.CLEAR },
                     margins: { left: 300, right: 200, top: 200, bottom: 200 },
                     children: [
                       createHeading("Skills", accent),
@@ -266,7 +299,7 @@ export async function GET(request: Request) {
                 children: [
                   new TableCell({
                     width: { size: 100, type: WidthType.PERCENTAGE },
-                    shading: { fill: `${accent}15`, type: ShadingType.CLEAR }, // Tinted banner
+                    shading: { fill: tintHex(accent), type: ShadingType.CLEAR },
                     margins: { top: 700, bottom: 700, left: 700, right: 700 },
                     children: [
                       new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: fullName, bold: true, color: "000000", size: 48 })] }),

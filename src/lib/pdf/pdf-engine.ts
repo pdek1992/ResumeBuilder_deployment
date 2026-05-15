@@ -1,9 +1,8 @@
-import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
-import fs from "fs";
 
 // Find local chrome path for Windows development
-function getLocalChromePath() {
+async function getLocalChromePath() {
+  const fs = await import("node:fs");
   const paths = [
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
@@ -18,10 +17,12 @@ function getLocalChromePath() {
 
 export async function getBrowser() {
   const isDev = process.env.NODE_ENV === "development";
+  const { default: chromium } = await import("@sparticuz/chromium");
   const chr = chromium as any;
+  chr.setGraphicsMode = false;
   
   const executablePath = isDev 
-    ? getLocalChromePath()
+    ? await getLocalChromePath()
     : await chr.executablePath();
     
   return await puppeteer.launch({

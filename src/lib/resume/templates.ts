@@ -20,6 +20,7 @@ const template = (
 });
 
 export const defaultTemplates: TemplateRecord[] = [
+  // ── Elite Tier ───────────────────────────────────────────────────────────
   template("elite-modular-card", "Elite Modular Card", "/templates/elite-modular-card.png", "Premium modular card-based layout for a modern interactive look.", ["Elite", "Modular", "Premium"], {
     accent: "#2563eb",
     headerBackground: "#f8fafc",
@@ -29,6 +30,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "single",
     layout: "modular-card",
   }, "/icons/icon-resume.png"),
+
   template("elite-sidebar-circles", "Elite Sidebar Circles", "/templates/elite-sidebar-circles.png", "Clean sidebar layout with circular indicators and elegant hierarchy.", ["Elite", "Sidebar", "Visual"], {
     accent: "#0284c7",
     headerBackground: "#ffffff",
@@ -38,6 +40,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "split",
     layout: "sidebar-circles",
   }, "/icons/icon-connections.png"),
+
   template("elite-banner-soft", "Elite Soft Banner", "/templates/elite-banner-soft.png", "Sophisticated layout with a soft banner and clean two-column content.", ["Elite", "Banner", "Professional"], {
     accent: "#65a30d",
     headerBackground: "#ecfccb",
@@ -47,6 +50,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "split",
     layout: "banner-soft",
   }, "/icons/icon-communication.png"),
+
   template("elite-grid-labels", "Elite Grid Labels", "/templates/elite-grid-labels.png", "Structured grid-based layout with prominent section labels.", ["Elite", "Grid", "Modern"], {
     accent: "#1e293b",
     headerBackground: "#ffffff",
@@ -56,6 +60,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "single",
     layout: "grid-labels",
   }, "/icons/icon-target.png"),
+
   template("elite-sidebar-dark", "Elite Dark Sidebar", "/templates/elite-sidebar-dark.png", "Professional layout with a bold dark sidebar for high contrast.", ["Elite", "Sidebar", "Bold"], {
     accent: "#14532d",
     headerBackground: "#ffffff",
@@ -66,6 +71,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "split",
     layout: "sidebar-dark",
   }, "/icons/icon-resume.png"),
+
   template("elite-corporate-pro", "Elite Corporate Pro", "/templates/elite-corporate-pro.png", "A high-end corporate layout with refined spacing and strong hierarchy.", ["Elite", "Corporate", "High-End"], {
     accent: "#0f172a",
     headerBackground: "#f1f5f9",
@@ -73,8 +79,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "corporate-minimal",
   }, "/icons/icon-analytics.png"),
+
   template("elite-creative-bold", "Elite Creative Bold", "/templates/elite-creative-bold.png", "Dynamic and expressive layout for creative professionals.", ["Elite", "Creative", "Bold"], {
     accent: "#7e22ce",
     headerBackground: "#faf5ff",
@@ -82,8 +89,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "split",
-    layout: "standard",
+    layout: "creative-bold",
   }, "/icons/icon-ai-brain.png"),
+
   template("elite-dynamic-grid", "Elite Dynamic Grid", "/templates/elite-dynamic-grid.png", "Modern grid-based system for high-impact visual presentation.", ["Elite", "Grid", "Dynamic"], {
     accent: "#0369a1",
     headerBackground: "#ffffff",
@@ -93,6 +101,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "single",
     layout: "grid-labels",
   }, "/icons/icon-github-ai.png"),
+
   template("elite-elegant-serif", "Elite Elegant Serif", "/templates/elite-elegant-serif.png", "Timeless elegance with a focus on typography and whitespace.", ["Elite", "Elegant", "Classic"], {
     accent: "#4338ca",
     headerBackground: "#eef2ff",
@@ -100,8 +109,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "single",
-    layout: "standard",
+    layout: "executive-serif",
   }, "/icons/icon-resume.png"),
+
   template("elite-minimal-clean", "Elite Minimal Clean", "/templates/elite-minimal-clean.png", "Ultra-clean minimalist layout for a distraction-free experience.", ["Elite", "Minimal", "Clean"], {
     accent: "#374151",
     headerBackground: "#ffffff",
@@ -109,8 +119,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "ultra-clean",
   }, "/icons/icon-upload.png"),
+
   template("elite-modern-accent", "Elite Modern Accent", "/templates/elite-modern-accent.png", "Contemporary layout with bold accent elements and modern feel.", ["Elite", "Modern", "Accent"], {
     accent: "#be185d",
     headerBackground: "#fdf2f8",
@@ -118,8 +129,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "vibrant-accent",
   }, "/icons/icon-target.png"),
+
   template("elite-premium-executive", "Elite Premium Executive", "/templates/elite-premium-executive.png", "The ultimate executive template for C-suite and senior leaders.", ["Elite", "Executive", "Premium"], {
     accent: "#1e1b4b",
     headerBackground: "#e0e7ff",
@@ -127,8 +139,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "single",
-    layout: "standard",
+    layout: "executive-serif",
   }, "/icons/icon-resume.png"),
+
   template("elite-sharp-modern", "Elite Sharp Modern", "/templates/elite-sharp-modern.png", "Precise, sharp layout with clear lines and professional impact.", ["Elite", "Sharp", "Modern"], {
     accent: "#15803d",
     headerBackground: "#f0fdf4",
@@ -136,8 +149,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "compact",
     typography: "technical-mono",
     columns: "single",
-    layout: "standard",
+    layout: "impactful-bold",
   }, "/icons/icon-github-ai.png"),
+
   template("elite-soft-minimal", "Elite Soft Minimal", "/templates/elite-soft-minimal.png", "Gentle minimalist approach with soft colors and clean layout.", ["Elite", "Minimal", "Soft"], {
     accent: "#0891b2",
     headerBackground: "#ecfeff",
@@ -145,8 +159,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "pastel-soft",
   }, "/icons/icon-communication.png"),
+
   template("elite-bold-header", "Elite Bold Header", "/templates/elite-bold-header.png", "Command attention with a bold header and structured content flow.", ["Elite", "Bold", "Impactful"], {
     accent: "#b91c1c",
     headerBackground: "#fef2f2",
@@ -154,8 +169,10 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "bold-header-accent",
   }, "/icons/icon-target.png"),
+
+  // ── Standard Tier ─────────────────────────────────────────────────────────
   template("minimal-ats", "ATS Minimal", "/templates/minimal-ats.png", "Clean ATS-safe layout with a strong recruiter scan path.", ["ATS", "Minimal", "Professional"], {
     accent: "#0f6c7c",
     headerBackground: "#0f6c7c",
@@ -164,8 +181,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "sidebar-dark",
   }),
+
   template("modern-professional", "Modern Professional", "/templates/modern-professional.png", "Professional layout with elegant hierarchy for general corporate roles.", ["Modern", "Professional", "Corporate"], {
     accent: "#334155",
     headerBackground: "#ffffff",
@@ -174,8 +192,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "hybrid-pro",
   }),
+
   template("executive", "Executive", "/templates/executive.png", "Premium executive profile with crisp spacing and decisive section rhythm.", ["Executive", "Premium", "Classic"], {
     accent: "#1d4ed8",
     headerBackground: "#eff6ff",
@@ -184,8 +203,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "single",
-    layout: "standard",
+    layout: "executive-serif",
   }),
+
   template("hybrid", "Hybrid", "/templates/hybrid.png", "Balanced hybrid resume for experienced candidates needing skill and impact coverage.", ["Hybrid", "Experienced", "Balanced"], {
     accent: "#0f766e",
     headerBackground: "#ffffff",
@@ -194,8 +214,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "hybrid-pro",
   }),
+
   template("creative", "Creative", "/templates/creative.png", "Contemporary layout with stronger visual character for portfolio-heavy roles.", ["Creative", "Visual", "Contemporary"], {
     accent: "#7c3aed",
     headerBackground: "#f5f3ff",
@@ -204,8 +225,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "editorial-serif",
     columns: "split",
-    layout: "standard",
+    layout: "creative-bold",
   }),
+
   template("modern-columns", "Modern Columns", "/templates/modern-columns.png", "Structured dual-column layout with concise scannability.", ["Modern", "Columns", "Scannable"], {
     accent: "#2563eb",
     headerBackground: "#eff6ff",
@@ -216,6 +238,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "split",
     layout: "modern-columns",
   }),
+
   template("sleek-dark", "Sleek Dark", "/templates/sleek-dark.png", "Dark-accent premium layout for standout senior applications.", ["Sleek", "Dark", "Premium"], {
     accent: "#111827",
     headerBackground: "#111827",
@@ -226,6 +249,7 @@ export const defaultTemplates: TemplateRecord[] = [
     columns: "single",
     layout: "sleek-dark",
   }),
+
   template("luxury-gold", "Luxury Gold", "/templates/luxury-gold.png", "Reserved luxury styling with refined color contrast.", ["Luxury", "Gold", "Refined"], {
     accent: "#a16207",
     headerBackground: "#fffbeb",
@@ -234,8 +258,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "single",
-    layout: "standard",
+    layout: "luxury-gold",
   }),
+
   template("impactful", "Impactful", "/templates/impactful.png", "Bold recruiter-facing layout optimized for quantified accomplishments.", ["Impactful", "Bold", "Achievements"], {
     accent: "#dc2626",
     headerBackground: "#fef2f2",
@@ -244,8 +269,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "compact",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "impactful-bold",
   }),
+
   template("infographic", "Infographic", "/templates/infographic.png", "Graphic-leaning presentation with controlled flair for creative industries.", ["Infographic", "Creative", "Visual"], {
     accent: "#9333ea",
     headerBackground: "#faf5ff",
@@ -254,8 +280,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "infographic-split",
   }),
+
   template("startup", "Startup", "/templates/startup.png", "Fast-moving startup style with strong metrics emphasis.", ["Startup", "Metrics", "Fast"], {
     accent: "#ea580c",
     headerBackground: "#fff7ed",
@@ -264,8 +291,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "compact",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "startup-metrics",
   }),
+
   template("classic-academic", "Classic Academic", "/templates/classic-academic.png", "Traditional academic format with disciplined hierarchy.", ["Academic", "Classic", "Traditional"], {
     accent: "#1e3a8a",
     headerBackground: "#eff6ff",
@@ -274,8 +302,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "single",
-    layout: "standard",
+    layout: "academic-classic",
   }),
+
   template("ultra-minimalist", "Ultra Minimalist", "/templates/ultra-minimalist.png", "Quiet minimalist design for conservative hiring funnels.", ["Minimalist", "Clean", "Conservative"], {
     accent: "#475569",
     headerBackground: "#ffffff",
@@ -284,8 +313,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "ultra-clean",
   }),
+
   template("creative-designer", "Creative Designer", "/templates/creative-designer.png", "A more expressive visual system for design-forward candidates.", ["Designer", "Creative", "Visual"], {
     accent: "#0d9488",
     headerBackground: "#ecfeff",
@@ -294,8 +324,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "editorial-serif",
     columns: "split",
-    layout: "standard",
+    layout: "creative-designer-split",
   }),
+
   template("deep-charcoal", "Deep Charcoal", "/templates/deep-charcoal.png", "Serious and understated with deep neutral contrast.", ["Serious", "Contrast", "Neutral"], {
     accent: "#0f172a",
     headerBackground: "#e2e8f0",
@@ -304,8 +335,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "deep-charcoal",
   }),
+
   template("corporate-minimal", "Corporate Minimal", "/templates/corporate-minimal.png", "Corporate-safe format with modern whitespace and compact headings.", ["Corporate", "Minimal", "Safe"], {
     accent: "#2563eb",
     headerBackground: "#ffffff",
@@ -314,8 +346,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "balanced",
     typography: "modern-sans",
     columns: "single",
-    layout: "standard",
+    layout: "corporate-minimal",
   }),
+
   template("pastel-professional", "Pastel Professional", "/templates/pastel-professional.png", "Soft but polished styling for people-facing roles.", ["Pastel", "Soft", "Professional"], {
     accent: "#7c3aed",
     headerBackground: "#faf5ff",
@@ -324,8 +357,9 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "airy",
     typography: "editorial-serif",
     columns: "single",
-    layout: "standard",
+    layout: "pastel-soft",
   }),
+
   template("vibrant-startup", "Vibrant Startup", "/templates/vibrant-startup.png", "High-energy startup template with colorful section anchors.", ["Vibrant", "Startup", "Color"], {
     accent: "#db2777",
     headerBackground: "#fdf2f8",
@@ -334,6 +368,6 @@ export const defaultTemplates: TemplateRecord[] = [
     density: "compact",
     typography: "modern-sans",
     columns: "split",
-    layout: "standard",
+    layout: "vibrant-accent",
   }),
 ];

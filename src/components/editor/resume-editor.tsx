@@ -895,7 +895,7 @@ export function ResumeEditor({
                       </div>
 
                       <p className="mt-4 text-[11px] font-medium text-slate-400">
-                        * This information is used by the AI to tailor your summary and experience highlights when you click "AI Tailor".
+                        * This information is used by the AI to tailor your summary and experience highlights when you click &quot;AI Tailor&quot;.
                       </p>
                     </div>
                   </div>

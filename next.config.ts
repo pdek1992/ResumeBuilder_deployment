@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: process.cwd(),
+  outputFileTracingIncludes: {
+    "/api/downloads/pdf": [
+      "./node_modules/@sparticuz/chromium/bin/**/*",
+      "./node_modules/@sparticuz/chromium/build/**/*",
+    ],
+  },
   images: {
     remotePatterns: [],
   },

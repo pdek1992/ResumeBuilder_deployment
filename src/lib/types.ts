@@ -60,7 +60,30 @@ export type ResumeThemeConfig = {
   previewClassName?: string;
   typography: TypographyStyle;
   columns: "single" | "split";
-  layout?: "standard" | "modular-card" | "sidebar-circles" | "banner-soft" | "grid-labels" | "sidebar-dark" | "sleek-dark" | "modern-columns";
+  layout?: 
+    | "standard"
+    | "modular-card"
+    | "sidebar-circles"
+    | "banner-soft"
+    | "grid-labels"
+    | "sidebar-dark"
+    | "sleek-dark"
+    | "modern-columns"
+    | "executive-serif"
+    | "luxury-gold"
+    | "corporate-minimal"
+    | "deep-charcoal"
+    | "infographic-split"
+    | "startup-metrics"
+    | "academic-classic"
+    | "ultra-clean"
+    | "creative-bold"
+    | "pastel-soft"
+    | "vibrant-accent"
+    | "impactful-bold"
+    | "hybrid-pro"
+    | "creative-designer-split"
+    | "bold-header-accent";
 };
 
 export type PersonalInfo = {
