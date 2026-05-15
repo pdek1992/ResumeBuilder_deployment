@@ -22,23 +22,43 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
 
   const renderPersonal = () => (
     <div className={cn(
-      "px-8 py-7 text-white md:px-10",
-      layout === "banner-soft" && "rounded-b-[2rem] shadow-lg",
-      layout === "sidebar-dark" && "bg-transparent !text-slate-900"
-    )} style={{ backgroundColor: layout === "sidebar-dark" ? "transparent" : (template.config_json.headerBackground || accent) }}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      "px-8 py-10 text-white md:px-12",
+      layout === "banner-soft" && "rounded-b-[3rem] shadow-2xl",
+      layout === "sidebar-dark" && "bg-transparent !text-slate-900 !px-0 !py-0",
+      layout === "modular-card" && "rounded-[2.5rem] !text-slate-900 border border-slate-100 shadow-sm mb-8",
+      !layout.includes("sidebar") && "mb-8"
+    )} style={{ 
+      backgroundColor: (layout === "sidebar-dark" || layout === "modular-card") ? "transparent" : (template.config_json.headerBackground || accent),
+      borderColor: layout === "modular-card" ? template.config_json.headerBackground : undefined
+    }}>
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex-1">
           <h1 className={cn(
-            "font-display text-[26px] font-black tracking-tight md:text-[30px]",
-            layout === "sidebar-dark" && "text-slate-900"
+            "font-display text-[32px] font-black leading-tight tracking-tight md:text-[42px]",
+            (layout === "sidebar-dark" || layout === "modular-card") ? "text-slate-950" : "text-white"
           )}>{fullName}</h1>
-          <p className={cn("mt-2 text-[13px] opacity-95", layout === "sidebar-dark" && "text-slate-600")}>{resume.personal.headline || resume.ats.targetRole || "Professional Headline"}</p>
-          <p className={cn("mt-3 text-[11px] opacity-90", layout === "sidebar-dark" && "text-slate-500")}>
-            {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).join(" | ") || "Location | Phone | Email"}
-          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <p className={cn(
+              "text-[14px] font-bold uppercase tracking-widest",
+              (layout === "sidebar-dark" || layout === "modular-card") ? "text-primary" : "text-white/90"
+            )}>{resume.personal.headline || resume.ats.targetRole || "Professional Headline"}</p>
+          </div>
+          <div className={cn(
+            "mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t pt-6 text-[11px] font-medium tracking-wide",
+            (layout === "sidebar-dark" || layout === "modular-card") ? "border-slate-100 text-slate-500" : "border-white/10 text-white/70"
+          )}>
+            {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).map((text, i) => (
+              <span key={i} className="flex items-center gap-2">
+                {i > 0 && <span className="h-1 w-1 rounded-full bg-current opacity-30" />}
+                {text}
+              </span>
+            ))}
+          </div>
         </div>
-        {template.icon && (
-          <img src={template.icon} alt="Template Icon" className="h-16 w-16 opacity-20 contrast-125" />
+        {template.icon && layout !== "sidebar-dark" && (
+          <div className="hidden h-24 w-24 shrink-0 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-sm md:flex">
+            <img src={template.icon} alt="" className={cn("h-14 w-14 contrast-125", (layout === "modular-card" ? "opacity-100" : "opacity-40 invert brightness-0"))} />
+          </div>
         )}
       </div>
     </div>
@@ -183,6 +203,35 @@ export function ResumePreview({ resume, template, className }: ResumePreviewProp
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {!isSplit && (
+                      <>
+                        {renderSkills()}
+                        <div className={cn(layout === "modular-card" && "rounded-2xl border border-slate-100 bg-slate-50/50 p-6")}>
+                          <PreviewHeading accent={accent}>Education</PreviewHeading>
+                          <div className="mt-4 space-y-3">
+                            {resume.education.map(item => (
+                              <div key={item.id}>
+                                <p className="text-[12px] font-black text-slate-900">{item.degree}</p>
+                                <p className="mt-1 text-[11px] text-slate-500">{item.school}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {resume.certifications.some((item) => item.name) && (
+                          <div className={cn(layout === "modular-card" && "rounded-2xl border border-slate-100 bg-slate-50/50 p-6")}>
+                            <PreviewHeading accent={accent}>Certifications</PreviewHeading>
+                            <div className="mt-4 space-y-2">
+                              {resume.certifications.map((item) => (
+                                <p key={item.id} className="text-[11.5px] leading-5 text-slate-600">
+                                  {[item.name, item.issuer].filter(Boolean).join(" — ")}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 

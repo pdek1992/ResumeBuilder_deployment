@@ -46,28 +46,42 @@ export function TemplateSelector({
   }
 
   return (
-    <section className="rounded-[3rem] border border-white/70 bg-white/82 px-6 py-8 shadow-[0_30px_80px_rgba(37,99,235,0.12)] backdrop-blur md:px-10 md:py-10">
-      <p className="text-[12px] font-black uppercase tracking-[0.32em] text-primary">Step 3: Visuals</p>
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mt-6 inline-flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.22em] text-slate-500"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </button>
-      <h1 className="mt-5 font-display text-[3rem] font-black leading-none tracking-tight text-slate-950 md:text-[4.3rem]">
-        Choose Your Style
-      </h1>
-      <p className="mt-5 max-w-3xl text-[18px] leading-9 text-slate-500">
-        Select a template that matches your industry. You can change colors and fonts later in the editor.
-      </p>
+    <section className="rounded-[4rem] border border-white/80 bg-white/40 p-8 backdrop-blur-3xl md:p-12">
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-primary/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              {templates.length} Premium Designs
+            </span>
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          </div>
+          <h1 className="mt-4 font-display text-[3rem] font-black leading-none tracking-tight text-slate-950 md:text-[4.5rem]">
+            Elite <span className="text-primary">Library</span>
+          </h1>
+          <p className="mt-6 text-[16px] text-slate-500 max-w-lg leading-relaxed">
+            Choose a visual strategy that aligns with your target role. Each template is engineered for maximum ATS readability and visual impact.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="group flex items-center gap-3 rounded-full border border-slate-200 bg-white px-8 py-4 text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 transition hover:border-primary hover:text-primary shadow-sm"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          Return to Editor
+        </button>
+      </div>
 
-      {error ? <p className="mt-6 text-sm text-rose-600">{error}</p> : null}
+      {error ? (
+        <div className="mt-8 rounded-2xl bg-rose-50 px-6 py-4 text-[13px] font-bold text-rose-600">
+          {error}
+        </div>
+      ) : null}
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="mt-16 grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {templates.map((template) => {
           const active = template.id === selectedTemplateId;
+          const isPending = pendingId === template.id;
 
           return (
             <button
@@ -76,25 +90,54 @@ export function TemplateSelector({
               onClick={() => handleSelect(template.id)}
               disabled={pendingId !== null}
               className={cn(
-                "block w-full rounded-[2.8rem] border border-slate-100 bg-white p-5 text-left shadow-[0_18px_40px_rgba(15,23,42,0.05)] transition hover:shadow-[0_24px_58px_rgba(15,23,42,0.08)] disabled:opacity-70",
-                active && "ring-4 ring-primary"
+                "group relative block w-full transition-all duration-500",
+                pendingId !== null && !isPending && "opacity-40 grayscale"
               )}
             >
-              <div className="rounded-[2.2rem] border border-slate-100 bg-white p-3 md:p-5">
-                <div className="overflow-hidden rounded-[1.8rem] border border-slate-100 bg-[#fbfdff] p-2 md:p-4 shadow-[inset_0_0_40px_rgba(148,163,184,0.08)] aspect-[1/1.4] relative">
-                  <Image
-                    src={template.preview_image}
-                    alt={template.template_name}
-                    fill
-                    className="object-contain"
-                  />
+              <div className={cn(
+                "relative aspect-[1/1.414] overflow-hidden rounded-[3rem] border-4 transition-all duration-700",
+                active 
+                  ? "border-primary shadow-[0_40px_100px_rgba(37,99,235,0.25)] scale-[1.02]" 
+                  : "border-white bg-white shadow-[0_20px_50px_rgba(15,23,42,0.06)] group-hover:border-primary/20 group-hover:shadow-[0_40px_80px_rgba(15,23,42,0.12)] group-hover:-translate-y-4"
+              )}>
+                <Image
+                  src={template.preview_image}
+                  alt={template.template_name}
+                  fill
+                  className={cn(
+                    "object-cover transition-transform duration-1000 group-hover:scale-110",
+                    isPending && "animate-pulse brightness-75"
+                  )}
+                />
+                
+                {active && (
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/90 to-transparent p-8 pt-16">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Active Choice</p>
+                  </div>
+                )}
+                
+                <div className={cn(
+                  "absolute inset-0 flex items-center justify-center bg-slate-950/40 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100",
+                  active && "hidden"
+                )}>
+                  <div className="rounded-full bg-white px-8 py-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-950 shadow-2xl">
+                    {isPending ? "Applying Style..." : "Select Template"}
+                  </div>
                 </div>
               </div>
-              <div className="px-2 pb-2 pt-6 text-center">
-                <h3 className="font-display text-[1.4rem] font-black tracking-tight text-slate-950">{template.template_name}</h3>
-                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">
-                  {pendingId === template.id ? "Applying..." : active ? "Current" : "Select"}
-                </p>
+
+              <div className="mt-8 text-left">
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="font-display text-[1.6rem] font-black tracking-tight text-slate-950 group-hover:text-primary transition-colors">{template.template_name}</h3>
+                  {template.icon && (
+                    <img src={template.icon} alt="" className="h-6 w-6 opacity-30 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {template.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-slate-500">{tag}</span>
+                  ))}
+                </div>
               </div>
             </button>
           );

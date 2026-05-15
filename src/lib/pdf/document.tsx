@@ -156,9 +156,13 @@ const styles = StyleSheet.create({
 
 function Section({ title, children, accent, layout }: { title: string; children: React.ReactNode; accent: string; layout?: string }) {
   const isCard = layout === "modular-card";
+  const isGridLabels = layout === "grid-labels";
   return (
-    <View style={isCard ? styles.sectionCard : styles.section}>
-      <Text style={{ ...styles.sectionTitle, color: accent }}>{title}</Text>
+    <View style={[
+      isCard ? styles.sectionCard : styles.section,
+      isGridLabels ? { backgroundColor: "#0f172a", padding: 16, borderRadius: 12 } : {}
+    ]}>
+      <Text style={{ ...styles.sectionTitle, color: isGridLabels ? "#ffffff" : accent }}>{title}</Text>
       {children}
     </View>
   );
@@ -174,20 +178,42 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
   const renderPersonal = (isDarkHeader = false) => (
     <View style={[
       layout === "banner-soft" ? styles.headerBannerSoft : styles.header,
-      { backgroundColor: isDarkHeader ? "transparent" : headerBackground }
+      { 
+        backgroundColor: (isDarkHeader || layout === "modular-card") ? "transparent" : headerBackground,
+        marginBottom: (isDarkHeader || layout === "sidebar-dark") ? 0 : 24,
+        padding: layout === "sidebar-dark" ? 0 : 32
+      }
     ]}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <View>
-          <Text style={isDarkHeader ? styles.nameDark : styles.name}>{fullName}</Text>
-          <Text style={isDarkHeader ? styles.headlineDark : styles.headline}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View style={{ flex: 1 }}>
+          <Text style={[isDarkHeader || layout === "modular-card" ? styles.nameDark : styles.name, { fontSize: 28 }]}>{fullName}</Text>
+          <Text style={[isDarkHeader || layout === "modular-card" ? styles.headlineDark : styles.headline, { marginTop: 8, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }]}>
             {resume.personal.headline || resume.ats.targetRole || "Professional Headline"}
           </Text>
-          <Text style={isDarkHeader ? styles.contactDark : styles.contact}>
-            {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).join(" | ")}
-          </Text>
+          <View style={{ 
+            marginTop: 16, 
+            paddingTop: 12, 
+            borderTopWidth: 1, 
+            borderTopColor: isDarkHeader || layout === "modular-card" ? "#f1f5f9" : "rgba(255,255,255,0.1)",
+            flexDirection: "row",
+            gap: 12
+          }}>
+            <Text style={[isDarkHeader || layout === "modular-card" ? styles.contactDark : styles.contact, { fontSize: 9 }]}>
+              {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).join("  •  ")}
+            </Text>
+          </View>
         </View>
-        {template.icon && !isDarkHeader && (
-          <Image src={template.icon} style={styles.icon} />
+        {template.icon && !isDarkHeader && layout !== "sidebar-dark" && (
+          <View style={{ 
+            width: 70, 
+            height: 70, 
+            backgroundColor: layout === "modular-card" ? "#f8fafc" : "rgba(255,255,255,0.1)", 
+            borderRadius: 15, 
+            justifyContent: "center", 
+            alignItems: "center" 
+          }}>
+            <Image src={template.icon} style={[styles.icon, { width: 40, height: 40, opacity: layout === "modular-card" ? 1 : 0.4 }]} />
+          </View>
         )}
       </View>
     </View>
@@ -195,11 +221,20 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
 
   const renderSkills = (isDarkBg = false) => (
     <Section title="Skills" accent={isDarkBg ? "#ffffff" : accent} layout={layout}>
-      <View style={layout === "grid-labels" ? { flexDirection: "row", flexWrap: "wrap" } : {}}>
+      <View style={layout === "grid-labels" ? { flexDirection: "row", flexWrap: "wrap", marginTop: 8 } : { marginTop: 8 }}>
         {resume.skills.map((skill) => (
           <View key={skill} style={layout === "grid-labels" ? styles.gridSkill : styles.skillItem}>
-            {layout !== "grid-labels" && <View style={[styles.skillDot, { backgroundColor: isDarkBg ? "#ffffff" : accent }]} />}
-            <Text style={[styles.skillLabel, isDarkBg ? { color: "#ffffff" } : {}]}>{skill}</Text>
+            {layout !== "grid-labels" && (
+              <View style={[
+                styles.skillDot, 
+                { backgroundColor: isDarkBg ? "#ffffff" : accent },
+                layout === "sidebar-circles" ? { width: 6, height: 6, borderRadius: 3 } : {}
+              ]} />
+            )}
+            <Text style={[
+              styles.skillLabel, 
+              isDarkBg || layout === "grid-labels" ? { color: "#ffffff" } : {}
+            ]}>{skill}</Text>
           </View>
         ))}
       </View>
@@ -239,6 +274,45 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
                   </View>
                 ))}
               </Section>
+              {resume.projects.some(p => p.name) && (
+                <Section title="Projects" accent={accent} layout={layout}>
+                  {resume.projects.map((item) => (
+                    <View key={item.id} style={{ marginBottom: 10 }}>
+                      <Text style={styles.itemTitle}>{item.name}</Text>
+                      {item.highlights.filter(Boolean).map((highlight, index) => (
+                        <Text key={index} style={styles.bullet}>• {highlight}</Text>
+                      ))}
+                    </View>
+                  ))}
+                </Section>
+              )}
+              {resume.volunteer?.some(v => v.organization) && (
+                <Section title="Volunteer Experience" accent={accent} layout={layout}>
+                  {resume.volunteer.map((item) => (
+                    <View key={item.id} style={{ marginBottom: 12 }}>
+                      <Text style={styles.itemTitle}>{item.role || "Role"}</Text>
+                      <Text style={styles.itemMeta}>{[item.organization, [item.startDate, item.endDate].filter(Boolean).join(" — ")].filter(Boolean).join(" | ")}</Text>
+                      {item.highlights.filter(Boolean).map((highlight, index) => (
+                        <Text key={index} style={styles.bullet}>• {highlight}</Text>
+                      ))}
+                    </View>
+                  ))}
+                </Section>
+              )}
+              {resume.certifications.some(c => c.name) && (
+                <Section title="Certifications" accent={accent} layout={layout}>
+                  {resume.certifications.map((item) => (
+                    <Text key={item.id} style={styles.bullet}>
+                      • {[item.name, item.issuer].filter(Boolean).join(" — ")}
+                    </Text>
+                  ))}
+                </Section>
+              )}
+              {resume.more?.map(item => (
+                <Section key={item.id} title={item.label} accent={accent} layout={layout}>
+                  <Text style={styles.paragraph}>{item.value}</Text>
+                </Section>
+              ))}
             </View>
           </View>
         ) : (
@@ -260,7 +334,7 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
                     </View>
                   ))}
                 </Section>
-                {resume.projects.some((item) => item.name) && (
+                {resume.projects.some(p => p.name) && (
                   <Section title="Projects" accent={accent} layout={layout}>
                     {resume.projects.map((item) => (
                       <View key={item.id} style={{ marginBottom: 10 }}>
@@ -271,6 +345,42 @@ export function ResumePdfDocument({ resume, template }: { resume: ResumeData; te
                       </View>
                     ))}
                   </Section>
+                )}
+                {resume.volunteer?.some((item) => item.organization) && (
+                  <Section title="Volunteer Experience" accent={accent} layout={layout}>
+                    {resume.volunteer.map((item) => (
+                      <View key={item.id} style={{ marginBottom: 12 }}>
+                        <Text style={styles.itemTitle}>{item.role || "Role"}</Text>
+                        <Text style={styles.itemMeta}>{[item.organization, [item.startDate, item.endDate].filter(Boolean).join(" — ")].filter(Boolean).join(" | ")}</Text>
+                        {item.highlights.filter(Boolean).map((highlight, index) => (
+                          <Text key={index} style={styles.bullet}>• {highlight}</Text>
+                        ))}
+                      </View>
+                    ))}
+                  </Section>
+                )}
+
+                {!isSplit && (
+                  <>
+                    {renderSkills()}
+                    <Section title="Education" accent={accent} layout={layout}>
+                      {resume.education.map((item) => (
+                        <View key={item.id} style={{ marginBottom: 10 }}>
+                          <Text style={styles.itemTitle}>{item.degree}</Text>
+                          <Text style={styles.itemMeta}>{item.school}</Text>
+                        </View>
+                      ))}
+                    </Section>
+                    {resume.certifications.some((item) => item.name) && (
+                      <Section title="Certifications" accent={accent} layout={layout}>
+                        {resume.certifications.map((item) => (
+                          <Text key={item.id} style={styles.bullet}>
+                            • {[item.name, item.issuer].filter(Boolean).join(" — ")}
+                          </Text>
+                        ))}
+                      </Section>
+                    )}
+                  </>
                 )}
               </View>
 
