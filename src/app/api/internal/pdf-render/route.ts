@@ -49,7 +49,6 @@ async function generatePdfBuffer(job: SignedPdfRenderJob, assetBaseUrl: string) 
     
     // Wait for the fonts and images to be fully loaded
     await page.waitForSelector("#pdf-ready", {
-      state: "attached",
       timeout: env.pdfRendererTimeoutMs,
     }).catch(() => {
       console.warn("[PDF_RENDER] #pdf-ready selector timeout. Proceeding with render anyway.");
