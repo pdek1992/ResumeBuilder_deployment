@@ -3,11 +3,6 @@ export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { fail } from "@/lib/api-response";
-import { verifyDownloadToken } from "@/lib/downloads/tokens";
-import { getActiveResumePass } from "@/lib/payments/access";
-import { getResumeForUser } from "@/lib/resume/repository";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { logUserAction } from "@/lib/logging";
 
 export async function POST(request: Request) {
   try {
@@ -16,55 +11,25 @@ export async function POST(request: Request) {
 
     if (!token) return fail("Missing token", 400);
 
-    // 1. Verify access token and get payload
-    const payload = await verifyDownloadToken(token);
-    if (payload.format !== "pdf") return fail("Invalid download token", 400);
-
-    const supabase = await getSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user || user.id !== payload.userId) {
-      return fail("Authentication required", 401);
-    }
-
-    // 2. Validate active export pass
-    const pass = await getActiveResumePass(user.id, payload.resumeId);
-    if (!pass) {
-      return fail("Export access expired", 403);
-    }
-
-    const resumeId = payload.resumeId;
-
-    // 3. Validate resume ownership before any renderer job is created
-    const resume = await getResumeForUser(user.id, resumeId);
-    if (!resume) return fail("Resume not found", 404);
-
-    const [{ cleanupStalePdfJobs, createSignedPdfJob }, { requestPdfRender }] = await Promise.all([
-      import("@/lib/pdf/jobs"),
-      import("@/lib/pdf/renderer-client"),
-    ]);
-
-    await cleanupStalePdfJobs().catch(() => undefined);
-
-    // 4. Create a one-time signed internal renderer job. The frontend only sees this route.
-    const job = await createSignedPdfJob({
-      userId: user.id,
-      resumeId,
-    });
-    const result = await requestPdfRender(job, new URL(request.url).origin);
-
-    await logUserAction({
-      userId: user.id,
-      actionType: "pdf_download",
-      metadata: { resumeId },
+    const dispatchUrl = new URL("/api/internal/pdf-dispatch", request.url);
+    dispatchUrl.searchParams.set("token", token);
+    const response = await fetch(dispatchUrl, {
+      method: "POST",
+      headers: {
+        cookie: request.headers.get("cookie") ?? "",
+      },
+      cache: "no-store",
     });
 
-    return NextResponse.json(result);
-
+    return new NextResponse(response.body, {
+      status: response.status,
+      headers: {
+        "content-type": response.headers.get("content-type") ?? "application/json",
+        "cache-control": "no-store",
+      },
+    });
   } catch (error: any) {
-    console.error("[PDF_GEN] Internal renderer error:", error);
+    console.error("[PDF_DOWNLOAD] Dispatch proxy error:", error);
     return fail(error.message || "Failed to generate PDF", 500);
   }
 }

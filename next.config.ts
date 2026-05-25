@@ -2,15 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
-    "/api/downloads/pdf": [
+    "/api/internal/pdf-render": [
       "./node_modules/@sparticuz/chromium/bin/**/*",
       "./node_modules/@sparticuz/chromium/build/**/*",
+      "./node_modules/@sparticuz/chromium-min/build/**/*",
     ],
   },
   images: {
     remotePatterns: [],
   },
-  serverExternalPackages: ["@napi-rs/canvas", "@sparticuz/chromium", "puppeteer-core"],
+  serverExternalPackages: ["@napi-rs/canvas", "@sparticuz/chromium", "@sparticuz/chromium-min", "puppeteer-core"],
   async headers() {
     const securityHeaders = [
       {
