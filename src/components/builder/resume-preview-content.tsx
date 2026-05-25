@@ -69,53 +69,136 @@ export function ResumePreviewContent({ resume, template, className, isPrintMode 
   const isDarkSidebar = layout === "sidebar-dark" || layout === "sidebar-dark-right";
   const isSidebarLayout = renderConfig.hasSidebar && (isDarkSidebar || layout === "sidebar-circles");
 
-  const renderPersonal = () => (
-    <div className={cn(
-      "px-8 py-10 md:px-12",
-      layout === "banner-soft" && "rounded-b-[3rem] shadow-2xl",
-      isDarkSidebar && "bg-transparent !px-0 !py-0",
-      layout === "modular-card" && "rounded-[2.5rem] border border-slate-100 shadow-sm mb-8",
-      !layout.includes("sidebar") && "mb-8"
-    )} style={{ 
-      backgroundColor: (isDarkSidebar || layout === "modular-card") ? "transparent" : `${accent}15`,
-      borderColor: layout === "modular-card" ? accent : undefined,
-      color: "inherit"
-    }}>
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex-1">
-          <div className="flex items-center gap-6">
-            {resume.personal.profilePhotoUrl && ![layout === "sidebar-dark-right" ? "sidebar-dark-right" : "sidebar-dark", "sidebar-circles"].includes(layout) && (
-              <div className={cn(
-                "h-24 w-24 shrink-0 overflow-hidden shadow-2xl border-4 border-white",
-                layout === "banner-soft" ? "rounded-[2rem]" : "rounded-3xl"
-              )}>
+  const renderPersonal = () => {
+    switch (renderConfig.headerStyle) {
+      case "centered-dark-bg":
+        return (
+          <div className="px-12 py-12 text-center text-white" style={{ backgroundColor: accent }}>
+            {resume.personal.profilePhotoUrl && renderConfig.showProfilePhotoInHeader && (
+              <div className={cn("mx-auto mb-6 overflow-hidden border-4 border-white/30 shadow-2xl", renderConfig.profilePhotoSizeClass, renderConfig.profilePhotoShape === "circle" ? "rounded-full" : "rounded-3xl")}>
                 <img src={resume.personal.profilePhotoUrl} alt={fullName} className="h-full w-full object-cover" />
               </div>
             )}
-            <div>
-              <h1 className="font-display text-[28px] font-black leading-tight tracking-tight break-words text-slate-950 md:text-[36px]">{fullName}</h1>
-              <p className="mt-2 text-[13px] font-bold uppercase tracking-widest break-words" style={{ color: accent }}>
-                {resume.personal.headline || resume.ats.targetRole || "Professional Headline"}
-              </p>
+            <h1 className={cn("font-black tracking-tight", renderConfig.nameSizeClass)}>{fullName}</h1>
+            <p className={cn("mt-4 font-bold uppercase tracking-[0.4em] text-white/70", renderConfig.headlineSizeClass)}>{resume.personal.headline || resume.ats.targetRole}</p>
+            <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-2 text-[11px] font-medium text-white/60">
+              {resume.personal.location && <span>{resume.personal.location}</span>}
+              {resume.personal.email && <span>{resume.personal.email}</span>}
+              {resume.personal.phone && <span>{resume.personal.phone}</span>}
             </div>
           </div>
-          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t pt-6 text-[11px] font-medium tracking-wide border-slate-100 text-slate-500">
-            {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).map((text, i) => (
-              <span key={i} className="flex items-center gap-2">
-                {i > 0 && <span className="h-1 w-1 rounded-full bg-current opacity-30" />}
-                {text}
-              </span>
-            ))}
+        );
+
+      case "centered-light-bg":
+        return (
+          <div className="p-10 text-center" style={{ backgroundColor: `${accent}${renderConfig.headerBgOpacity || 15}` }}>
+             {resume.personal.profilePhotoUrl && renderConfig.showProfilePhotoInHeader && (
+               <div className={cn("mx-auto mb-6 overflow-hidden border-4 border-white shadow-2xl", renderConfig.profilePhotoSizeClass, renderConfig.profilePhotoShape === "circle" ? "rounded-full" : "rounded-[2rem]")}>
+                 <img src={resume.personal.profilePhotoUrl} alt={fullName} className="h-full w-full object-cover" />
+               </div>
+             )}
+             <h1 className={cn("font-black tracking-tight text-slate-950", renderConfig.nameSizeClass)}>{fullName}</h1>
+             <p className={cn("mt-3 font-bold uppercase tracking-[0.35em]", renderConfig.headlineSizeClass)} style={{ color: accent }}>{resume.personal.headline || resume.ats.targetRole}</p>
+             <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+               {resume.personal.location && <span>{resume.personal.location}</span>}
+               {resume.personal.email && <span>{resume.personal.email}</span>}
+               {resume.personal.phone && <span>{resume.personal.phone}</span>}
+               {resume.personal.linkedIn && <span>LinkedIn</span>}
+             </div>
           </div>
-        </div>
-        {template.icon && !isDarkSidebar && !resume.personal.profilePhotoUrl && (
-          <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm md:flex">
-            <img src={template.icon} alt="" className={cn("h-12 w-12 contrast-125", (layout === "modular-card" ? "opacity-100" : "opacity-40 invert brightness-0"))} />
+        );
+
+      case "left-serif-elegant":
+        return (
+          <div className={cn("px-8 py-10 md:px-12 border-b-[3px]", !layout.includes("sidebar") && "mb-8")} style={{ borderColor: accent, backgroundColor: renderConfig.headerBgOpacity ? `${accent}${renderConfig.headerBgOpacity}` : "transparent" }}>
+            <h1 className={cn("font-serif font-black tracking-tight text-slate-900", renderConfig.nameSizeClass)}>{fullName}</h1>
+            <p className={cn("mt-2 font-serif font-bold uppercase tracking-[0.2em]", renderConfig.headlineSizeClass)} style={{ color: accent }}>{resume.personal.headline || resume.ats.targetRole}</p>
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[11px] font-medium tracking-wide text-slate-500">
+               {resume.personal.location && <span>{resume.personal.location}</span>}
+               {resume.personal.email && <span>{resume.personal.email}</span>}
+               {resume.personal.phone && <span>{resume.personal.phone}</span>}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
+        );
+
+      case "left-border-rule":
+        return (
+          <div className={cn("px-8 py-10 md:px-12 border-l-[12px]", !layout.includes("sidebar") && "mb-8")} style={{ borderColor: accent, backgroundColor: renderConfig.headerBgOpacity ? `${accent}${renderConfig.headerBgOpacity}` : "transparent" }}>
+            <h1 className={cn("font-black tracking-tight text-slate-950", renderConfig.nameSizeClass)}>{fullName}</h1>
+            <p className={cn("mt-2 font-bold uppercase tracking-widest", renderConfig.headlineSizeClass)} style={{ color: accent }}>{resume.personal.headline || resume.ats.targetRole}</p>
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[11px] font-medium tracking-wide text-slate-500">
+               {resume.personal.location && <span>{resume.personal.location}</span>}
+               {resume.personal.email && <span>{resume.personal.email}</span>}
+               {resume.personal.phone && <span>{resume.personal.phone}</span>}
+            </div>
+          </div>
+        );
+
+      case "left-compact":
+        return (
+          <div className={cn("px-8 py-8 md:px-12 border-b border-slate-100 flex justify-between items-end", !layout.includes("sidebar") && "mb-8")}>
+            <div>
+              <h1 className={cn("font-black tracking-tight text-slate-900", renderConfig.nameSizeClass)}>{fullName}</h1>
+              <p className={cn("mt-1 font-bold uppercase tracking-widest", renderConfig.headlineSizeClass)} style={{ color: accent }}>{resume.personal.headline || resume.ats.targetRole}</p>
+            </div>
+            <div className="text-right space-y-1 text-[11px] font-medium text-slate-500">
+               {resume.personal.email && <p>{resume.personal.email}</p>}
+               {resume.personal.phone && <p>{resume.personal.phone}</p>}
+               {resume.personal.location && <p>{resume.personal.location}</p>}
+            </div>
+          </div>
+        );
+
+      default:
+        // left-standard
+        return (
+          <div className={cn(
+            "px-8 py-10 md:px-12",
+            layout === "modular-card" && "rounded-[2.5rem] border border-slate-100 shadow-sm mb-8",
+            !layout.includes("sidebar") && "mb-8"
+          )} style={{ 
+            backgroundColor: (isDarkSidebar || layout === "modular-card") ? "transparent" : (renderConfig.headerBgOpacity ? `${accent}${renderConfig.headerBgOpacity.toString().padStart(2, '0')}` : "transparent"),
+            borderColor: layout === "modular-card" ? accent : undefined,
+            color: "inherit"
+          }}>
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-6">
+                  {resume.personal.profilePhotoUrl && renderConfig.showProfilePhotoInHeader && (
+                    <div className={cn(
+                      "shrink-0 overflow-hidden shadow-2xl border-4 border-white",
+                      renderConfig.profilePhotoSizeClass,
+                      renderConfig.profilePhotoShape === "circle" ? "rounded-full" : "rounded-3xl"
+                    )}>
+                      <img src={resume.personal.profilePhotoUrl} alt={fullName} className="h-full w-full object-cover" />
+                    </div>
+                  )}
+                  <div>
+                    <h1 className={cn("font-display font-black leading-tight tracking-tight break-words text-slate-950", renderConfig.nameSizeClass)}>{fullName}</h1>
+                    <p className={cn("mt-2 font-bold uppercase tracking-widest break-words", renderConfig.headlineSizeClass)} style={{ color: accent }}>
+                      {resume.personal.headline || resume.ats.targetRole || "Professional Headline"}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t pt-6 text-[11px] font-medium tracking-wide border-slate-100 text-slate-500">
+                  {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).map((text, i) => (
+                    <span key={i} className="flex items-center gap-2">
+                      {i > 0 && <span className="h-1 w-1 rounded-full bg-current opacity-30" />}
+                      {text}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {template.icon && !isDarkSidebar && !resume.personal.profilePhotoUrl && renderConfig.showTemplateIconInHeader && (
+                <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm md:flex">
+                  <img src={template.icon} alt="" className={cn("h-12 w-12 contrast-125", (layout === "modular-card" ? "opacity-100" : "opacity-40 invert brightness-0"))} />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+    }
+  };
 
   const renderSummary = () => (
     <div className={cn(layout === "modular-card" && "rounded-2xl border p-6")} style={layout === "modular-card" ? { backgroundColor: `${accent}08`, borderColor: `${accent}20` } : {}}>

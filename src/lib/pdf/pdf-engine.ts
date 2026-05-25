@@ -16,14 +16,22 @@ const OPTIMIZED_CHROMIUM_FLAGS = [
 
 let browserPromise: Promise<Browser> | null = null;
 
-// Find local chrome path for Windows development
+// Find local chrome path for local development
 async function getLocalChromePath() {
   const fs = await import("node:fs");
   const paths = [
+    // Windows
     "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    // Mac
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    // Linux
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
   ];
   for (const p of paths) {
     if (fs.existsSync(p)) return p;
@@ -45,27 +53,44 @@ export async function getBrowser() {
 }
 
 async function launchBrowser() {
-  const isLocalWindows = process.platform === "win32";
-  const isDev = process.env.NODE_ENV === "development" || isLocalWindows;
-  const { default: chromium } = env.chromiumPackUrl
-    ? await import("@sparticuz/chromium-min")
-    : await import("@sparticuz/chromium");
+  const isDev = process.env.NODE_ENV === "development" || !process.env.VERCEL;
+  
+  if (isDev) {
+    console.log("[PDF_ENGINE] Running in local/dev mode. Using local Chrome installation.");
+    const executablePath = await getLocalChromePath();
+    const browser = await puppeteer.launch({
+      args: OPTIMIZED_CHROMIUM_FLAGS,
+      defaultViewport: { width: 794, height: 1123, deviceScaleFactor: 1 },
+      executablePath,
+      headless: true,
+    });
+    browser.once("disconnected", () => { browserPromise = null; });
+    return browser;
+  }
+
+  console.log("[PDF_ENGINE] Running in production/Vercel mode. Fetching sparticuz/chromium-min.");
+  
+  // Dynamic import of sparticuz/chromium-min for production
+  // We explicitly avoid importing @sparticuz/chromium because its binary size exceeds Vercel's 50MB Serverless limit.
+  const { default: chromium } = await import("@sparticuz/chromium-min");
   const chr = chromium as any;
   chr.setGraphicsMode = false;
   
-  const executablePath = isDev 
-    ? await getLocalChromePath()
-    : await chr.executablePath(env.chromiumPackUrl || undefined);
+  // Puppeteer ^24.43.1 -> Chromium v133
+  const packUrl = env.chromiumPackUrl || "https://github.com/Sparticuz/chromium/releases/download/v133.0.0/chromium-v133.0.0-pack.tar";
+  
+  console.log(`[PDF_ENGINE] Downloading Chromium pack from: ${packUrl}`);
+  const executablePath = await chr.executablePath(packUrl);
     
   const browser = await puppeteer.launch({
-    args: isDev ? OPTIMIZED_CHROMIUM_FLAGS : Array.from(new Set([...chr.args, ...OPTIMIZED_CHROMIUM_FLAGS])),
+    args: Array.from(new Set([...chr.args, ...OPTIMIZED_CHROMIUM_FLAGS])),
     defaultViewport: {
       width: 794,
       height: 1123,
       deviceScaleFactor: 1,
     },
     executablePath,
-    headless: isDev ? true : "shell",
+    headless: "shell",
   });
 
   browser.once("disconnected", () => {
