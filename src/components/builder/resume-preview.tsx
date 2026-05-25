@@ -59,7 +59,35 @@ function skillPercent(index: number) {
   return Math.max(72, 94 - (index % 5) * 5);
 }
 
+import { useEffect, useRef, useState } from "react";
+
 export function ResumePreview({ resume, template, className, isPrintMode }: ResumePreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  // A4 size in pixels (at 96 DPI, 210mm = ~793.7px)
+  // We use the exact CSS dimension in JS for calculation
+  useEffect(() => {
+    if (isPrintMode) return;
+    
+    const updateScale = () => {
+      if (containerRef.current) {
+        // The exact pixel width of 210mm as rendered by the browser is approx 793.7px.
+        // We measure the container's width to scale the inner 210mm content to fit exactly.
+        const containerWidth = containerRef.current.clientWidth;
+        const targetWidthPx = 794; 
+        setScale(containerWidth / targetWidthPx);
+      }
+    };
+    
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [isPrintMode]);
+
   const fullName = [resume.personal.firstName, resume.personal.lastName].filter(Boolean).join(" ") || "Your Name";
   const accent = template.config_json.accent || resume.style.accent;
   const layout = template.config_json.layout || "standard";
@@ -303,11 +331,17 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
 
   const innerContent = (
     <div className={cn(
-      isPrintMode ? "h-[297mm] w-[210mm] bg-white overflow-hidden print:shadow-none" : "h-full w-full overflow-hidden bg-white shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
+      "origin-top-left bg-white overflow-hidden",
+      isPrintMode ? "" : "shadow-[0_25px_60px_rgba(15,23,42,0.12)]",
       isSidebarLayout && "flex",
       layout === "sleek-dark" && "bg-slate-50"
     )}
-    style={{ fontSize: template.config_json.density === "compact" ? "0.95em" : template.config_json.density === "airy" ? "1.02em" : undefined }}
+    style={{ 
+      width: "210mm", 
+      minHeight: "297mm",
+      transform: isPrintMode ? undefined : `scale(${scale})`,
+      fontSize: template.config_json.density === "compact" ? "0.95em" : template.config_json.density === "airy" ? "1.02em" : undefined 
+    }}
     data-template-id={template.id}
     data-template-layout={layout}
     >
@@ -502,8 +536,8 @@ export function ResumePreview({ resume, template, className, isPrintMode }: Resu
       </div>
 
       <div className="px-5 py-6 md:px-8">
-        <div className="overflow-auto rounded-[2rem] border border-slate-100 bg-slate-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div className="mx-auto aspect-[1/1.414] max-w-[760px] bg-white shadow-2xl">
+        <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <div ref={containerRef} className="mx-auto w-full relative bg-white shadow-2xl overflow-hidden" style={{ aspectRatio: "210/297" }}>
             {innerContent}
           </div>
         </div>

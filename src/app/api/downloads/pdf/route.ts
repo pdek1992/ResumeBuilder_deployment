@@ -2,8 +2,6 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
-import crypto from "crypto";
-
 import { fail } from "@/lib/api-response";
 import { verifyDownloadToken } from "@/lib/downloads/tokens";
 import { getActiveResumePass } from "@/lib/payments/access";
@@ -11,22 +9,18 @@ import { getResumeForUser } from "@/lib/resume/repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logUserAction } from "@/lib/logging";
+import { getBrowser } from "@/lib/pdf/pdf-engine";
+import { generatePdfHtml } from "@/lib/pdf/html-renderer";
 
-// Helper to generate HMAC signature for the backend GHA dispatch
-function generateHmacSignature(jobId: string, resumeId: string, timestamp: string, nonce: string, secret: string): string {
-  const data = jobId + resumeId + timestamp + nonce;
-  return crypto.createHmac("sha256", secret).update(data).digest("hex");
-}
+// Helper to wait
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
-    const isCheck = searchParams.get("check") === "true";
 
-    if (!token) {
-      return fail("Missing token", 400);
-    }
+    if (!token) return fail("Missing token", 400);
 
     // 1. Verify access token and get payload
     const payload = await verifyDownloadToken(token);
@@ -47,131 +41,110 @@ export async function GET(request: Request) {
 
     const resumeId = payload.resumeId;
 
-    // 3. Check if PDF already exists and is complete in storage
-    const storagePath = `pdf/${resumeId}.pdf`;
+    // 3. Fetch Resume Data and Template
+    const resume = await getResumeForUser(user.id, resumeId);
+    if (!resume) return fail("Resume not found", 404);
+
     const adminSupabase = getSupabaseAdminClient();
-    
-    // Check if there is an active completed job first to fetch the file
-    const { data: activeCompletedJob } = await adminSupabase
-      .from("pdf_generation_jobs")
+    const { data: templateRecord } = await adminSupabase
+      .from("templates")
       .select("*")
-      .eq("resume_id", resumeId)
-      .eq("status", "completed")
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", resume.templateId)
       .maybeSingle();
 
-    if (activeCompletedJob) {
-      // Check if file actually exists in storage
+    const templateConfig = templateRecord || {
+      id: resume.templateId || "default",
+      template_name: "Default Template",
+      config_json: { accent: "#2563eb", density: "balanced", columns: "single" }
+    };
+
+    // 4. Generate the exact same HTML used in the preview pane
+    console.log("[PDF_GEN] Generating HTML string...");
+    const html = await generatePdfHtml(resume, templateConfig);
+
+    // 5. Fire up headless Chromium natively on Vercel Serverless
+    console.log("[PDF_GEN] Launching Vercel Puppeteer instance...");
+    const browser = await getBrowser();
+    
+    try {
+      const page = await browser.newPage();
+      
+      // Inject HTML directly (no network navigation needed!)
+      await page.setContent(html, { waitUntil: ["load", "networkidle0"] });
+      
+      // Give Tailwind CDN and Google Fonts a moment to compile and paint
+      console.log("[PDF_GEN] Waiting for fonts and CSS to settle...");
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+      await delay(400); // safety buffer for Tailwind browser compiler
+      
+      console.log("[PDF_GEN] Printing to PDF buffer...");
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        preferCSSPageSize: true,
+        margin: { top: "0px", right: "0px", bottom: "0px", left: "0px" }
+      });
+
+      // 6. Upload PDF to Supabase storage
+      const storagePath = `pdf/${resumeId}.pdf`;
+      console.log(`[PDF_GEN] Uploading to Supabase: ${storagePath}`);
+      
+      const { error: uploadError } = await adminSupabase.storage
+        .from("resumes")
+        .upload(storagePath, pdfBuffer, {
+          contentType: "application/pdf",
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Generate signed URL
       const { data: signedData, error: signedError } = await adminSupabase.storage
         .from("resumes")
-        .createSignedUrl(storagePath, 60 * 5); // 5 min access is safe for immediate redirect
+        .createSignedUrl(storagePath, 60 * 60 * 24);
 
-      if (!signedError && signedData?.signedUrl) {
-        if (isCheck) {
-          return NextResponse.json({ status: "completed", url: signedData.signedUrl });
-        }
-        // Log downlading metric
-        await logUserAction({
-          userId: user.id,
-          actionType: "pdf_download",
-          metadata: { resumeId },
-        });
-        
-        return NextResponse.redirect(signedData.signedUrl);
+      if (signedError || !signedData?.signedUrl) {
+        throw new Error("Failed to generate secure signed URL");
       }
+      
+      // Log downloading metric
+      await logUserAction({
+        userId: user.id,
+        actionType: "pdf_download",
+        metadata: { resumeId },
+      });
+
+      console.log("[PDF_GEN] Success! Returning URL.");
+      return NextResponse.json({ status: "success", url: signedData.signedUrl });
+
+    } finally {
+      await browser.close();
     }
 
-    // 4. Polling JSON status check
-    if (isCheck) {
-      // Find the latest active job in the last 10 minutes
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-      const { data: recentJob } = await adminSupabase
-        .from("pdf_generation_jobs")
-        .select("*")
-        .eq("resume_id", resumeId)
-        .gte("created_at", tenMinutesAgo)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+  } catch (error: any) {
+    console.error("[PDF_GEN] Vercel Execution Error:", error);
+    return fail(error.message || "Failed to generate PDF", 500);
+  }
+}
 
-      if (!recentJob) {
-        return NextResponse.json({ status: "not_started" });
-      }
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token");
 
-      if (recentJob.status === "completed") {
-        const { data: signedData } = await adminSupabase.storage
-          .from("resumes")
-          .createSignedUrl(storagePath, 60 * 5);
-        return NextResponse.json({ status: "completed", url: signedData?.signedUrl || recentJob.pdf_url });
-      }
+    if (!token) return fail("Missing token", 400);
 
-      if (recentJob.status === "failed") {
-        return NextResponse.json({ status: "failed", error: recentJob.error_message });
-      }
-
-      return NextResponse.json({ status: recentJob.status }); // 'pending' | 'processing'
-    }
-
-    // 5. Normal Browser Request - Trigger PDF generation & render beautiful loader page
-    const renderSecret = process.env.RENDER_SECRET;
-    const githubToken = process.env.GITHUB_TOKEN;
-    const githubRepo = process.env.GITHUB_REPO;
-    const githubBranch = process.env.GITHUB_BRANCH || "main";
-
-    if (!renderSecret || !githubToken || !githubRepo) {
-      console.error("[PDF_PIPELINE] Missing environment credentials:", { renderSecret: !!renderSecret, githubToken: !!githubToken, githubRepo: !!githubRepo });
-      return fail("Render compute backend is not fully configured.", 500);
-    }
-
-    // Initialize the GHA pipeline trigger
-    const jobId = crypto.randomUUID();
-    const nonce = crypto.randomBytes(16).toString("hex");
-    const timestamp = new Date().toISOString();
-    const signature = generateHmacSignature(jobId, resumeId, timestamp, nonce, renderSecret);
-
-    // Save job track record
-    await adminSupabase.from("pdf_generation_jobs").insert({
-      id: jobId,
-      user_id: user.id,
-      resume_id: resumeId,
-      status: "pending",
-      signature,
-      nonce,
-      timestamp,
-    });
-
-    // Fire GHA workflow dispatch asynchronously
-    const [owner, repo] = githubRepo.split("/");
-    const dispatchUrl = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/render-pdf.yml/dispatches`;
-    
-    // Non-blocking fire and forget trigger (safe fetch, we do not await it blocking the HTML return)
-    fetch(dispatchUrl, {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${githubToken}`,
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-        "User-Agent": "Vercel-Resume-Builder",
-      },
-      body: JSON.stringify({
-        ref: githubBranch,
-        inputs: { jobId, resumeId, timestamp, nonce, signature },
-      }),
-    }).catch(err => console.error("[PDF_PIPELINE] Async GHA trigger failed:", err));
-
-    // Return the premium loading screen page in modern dark mode styling
-    const resume = await getResumeForUser(user.id, resumeId);
-    const resumeTitle = resume?.title || "My Resume";
-
+    // Provide the beautiful loading screen. 
+    // It will immediately trigger the POST request in the background.
     const loadingHtml = `
       <!DOCTYPE html>
       <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Exporting ${resumeTitle} | VigilSiddhiAI</title>
+          <title>Exporting PDF | VigilSiddhiAI</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
@@ -356,7 +329,7 @@ export async function GET(request: Request) {
             </div>
             
             <h1 class="header">AI PDF Generator</h1>
-            <p class="subtitle">${resumeTitle}</p>
+            <p class="subtitle">Generating Pixel-Perfect PDF</p>
             
             <div class="status-box">
               <p id="status" class="status-text">Booting Puppeteer runner...</p>
@@ -369,92 +342,75 @@ export async function GET(request: Request) {
 
             <div id="error" class="error-box">
               <p class="error-title">Export Failed</p>
-              <p id="error-msg" class="error-msg">A processing timeout occurred. Please try again.</p>
+              <p id="error-msg" class="error-msg">An error occurred during generation.</p>
               <a href="" onclick="window.location.reload(); return false;" class="retry-btn">Retry Export</a>
             </div>
           </div>
 
           <script>
             const token = encodeURIComponent(new URLSearchParams(window.location.search).get("token"));
-            let pollCount = 0;
-            const maxPolls = 60; // 2 minutes (2s intervals)
             
             // Visual state transitions
             const statuses = [
-              { pct: 15, txt: "Verifying secure signatures...", sub: "Authenticating HMAC keys..." },
-              { pct: 30, txt: "Booting headless sandbox...", sub: "Deploying Chromium container..." },
-              { pct: 45, txt: "Injecting data models...", sub: "Hydrating absolute dimensions..." },
-              { pct: 60, txt: "Assembling layout structure...", sub: "Resolving grid divisions and typography..." },
-              { pct: 75, txt: "Rendering pixel-perfect shapes...", sub: "Optimizing vectors and vectors spacing..." },
+              { pct: 15, txt: "Booting headless sandbox...", sub: "Deploying Chromium container..." },
+              { pct: 30, txt: "Injecting data models...", sub: "Hydrating absolute dimensions..." },
+              { pct: 50, txt: "Assembling layout structure...", sub: "Resolving grid divisions and typography..." },
+              { pct: 70, txt: "Rendering pixel-perfect shapes...", sub: "Waiting for fonts and styles..." },
               { pct: 90, txt: "Uploading PDF package...", sub: "Saving securely to storage cloud..." }
             ];
 
-            function updateVisuals(pollNum) {
-              const fillEl = document.getElementById("progress");
-              const txtEl = document.getElementById("status");
-              const subEl = document.getElementById("status-sub");
-              
-              // Smooth virtual progress
-              const index = Math.min(statuses.length - 1, Math.floor(pollNum / 4));
-              const current = statuses[index];
-              
-              fillEl.style.width = current.pct + "%";
-              txtEl.textContent = current.txt;
-              subEl.textContent = current.sub;
+            function updateVisuals(index) {
+              const current = statuses[Math.min(index, statuses.length - 1)];
+              document.getElementById("progress").style.width = current.pct + "%";
+              document.getElementById("status").textContent = current.txt;
+              document.getElementById("status-sub").textContent = current.sub;
             }
 
-            async function pollStatus() {
-              pollCount++;
-              updateVisuals(pollCount);
-              
-              if (pollCount > maxPolls) {
-                showError("The request timed out. Our cloud runner might be overloaded. Please click Retry below.");
-                return;
-              }
+            function showError(msg) {
+              document.querySelector(".spinner-box").style.display = "none";
+              document.getElementById("status-box").style.display = "none";
+              document.getElementById("progress").style.backgroundColor = "#ef4444";
+              document.getElementById("progress").style.width = "100%";
+              document.getElementById("error-msg").textContent = msg;
+              document.getElementById("error").style.display = "block";
+            }
+
+            let visualInterval;
+            
+            async function startGeneration() {
+              let step = 0;
+              visualInterval = setInterval(() => {
+                step++;
+                updateVisuals(step);
+              }, 1200);
 
               try {
-                const res = await fetch(\`/api/downloads/pdf?token=\${token}&check=true\`);
+                const res = await fetch(\`/api/downloads/pdf?token=\${token}\`, {
+                  method: 'POST'
+                });
                 const data = await res.json();
                 
-                if (data.status === "completed") {
+                clearInterval(visualInterval);
+                
+                if (data.status === "success" && data.url) {
                   document.getElementById("progress").style.width = "100%";
                   document.getElementById("status").textContent = "Download starting!";
                   document.getElementById("status-sub").textContent = "Redirecting immediately...";
                   
                   setTimeout(() => {
                     window.location.href = data.url;
-                  }, 800);
-                  return;
+                  }, 500);
+                } else {
+                  showError(data.error || "Generation failed. Please try again.");
                 }
-                
-                if (data.status === "failed") {
-                  showError(data.error || "An error occurred inside the headless runner.");
-                  return;
-                }
-                
-                // Keep polling
-                setTimeout(pollStatus, 2000);
               } catch(e) {
-                console.error("Polling error:", e);
-                setTimeout(pollStatus, 2000); // retry polling on network error
+                clearInterval(visualInterval);
+                showError("Network error. Please try again.");
               }
             }
 
-            function showError(msg) {
-              document.querySelector(".spinner-box").style.display = "none";
-              document.getElementById("status-box") ? document.getElementById("status-box").style.display = "none" : null;
-              document.getElementById("status").style.color = "#f87171";
-              document.getElementById("status").textContent = "Generation halted";
-              document.getElementById("status-sub").textContent = "Error encountered";
-              document.getElementById("progress").style.backgroundColor = "#ef4444";
-              document.getElementById("progress").style.width = "100%";
-              
-              document.getElementById("error-msg").textContent = msg;
-              document.getElementById("error").style.display = "block";
-            }
-
-            // Start polling process
-            setTimeout(pollStatus, 1500);
+            // Start automatically
+            setTimeout(startGeneration, 500);
           </script>
         </body>
       </html>
@@ -468,7 +424,7 @@ export async function GET(request: Request) {
     });
 
   } catch (error) {
-    console.error("[PDF_DOWNLOAD] Route error:", error);
+    console.error("[PDF_DOWNLOAD] Route GET error:", error);
     return fail(error, 400);
   }
 }
