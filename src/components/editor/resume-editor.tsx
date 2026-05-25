@@ -519,7 +519,7 @@ export function ResumeEditor({
           )}
 
           <div className="flex flex-col xl:flex-row gap-8 items-start">
-            <div className="w-full xl:w-[45%] space-y-8">
+            <div className="w-full xl:w-[60%] space-y-8">
             <EditorCard className="pb-0">
               <div className="flex flex-wrap items-start justify-between gap-6">
                 <div className="flex flex-wrap gap-3">
@@ -1174,7 +1174,7 @@ export function ResumeEditor({
               </div>
             </EditorCard>
             </div>
-            <div className="w-full xl:w-[55%] xl:sticky xl:top-6">
+            <div className="w-full xl:w-[40%] xl:sticky xl:top-6">
               <ResumePreview
                 resume={{
                   ...resume,
