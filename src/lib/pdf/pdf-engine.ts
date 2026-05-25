@@ -45,7 +45,8 @@ export async function getBrowser() {
 }
 
 async function launchBrowser() {
-  const isDev = process.env.NODE_ENV === "development";
+  const isLocalWindows = process.platform === "win32";
+  const isDev = process.env.NODE_ENV === "development" || isLocalWindows;
   const { default: chromium } = env.chromiumPackUrl
     ? await import("@sparticuz/chromium-min")
     : await import("@sparticuz/chromium");

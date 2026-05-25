@@ -4,31 +4,12 @@ export const maxDuration = 10;
 import { NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
-import { resumeRecordToData } from "@/lib/pdf/export-data";
 import { transitionPdfJob } from "@/lib/pdf/jobs";
 import { newPdfPage } from "@/lib/pdf/pdf-engine";
 import { verifyPdfRenderJob, type SignedPdfRenderJob } from "@/lib/pdf/signing";
-import { generatePdfHtml } from "@/lib/pdf/html-renderer";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { ResumeRecord, TemplateRecord } from "@/lib/types";
 
-const DEFAULT_TEMPLATE: TemplateRecord = {
-  id: "default",
-  template_name: "Default Template",
-  preview_image: "",
-  description: "",
-  tags: [],
-  active: true,
-  config_json: {
-    accent: "#2563eb",
-    headerBackground: "#ffffff",
-    pageBackground: "#ffffff",
-    density: "balanced",
-    typography: "modern-sans",
-    columns: "single",
-    layout: "standard",
-  },
-};
+
 
 function jsonError(message: string, status = 500) {
   return NextResponse.json({ status: "error", error: message }, { status });
@@ -51,48 +32,28 @@ async function withRetry<T>(operation: () => Promise<T>, retries = 1): Promise<T
   throw lastError;
 }
 
-async function loadResumeAndTemplate(job: SignedPdfRenderJob) {
-  const supabase = getSupabaseAdminClient();
-  const { data: resume, error: resumeError } = await supabase
-    .from("resumes")
-    .select("*")
-    .eq("id", job.resumeId)
-    .eq("user_id", job.userId)
-    .maybeSingle();
-
-  if (resumeError) throw resumeError;
-  if (!resume) throw new Error("Resume not found");
-
-  const { data: template, error: templateError } = await supabase
-    .from("templates")
-    .select("*")
-    .eq("id", (resume as ResumeRecord).template_id)
-    .maybeSingle();
-
-  if (templateError) throw templateError;
-
-  return {
-    resumeData: resumeRecordToData(resume as ResumeRecord),
-    template: (template as TemplateRecord | null) ?? {
-      ...DEFAULT_TEMPLATE,
-      id: (resume as ResumeRecord).template_id || DEFAULT_TEMPLATE.id,
-    },
-  };
-}
-
 async function generatePdfBuffer(job: SignedPdfRenderJob, assetBaseUrl: string) {
-  const { resumeData, template } = await loadResumeAndTemplate(job);
-  const html = await generatePdfHtml(resumeData, template, assetBaseUrl);
   const page = await newPdfPage();
 
   try {
     await page.setCacheEnabled(true);
-    await page.setContent(html, {
-      waitUntil: "domcontentloaded",
+    
+    // Build the secure print URL using the jobId
+    const url = new URL(`/print/${job.jobId}`, assetBaseUrl).toString();
+
+    // Navigate to the print view
+    await page.goto(url, {
+      waitUntil: "networkidle0",
       timeout: env.pdfRendererTimeoutMs,
     });
-    await page.waitForNetworkIdle({ idleTime: 100, timeout: env.pdfRendererTimeoutMs }).catch(() => undefined);
-    await page.evaluateHandle("document.fonts.ready");
+    
+    // Wait for the fonts and images to be fully loaded
+    await page.waitForSelector("#pdf-ready", {
+      state: "attached",
+      timeout: env.pdfRendererTimeoutMs,
+    }).catch(() => {
+      console.warn("[PDF_RENDER] #pdf-ready selector timeout. Proceeding with render anyway.");
+    });
 
     return await page.pdf({
       format: "A4",
