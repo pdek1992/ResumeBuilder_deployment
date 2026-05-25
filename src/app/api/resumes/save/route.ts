@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { createDefaultResumeData } from "@/lib/resume/defaults";
-import { getResumeForUser, saveResumeDraft } from "@/lib/resume/repository";
+import { getResumeForUser, listTemplates, saveResumeDraft } from "@/lib/resume/repository";
 import { decompressJson } from "@/lib/compression";
 import type { ResumeData } from "@/lib/types";
 import { logUserAction } from "@/lib/logging";
@@ -36,7 +36,23 @@ export async function POST(request: Request) {
       return fail("Resume not found", 404);
     }
 
-    const payload = body.data ?? decompressJson(existing.raw_json_compressed, createDefaultResumeData());
+    let payload = body.data ?? decompressJson(existing.raw_json_compressed, createDefaultResumeData());
+
+    if (body.templateId && body.templateId !== existing.template_id && !body.data) {
+      const templates = await listTemplates();
+      const selectedTemplate = templates.find((template) => template.id === body.templateId);
+
+      if (selectedTemplate) {
+        payload = {
+          ...payload,
+          style: {
+            ...payload.style,
+            accent: selectedTemplate.config_json.accent || payload.style.accent,
+            typography: selectedTemplate.config_json.typography || payload.style.typography,
+          },
+        };
+      }
+    }
     const updated = await saveResumeDraft({
       resumeId: body.resumeId,
       userId: user.id,

@@ -59,7 +59,7 @@ function skillPercent(index: number) {
 
 export function ResumePreviewContent({ resume, template, className, isPrintMode }: ResumePreviewProps) {
   const fullName = [resume.personal.firstName, resume.personal.lastName].filter(Boolean).join(" ") || "Your Name";
-  const accent = template.config_json.accent || resume.style.accent;
+  const accent = resume.style.accent || template.config_json.accent;
   const layout = template.config_json.layout || "standard";
   const renderConfig = getTemplateRenderConfig(layout, template.config_json, accent);
   const isSplit = renderConfig.hasSidebar || template.config_json.columns === "split";

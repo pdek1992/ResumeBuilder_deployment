@@ -8,8 +8,6 @@ import { getActiveResumePass } from "@/lib/payments/access";
 import { getResumeForUser } from "@/lib/resume/repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logUserAction } from "@/lib/logging";
-import { cleanupStalePdfJobs, createSignedPdfJob } from "@/lib/pdf/jobs";
-import { requestPdfRender } from "@/lib/pdf/renderer-client";
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +40,11 @@ export async function POST(request: Request) {
     // 3. Validate resume ownership before any renderer job is created
     const resume = await getResumeForUser(user.id, resumeId);
     if (!resume) return fail("Resume not found", 404);
+
+    const [{ cleanupStalePdfJobs, createSignedPdfJob }, { requestPdfRender }] = await Promise.all([
+      import("@/lib/pdf/jobs"),
+      import("@/lib/pdf/renderer-client"),
+    ]);
 
     await cleanupStalePdfJobs().catch(() => undefined);
 

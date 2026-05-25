@@ -1176,14 +1176,7 @@ export function ResumeEditor({
             </div>
             <div className="w-full xl:w-[40%] xl:sticky xl:top-6">
               <ResumePreview
-                resume={{
-                  ...resume,
-                  style: {
-                    ...resume.style,
-                    accent: selectedTemplate.config_json.accent || resume.style.accent,
-                    typography: selectedTemplate.config_json.typography || resume.style.typography,
-                  },
-                }}
+                resume={resume}
                 template={selectedTemplate}
               />
             </div>
