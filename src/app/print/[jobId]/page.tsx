@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { resumeRecordToData } from "@/lib/pdf/export-data";
 import type { ResumeRecord, TemplateRecord } from "@/lib/types";
 import { ResumePreview } from "@/components/builder/resume-preview";
+import { hydrateTemplateRecord } from "@/lib/resume/templates";
 import { PdfReadyNotifier } from "./notifier";
 
 const DEFAULT_TEMPLATE: TemplateRecord = {
@@ -55,10 +56,12 @@ export default async function PrintPage({ params }: { params: Promise<{ jobId: s
     .maybeSingle();
 
   const resumeData = resumeRecordToData(resume as ResumeRecord);
-  const activeTemplate = (template as TemplateRecord | null) ?? {
-    ...DEFAULT_TEMPLATE,
-    id: resume.template_id || DEFAULT_TEMPLATE.id,
-  };
+  const activeTemplate = template 
+    ? hydrateTemplateRecord(template as TemplateRecord)
+    : {
+        ...DEFAULT_TEMPLATE,
+        id: resume.template_id || DEFAULT_TEMPLATE.id,
+      };
 
   return (
     <div className="bg-white min-h-screen">
