@@ -1,5 +1,5 @@
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 10;
 
 import { NextResponse } from "next/server";
 import { fail } from "@/lib/api-response";
