@@ -1,0 +1,60 @@
+name: Render Resume PDF
+
+on:
+  workflow_dispatch:
+    inputs:
+      jobId:
+        description: 'Unique Job ID for status tracking'
+        required: true
+        type: string
+      resumeId:
+        description: 'Resume ID to generate'
+        required: true
+        type: string
+      timestamp:
+        description: 'ISO Timestamp of the request'
+        required: true
+        type: string
+      nonce:
+        description: 'Unique anti-replay nonce'
+        required: true
+        type: string
+      signature:
+        description: 'HMAC secure verification signature'
+        required: true
+        type: string
+
+jobs:
+  render:
+    name: Generate High-Fidelity PDF
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Compute Dependencies
+        # Installs base node_modules from package-lock and forces puppeteer/pako/supabase installation
+        # for guaranteed compatibility inside the headless runner.
+        run: |
+          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          npm install puppeteer pako @supabase/supabase-js
+
+      - name: Execute Puppeteer PDF Compiler
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RENDER_SECRET: ${{ secrets.RENDER_SECRET }}
+        run: |
+          node renderer/generate-pdf.js \
+            --jobId="${{ github.event.inputs.jobId }}" \
+            --resumeId="${{ github.event.inputs.resumeId }}" \
+            --signature="${{ github.event.inputs.signature }}" \
+            --timestamp="${{ github.event.inputs.timestamp }}" \
+            --nonce="${{ github.event.inputs.nonce }}"
