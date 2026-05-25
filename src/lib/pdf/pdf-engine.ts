@@ -1,4 +1,20 @@
-import puppeteer from "puppeteer-core";
+import puppeteer, { type Browser } from "puppeteer-core";
+
+import { env } from "@/lib/env";
+
+const OPTIMIZED_CHROMIUM_FLAGS = [
+  "--disable-dev-shm-usage",
+  "--disable-gpu",
+  "--no-sandbox",
+  "--disable-setuid-sandbox",
+  "--disable-web-security",
+  "--font-render-hinting=none",
+  "--no-first-run",
+  "--no-zygote",
+  "--single-process",
+];
+
+let browserPromise: Promise<Browser> | null = null;
 
 // Find local chrome path for Windows development
 async function getLocalChromePath() {
@@ -16,19 +32,60 @@ async function getLocalChromePath() {
 }
 
 export async function getBrowser() {
+  if (browserPromise) {
+    return browserPromise;
+  }
+
+  browserPromise = launchBrowser().catch((error) => {
+    browserPromise = null;
+    throw error;
+  });
+
+  return browserPromise;
+}
+
+async function launchBrowser() {
   const isDev = process.env.NODE_ENV === "development";
-  const { default: chromium } = await import("@sparticuz/chromium");
+  const { default: chromium } = env.chromiumPackUrl
+    ? await import("@sparticuz/chromium-min")
+    : await import("@sparticuz/chromium");
   const chr = chromium as any;
   chr.setGraphicsMode = false;
   
   const executablePath = isDev 
     ? await getLocalChromePath()
-    : await chr.executablePath();
+    : await chr.executablePath(env.chromiumPackUrl || undefined);
     
-  return await puppeteer.launch({
-    args: isDev ? ["--no-sandbox", "--disable-setuid-sandbox"] : chr.args,
-    defaultViewport: chr.defaultViewport,
+  const browser = await puppeteer.launch({
+    args: isDev ? OPTIMIZED_CHROMIUM_FLAGS : Array.from(new Set([...chr.args, ...OPTIMIZED_CHROMIUM_FLAGS])),
+    defaultViewport: {
+      width: 794,
+      height: 1123,
+      deviceScaleFactor: 1,
+    },
     executablePath,
-    headless: isDev ? true : chr.headless,
+    headless: isDev ? true : "shell",
   });
+
+  browser.once("disconnected", () => {
+    browserPromise = null;
+  });
+
+  return browser;
+}
+
+export async function newPdfPage() {
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  page.setDefaultNavigationTimeout(env.pdfRendererTimeoutMs);
+  page.setDefaultTimeout(env.pdfRendererTimeoutMs);
+
+  await page.setViewport({
+    width: 794,
+    height: 1123,
+    deviceScaleFactor: 1,
+  });
+
+  return page;
 }

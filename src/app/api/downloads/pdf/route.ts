@@ -7,13 +7,9 @@ import { verifyDownloadToken } from "@/lib/downloads/tokens";
 import { getActiveResumePass } from "@/lib/payments/access";
 import { getResumeForUser } from "@/lib/resume/repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logUserAction } from "@/lib/logging";
-import { getBrowser } from "@/lib/pdf/pdf-engine";
-import { generatePdfHtml } from "@/lib/pdf/html-renderer";
-
-// Helper to wait
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+import { cleanupStalePdfJobs, createSignedPdfJob } from "@/lib/pdf/jobs";
+import { requestPdfRender } from "@/lib/pdf/renderer-client";
 
 export async function POST(request: Request) {
   try {
@@ -24,6 +20,8 @@ export async function POST(request: Request) {
 
     // 1. Verify access token and get payload
     const payload = await verifyDownloadToken(token);
+    if (payload.format !== "pdf") return fail("Invalid download token", 400);
+
     const supabase = await getSupabaseServerClient();
     const {
       data: { user },
@@ -41,90 +39,29 @@ export async function POST(request: Request) {
 
     const resumeId = payload.resumeId;
 
-    // 3. Fetch Resume Data and Template
+    // 3. Validate resume ownership before any renderer job is created
     const resume = await getResumeForUser(user.id, resumeId);
     if (!resume) return fail("Resume not found", 404);
 
-    const adminSupabase = getSupabaseAdminClient();
-    const { data: templateRecord } = await adminSupabase
-      .from("templates")
-      .select("*")
-      .eq("id", resume.templateId)
-      .maybeSingle();
+    await cleanupStalePdfJobs().catch(() => undefined);
 
-    const templateConfig = templateRecord || {
-      id: resume.templateId || "default",
-      template_name: "Default Template",
-      config_json: { accent: "#2563eb", density: "balanced", columns: "single" }
-    };
+    // 4. Create a one-time signed internal renderer job. The frontend only sees this route.
+    const job = await createSignedPdfJob({
+      userId: user.id,
+      resumeId,
+    });
+    const result = await requestPdfRender(job, new URL(request.url).origin);
 
-    // 4. Generate the exact same HTML used in the preview pane
-    console.log("[PDF_GEN] Generating HTML string...");
-    const html = await generatePdfHtml(resume, templateConfig);
+    await logUserAction({
+      userId: user.id,
+      actionType: "pdf_download",
+      metadata: { resumeId },
+    });
 
-    // 5. Fire up headless Chromium natively on Vercel Serverless
-    console.log("[PDF_GEN] Launching Vercel Puppeteer instance...");
-    const browser = await getBrowser();
-    
-    try {
-      const page = await browser.newPage();
-      
-      // Inject HTML directly (no network navigation needed!)
-      await page.setContent(html, { waitUntil: ["load", "networkidle0"] });
-      
-      // Give Tailwind CDN and Google Fonts a moment to compile and paint
-      console.log("[PDF_GEN] Waiting for fonts and CSS to settle...");
-      await page.evaluate(async () => {
-        await document.fonts.ready;
-      });
-      await delay(400); // safety buffer for Tailwind browser compiler
-      
-      console.log("[PDF_GEN] Printing to PDF buffer...");
-      const pdfBuffer = await page.pdf({
-        format: "A4",
-        printBackground: true,
-        preferCSSPageSize: true,
-        margin: { top: "0px", right: "0px", bottom: "0px", left: "0px" }
-      });
-
-      // 6. Upload PDF to Supabase storage
-      const storagePath = `pdf/${resumeId}.pdf`;
-      console.log(`[PDF_GEN] Uploading to Supabase: ${storagePath}`);
-      
-      const { error: uploadError } = await adminSupabase.storage
-        .from("resumes")
-        .upload(storagePath, pdfBuffer, {
-          contentType: "application/pdf",
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Generate signed URL
-      const { data: signedData, error: signedError } = await adminSupabase.storage
-        .from("resumes")
-        .createSignedUrl(storagePath, 60 * 60 * 24);
-
-      if (signedError || !signedData?.signedUrl) {
-        throw new Error("Failed to generate secure signed URL");
-      }
-      
-      // Log downloading metric
-      await logUserAction({
-        userId: user.id,
-        actionType: "pdf_download",
-        metadata: { resumeId },
-      });
-
-      console.log("[PDF_GEN] Success! Returning URL.");
-      return NextResponse.json({ status: "success", url: signedData.signedUrl });
-
-    } finally {
-      await browser.close();
-    }
+    return NextResponse.json(result);
 
   } catch (error: any) {
-    console.error("[PDF_GEN] Vercel Execution Error:", error);
+    console.error("[PDF_GEN] Internal renderer error:", error);
     return fail(error.message || "Failed to generate PDF", 500);
   }
 }
@@ -332,8 +269,8 @@ export async function GET(request: Request) {
             <p class="subtitle">Generating Pixel-Perfect PDF</p>
             
             <div class="status-box">
-              <p id="status" class="status-text">Booting Puppeteer runner...</p>
-              <p id="status-sub" class="status-sub">Securing cloud compute sandbox...</p>
+              <p id="status" class="status-text">Preparing secure export...</p>
+              <p id="status-sub" class="status-sub">Validating your download access...</p>
             </div>
             
             <div class="progress-bar-container">
@@ -352,11 +289,11 @@ export async function GET(request: Request) {
             
             // Visual state transitions
             const statuses = [
-              { pct: 15, txt: "Booting headless sandbox...", sub: "Deploying Chromium container..." },
-              { pct: 30, txt: "Injecting data models...", sub: "Hydrating absolute dimensions..." },
-              { pct: 50, txt: "Assembling layout structure...", sub: "Resolving grid divisions and typography..." },
-              { pct: 70, txt: "Rendering pixel-perfect shapes...", sub: "Waiting for fonts and styles..." },
-              { pct: 90, txt: "Uploading PDF package...", sub: "Saving securely to storage cloud..." }
+              { pct: 15, txt: "Preparing secure export...", sub: "Validating your download access..." },
+              { pct: 30, txt: "Loading resume data...", sub: "Applying the selected template..." },
+              { pct: 50, txt: "Composing document layout...", sub: "Preserving spacing and typography..." },
+              { pct: 70, txt: "Finalizing PDF...", sub: "Checking fonts and print styles..." },
+              { pct: 90, txt: "Securing download...", sub: "Creating your private link..." }
             ];
 
             function updateVisuals(index) {
@@ -368,7 +305,7 @@ export async function GET(request: Request) {
 
             function showError(msg) {
               document.querySelector(".spinner-box").style.display = "none";
-              document.getElementById("status-box").style.display = "none";
+              document.querySelector(".status-box").style.display = "none";
               document.getElementById("progress").style.backgroundColor = "#ef4444";
               document.getElementById("progress").style.width = "100%";
               document.getElementById("error-msg").textContent = msg;

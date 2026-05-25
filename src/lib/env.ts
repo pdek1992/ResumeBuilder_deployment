@@ -72,6 +72,11 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? "",
   sessionSecret: process.env.SESSION_SECRET ?? "",
   cronSecret: process.env.CRON_SECRET ?? "",
+  pdfRendererUrl: process.env.PDF_RENDERER_URL ?? "",
+  pdfRendererSecret: process.env.PDF_RENDERER_SECRET ?? process.env.RENDER_SECRET ?? "",
+  pdfRendererTimeoutMs: parseNumber(process.env.PDF_RENDERER_TIMEOUT_MS, 25000),
+  pdfSignedUrlTtlSeconds: parseNumber(process.env.PDF_SIGNED_URL_TTL_SECONDS, 60 * 60 * 24),
+  chromiumPackUrl: process.env.CHROMIUM_PACK_URL ?? "",
 };
 
 export function assertServerEnv(keys: Array<keyof typeof env>) {
