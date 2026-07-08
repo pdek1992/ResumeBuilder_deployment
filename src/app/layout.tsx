@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Analytics } from "@vercel/analytics/next";
 
 import "@/app/globals.css";
 import { SupportButton } from "@/components/ui/support-button";
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${sansFont.variable} ${displayFont.variable} bg-background text-foreground`}>
         {children}
         <SupportButton />
+        <Analytics />
       </body>
     </html>
   );
