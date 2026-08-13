@@ -7,48 +7,6 @@ export type ResumePreviewProps = {
   isPrintMode?: boolean;
 };
 
-function PreviewHeading({
-  children,
-  accent,
-  layout,
-  headingStyle,
-}: {
-  children: ReactNode;
-  accent: string;
-  layout?: string;
-  headingStyle?: string;
-}) {
-  if (layout === "sleek-dark" || headingStyle === "dark-bg-band") {
-    return (
-      <div className="mb-4 bg-slate-900 px-4 py-2">
-        <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-white">{children}</h3>
-      </div>
-    );
-  }
-  if (headingStyle === "serif-underline") {
-    return (
-      <div className="mb-4 border-b pb-2" style={{ borderColor: accent }}>
-        <h3 className="font-serif text-[14px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{children}</h3>
-      </div>
-    );
-  }
-  if (headingStyle === "left-border" || headingStyle === "bold-oversized") {
-    return (
-      <div className="mb-4 flex items-center gap-3">
-        <span className="h-6 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: accent }} />
-        <h3 className={cn("font-black uppercase", headingStyle === "bold-oversized" ? "text-[15px] tracking-[0.2em]" : "text-[11px] tracking-[0.28em]")} style={{ color: accent }}>{children}</h3>
-      </div>
-    );
-  }
-  if (headingStyle === "light-pill") {
-    return (
-      <span className="inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em]" style={{ backgroundColor: `${accent}12`, color: accent }}>
-        {children}
-      </span>
-    );
-  }
-  return <h3 className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: accent }}>{children}</h3>;
-}
 
 export function ResumePreviewContent(props: ResumePreviewProps) {
   const { template } = props;
