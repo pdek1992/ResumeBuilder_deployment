@@ -19,8 +19,8 @@ export function PastelSoftTemplate({ resume, template, isPrintMode }: ResumePrev
   return (
     <div 
       className={cn(
-        "origin-top-left bg-white overflow-hidden min-h-full flex flex-col",
-        isPrintMode ? "" : "shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
+        "origin-top-left bg-white min-h-full",
+        isPrintMode ? "" : "overflow-hidden shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
       )}
       style={{ width: "210mm", minHeight: "297mm", fontSize: "1em" }}
       data-pdf-page="true"

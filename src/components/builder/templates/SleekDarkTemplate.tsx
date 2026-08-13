@@ -18,7 +18,7 @@ export function SleekDarkTemplate({ resume, template, isPrintMode }: ResumePrevi
     <div 
       className={cn(
         "origin-top-left bg-slate-50 overflow-hidden min-h-full flex flex-col",
-        isPrintMode ? "" : "shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
+        isPrintMode ? "" : "overflow-hidden shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
       )}
       style={{ width: "210mm", minHeight: "297mm", fontSize: "1em" }}
       data-pdf-page="true"

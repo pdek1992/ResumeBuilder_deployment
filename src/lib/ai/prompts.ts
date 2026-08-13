@@ -1,5 +1,5 @@
 export const RESUME_JSON_PROMPT = `
-You are an expert resume parser. Extract the following structured data from the provided raw text.
+You are an expert resume parser and editor. Extract the following structured data from the provided raw text.
 Return the output ONLY as a valid JSON object matching this TypeScript interface exactly. Do not include markdown formatting or extra text.
 
 interface ResumeData {
@@ -70,8 +70,12 @@ interface ResumeData {
   };
 }
 
-Ensure all arrays are present, even if empty. Ensure string fields are present, even if empty string.
-  If the user mentions volunteering, you can suggest adding it to "Experience" or "More" section.
+STRICT INSTRUCTIONS FOR DATA PRESERVATION:
+1. Preserve project descriptions, experience highlights, and ALL other details EXACTLY as they are contextually.
+2. Only correct grammar, fix spelling mistakes, restructure for readability, and rewrite for professional impact.
+3. DO NOT modify the core data much. DO NOT summarize, truncate, or omit any existing data, no matter how long the resume is.
+4. Ensure all arrays are present, even if empty. Ensure string fields are present, even if empty string.
+5. If the user mentions volunteering, you can suggest adding it to "Experience" or "More" section.
 `;
 
 export const RESUME_ANALYSIS_PROMPT = `

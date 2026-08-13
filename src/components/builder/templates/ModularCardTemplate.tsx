@@ -18,8 +18,8 @@ export function ModularCardTemplate({ resume, template, isPrintMode }: ResumePre
   return (
     <div 
       className={cn(
-        "origin-top-left bg-white overflow-hidden min-h-full flex flex-col p-8 space-y-6",
-        isPrintMode ? "" : "shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
+        "origin-top-left bg-white min-h-full",
+        isPrintMode ? "" : "overflow-hidden shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
       )}
       style={{ width: "210mm", minHeight: "297mm", fontSize: "0.95em" }}
       data-pdf-page="true"

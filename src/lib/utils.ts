@@ -53,3 +53,21 @@ export function absoluteUrl(pathname = "/") {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   return new URL(pathname, base).toString();
 }
+
+export function hexToRgba(hex: string, opacity: number): string {
+  let cleanedHex = hex.replace("#", "");
+  
+  if (cleanedHex.length === 3) {
+    cleanedHex = cleanedHex.split("").map((char) => char + char).join("");
+  }
+  
+  if (cleanedHex.length !== 6) {
+    return hex; // Fallback if invalid
+  }
+
+  const r = parseInt(cleanedHex.substring(0, 2), 16);
+  const g = parseInt(cleanedHex.substring(2, 4), 16);
+  const b = parseInt(cleanedHex.substring(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
