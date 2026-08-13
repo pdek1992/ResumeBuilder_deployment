@@ -35,7 +35,9 @@ export function ImportStep() {
   const router = useRouter();
   const [text, setText] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [jdLocation, setJdLocation] = useState("");
+  const [targetRole, setTargetRole] = useState("");
+  const [targetLocation, setTargetLocation] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -99,8 +101,14 @@ export function ImportStep() {
     if (companyName.trim()) {
       formData.append("companyName", companyName);
     }
-    if (jdLocation.trim()) {
-      formData.append("jdLocation", jdLocation);
+    if (targetRole.trim()) {
+      formData.append("targetRole", targetRole);
+    }
+    if (targetLocation.trim()) {
+      formData.append("targetLocation", targetLocation);
+    }
+    if (jobDescription.trim()) {
+      formData.append("jobDescription", jobDescription);
     }
 
     const response = await fetch("/api/resumes/import", {
@@ -173,7 +181,7 @@ export function ImportStep() {
 
       <div className="mt-10">
         <label htmlFor="careerText" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
-          Or Paste Career Text
+          Paste Resume as Text
         </label>
         <textarea
           id="careerText"
@@ -184,10 +192,10 @@ export function ImportStep() {
         />
       </div>
 
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div className="flex-1">
           <label htmlFor="companyName" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
-            Target Company (Optional)
+            Organization Name (Optional)
           </label>
           <input
             id="companyName"
@@ -199,18 +207,44 @@ export function ImportStep() {
           />
         </div>
         <div className="flex-1">
-          <label htmlFor="jdLocation" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
-            Target Role / Location (Optional)
+          <label htmlFor="targetRole" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Target Role (Optional)
           </label>
           <input
-            id="jdLocation"
+            id="targetRole"
             type="text"
-            placeholder="e.g. Frontend Engineer, London"
-            value={jdLocation}
-            onChange={(event) => setJdLocation(event.target.value)}
+            placeholder="e.g. DevOps Engineer"
+            value={targetRole}
+            onChange={(event) => setTargetRole(event.target.value)}
             className="mt-2 w-full rounded-full border-0 bg-gray-50/80 px-6 py-4 text-[14px] font-medium text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
           />
         </div>
+        <div className="flex-1">
+          <label htmlFor="targetLocation" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            JD Location (Optional)
+          </label>
+          <input
+            id="targetLocation"
+            type="text"
+            placeholder="e.g. Mumbai, Remote"
+            value={targetLocation}
+            onChange={(event) => setTargetLocation(event.target.value)}
+            className="mt-2 w-full rounded-full border-0 bg-gray-50/80 px-6 py-4 text-[14px] font-medium text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <label htmlFor="jobDescription" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+          Job Description (Optional)
+        </label>
+        <textarea
+          id="jobDescription"
+          placeholder="Paste the JD here so AI can tailor the resume without removing existing experience or project content..."
+          value={jobDescription}
+          onChange={(event) => setJobDescription(event.target.value)}
+          className="mt-3 min-h-[150px] w-full rounded-3xl border-0 bg-gray-50/80 px-8 py-5 text-[16px] font-medium text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
+        />
       </div>
 
       {error ? <p className="mt-4 text-sm font-medium text-red-600 ml-4">{error}</p> : null}

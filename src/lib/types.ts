@@ -166,6 +166,7 @@ export type ResumeData = {
   ats: {
     targetRole: string;
     targetCompany: string;
+    targetLocation?: string;
     targetJobDescription: string;
     score: number | null;
   };

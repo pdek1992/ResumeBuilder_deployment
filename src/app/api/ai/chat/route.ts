@@ -13,8 +13,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const { resumeId, prompt, currentData } = await req.json();
+    const compactResume = {
+      ...currentData,
+      personal: {
+        ...currentData.personal,
+        profilePhotoUrl: currentData.personal?.profilePhotoUrl ? "[profile-photo-present]" : "",
+      },
+    };
 
-    const systemPrompt = `${CHAT_RESUME_PROMPT}\n\nCurrent Resume Data:\n${JSON.stringify(currentData, null, 2)}`;
+    const systemPrompt = `${CHAT_RESUME_PROMPT}\n\nCurrent Resume Data:\n${JSON.stringify(compactResume)}`;
 
     const aiResponse = await generateAiContent({
       mode: "JSON",

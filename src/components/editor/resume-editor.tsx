@@ -217,6 +217,7 @@ export function ResumeEditor({
             prompt: {
               targetRole: resume.ats.targetRole,
               targetCompany: resume.ats.targetCompany,
+              targetLocation: resume.ats.targetLocation,
               jobDescription: resume.ats.targetJobDescription,
               summary: resume.summary,
               experience: resume.experience,
@@ -362,7 +363,7 @@ export function ResumeEditor({
   function downloadCoverLetter() {
     if (!coverLetter) return;
     const company = (resume.ats.targetCompany || "company").replace(/[^a-zA-Z0-9]/g, "-");
-    const date = new Date().toLocaleDateString("en-IN").replace(/\//g, "-");
+    const date = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).replace(/\//g, "-");
     const blob = new Blob([coverLetter], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -872,7 +873,7 @@ export function ResumeEditor({
                         <h4 className="text-[14px] font-black uppercase tracking-[0.24em] text-slate-800">Target Opportunity</h4>
                         <span className="rounded-full bg-primary/10 px-4 py-2 text-[10px] font-bold text-primary">Inspired by this</span>
                       </div>
-                      <div className="grid gap-5 md:grid-cols-2">
+                      <div className="grid gap-5 md:grid-cols-3">
                         <div>
                           <label className={labelClassName}>Designation / Role</label>
                           <input 
@@ -883,12 +884,21 @@ export function ResumeEditor({
                           />
                         </div>
                         <div>
-                          <label className={labelClassName}>Company Name</label>
+                          <label className={labelClassName}>Organization Name</label>
                           <input 
                             value={resume.ats.targetCompany} 
                             onChange={(event) => setResume(curr => ({ ...curr, ats: { ...curr.ats, targetCompany: event.target.value } }))} 
                             className={fieldClassName}
                             placeholder="e.g. Google" 
+                          />
+                        </div>
+                        <div>
+                          <label className={labelClassName}>JD Location</label>
+                          <input
+                            value={resume.ats.targetLocation ?? ""}
+                            onChange={(event) => setResume(curr => ({ ...curr, ats: { ...curr.ats, targetLocation: event.target.value } }))}
+                            className={fieldClassName}
+                            placeholder="e.g. Mumbai, Remote"
                           />
                         </div>
                       </div>

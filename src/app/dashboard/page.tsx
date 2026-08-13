@@ -63,7 +63,9 @@ export default async function DashboardPage() {
                 >
                   <p className="text-[11px] font-black uppercase tracking-[0.26em] text-slate-400">{resume.template_id}</p>
                   <h2 className="mt-3 text-[1.9rem] font-black tracking-tight text-slate-950">{resume.title}</h2>
-                  <p className="mt-3 text-[14px] leading-7 text-slate-500">Updated {new Date(resume.updated_at).toLocaleString()}</p>
+                  <p className="mt-3 text-[14px] leading-7 text-slate-500">
+                    Updated {new Date(resume.updated_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+                  </p>
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       href={`/builder/${resume.id}`}

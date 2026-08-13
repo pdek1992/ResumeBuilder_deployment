@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { ok, fail } from "@/lib/api-response";
 import { generateAiContent } from "@/lib/ai/service";
+import { RESUME_SECTION_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       mode: body.mode,
       prompt,
       userId: user.id,
+      systemPrompt: body.mode === "RESUME_SECTION" ? RESUME_SECTION_SYSTEM_PROMPT : undefined,
       metadata: {
         purpose: body.purpose,
         resumeId: body.resumeId,

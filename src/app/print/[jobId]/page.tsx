@@ -67,7 +67,12 @@ export default async function PrintPage({ params }: { params: Promise<{ jobId: s
     <div className="bg-white min-h-screen">
       <style dangerouslySetInnerHTML={{ __html: `
         @page { size: A4; margin: 0; }
+        html, body { height: auto !important; overflow: visible !important; }
         body { margin: 0; padding: 0; background: #ffffff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        [data-pdf-page="true"] { height: auto !important; overflow: visible !important; }
+        [data-pdf-page="true"] * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        [data-pdf-page="true"] p, [data-pdf-page="true"] li { overflow-wrap: anywhere; }
+        [data-pdf-page="true"] [class*="break-inside-avoid"] { break-inside: avoid-page; page-break-inside: avoid; }
       `}} />
       <ResumePreview resume={resumeData} template={activeTemplate} isPrintMode={true} />
       <PdfReadyNotifier />

@@ -92,6 +92,7 @@ export function createDefaultResumeData(): ResumeData {
     ats: {
       targetRole: "",
       targetCompany: "",
+      targetLocation: "",
       targetJobDescription: "",
       score: null,
     },
@@ -126,7 +127,8 @@ export function calculateAtsScore(resume: ResumeData) {
   // Targeting & Alignment (30 pts) - HEAVY WEIGHT
   if (resume.ats.targetRole) score += 10;
   if (resume.ats.targetCompany) score += 5;
-  if (resume.ats.targetJobDescription && resume.ats.targetJobDescription.length > 100) score += 15;
+  if (resume.ats.targetLocation) score += 3;
+  if (resume.ats.targetJobDescription && resume.ats.targetJobDescription.length > 100) score += 12;
 
   // Extras (5 pts)
   if (resume.projects.length >= 1 && resume.projects[0].name) score += 2;

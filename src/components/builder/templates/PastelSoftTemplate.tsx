@@ -130,7 +130,7 @@ export function PastelSoftTemplate({ resume, template, isPrintMode }: ResumePrev
             <div className="mt-4 space-y-5">
               {resume.projects.map((item) => (
                 <div key={item.id} className="group break-inside-avoid border-b border-dotted pb-5" style={{ borderColor: `${accent}30` }}>
-                  <p className="text-[14px] font-black text-slate-900">{item.name}</p>
+                  <p className="break-words text-[14px] font-black text-slate-900">{item.name}</p>
                   {item.role && <p className="mt-1 text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{item.role}</p>}
                   <div className="mt-2 space-y-2">
                     {item.highlights.filter(Boolean).map((highlight, index) => (

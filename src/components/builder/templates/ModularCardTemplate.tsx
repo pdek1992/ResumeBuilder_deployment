@@ -105,7 +105,7 @@ export function ModularCardTemplate({ resume, template, isPrintMode }: ResumePre
               <div className="mt-6 space-y-6">
                 {resume.projects.map((item) => (
                   <div key={item.id} className="group break-inside-avoid">
-                    <p className="text-[14px] font-black text-slate-900">{item.name}</p>
+                    <p className="break-words text-[14px] font-black text-slate-900">{item.name}</p>
                     {item.role && <p className="mt-1 text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{item.role}</p>}
                     <div className="mt-2 space-y-2">
                       {item.highlights.filter(Boolean).map((highlight, index) => (

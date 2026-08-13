@@ -18,8 +18,8 @@ export function CreativeDesignerSplitTemplate({ resume, template, isPrintMode }:
   return (
     <div 
       className={cn(
-        "origin-top-left bg-white min-h-full",
-        isPrintMode ? "" : "overflow-hidden shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
+        "origin-top-left flex bg-white min-h-full",
+        isPrintMode ? "overflow-visible" : "overflow-hidden shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
       )}
       style={{ width: "210mm", minHeight: "297mm", fontSize: "1em" }}
       data-pdf-page="true"
@@ -51,7 +51,7 @@ export function CreativeDesignerSplitTemplate({ resume, template, isPrintMode }:
               <div className="mt-4 space-y-5">
                 {resume.projects.map((item) => (
                   <div key={item.id} className="group break-inside-avoid">
-                    <p className="text-[14px] font-black text-white">{item.name}</p>
+                    <p className="break-words text-[14px] font-black text-white">{item.name}</p>
                     {item.role && <p className="mt-1 text-[10.5px] font-bold uppercase tracking-wide text-white/60">{item.role}</p>}
                     <div className="mt-2 space-y-2">
                       {item.highlights.filter(Boolean).map((highlight, index) => (

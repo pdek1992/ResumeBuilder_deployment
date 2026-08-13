@@ -47,6 +47,40 @@ textarea {
     background: #fff;
   }
 
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-pdf-page="true"] {
+    height: auto !important;
+    overflow: visible !important;
+    break-after: auto;
+  }
+
+  [data-pdf-page="true"] > *,
+  [data-pdf-page="true"] section,
+  [data-pdf-page="true"] article {
+    overflow: visible !important;
+  }
+
+  [data-pdf-page="true"] h3,
+  [data-pdf-page="true"] h4,
+  [data-pdf-page="true"] p,
+  [data-pdf-page="true"] li {
+    overflow-wrap: anywhere;
+  }
+
+  [data-pdf-page="true"] [class*="break-inside-avoid"] {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  [data-pdf-page="true"] [class*="space-y"] > * {
+    page-break-margin-top: 10mm;
+  }
+
   [data-print-block="true"] {
     display: none !important;
   }

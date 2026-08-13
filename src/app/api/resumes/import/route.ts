@@ -48,12 +48,14 @@ const importSchema = z.object({
     .object({
       targetRole: z.string().default(""),
       targetCompany: z.string().default(""),
+      targetLocation: z.string().default(""),
       targetJobDescription: z.string().default(""),
       score: z.number().nullable().default(null),
     })
     .default({
       targetRole: "",
       targetCompany: "",
+      targetLocation: "",
       targetJobDescription: "",
       score: null,
     }),
@@ -98,14 +100,26 @@ export async function POST(request: Request) {
     const file = formData.get("file");
     const text = String(formData.get("text") ?? "").trim();
     const companyName = String(formData.get("companyName") ?? "").trim();
-    const jdLocation = String(formData.get("jdLocation") ?? "").trim();
+    const legacyRoleLocation = String(formData.get("jdLocation") ?? "").trim();
+    const targetRole = String(formData.get("targetRole") ?? legacyRoleLocation).trim();
+    const targetLocation = String(formData.get("targetLocation") ?? "").trim();
+    const jobDescription = String(formData.get("jobDescription") ?? "").trim();
     
     let tailoringPrompt = "";
-    if (companyName || jdLocation) {
+    if (companyName || targetRole || targetLocation || jobDescription) {
       tailoringPrompt = `\n\nCRITICAL TAILORING INSTRUCTIONS:\n`;
       if (companyName) tailoringPrompt += `- Target Company: ${companyName}\n`;
-      if (jdLocation) tailoringPrompt += `- Target Role/Location: ${jdLocation}\n`;
-      tailoringPrompt += `Please deeply tailor and rewrite the bullet points, summary, and keywords in the resume to closely align with this specific target company and role. Emphasize relevant skills and experiences. Set the ats.targetCompany to ${companyName || '""'} and ats.targetRole to ${jdLocation || '""'}.\n`;
+      if (targetRole) tailoringPrompt += `- Target Role: ${targetRole}\n`;
+      if (targetLocation) tailoringPrompt += `- JD Location: ${targetLocation}\n`;
+      if (jobDescription) tailoringPrompt += `- Job Description:\n${jobDescription.slice(0, 8000)}\n`;
+      tailoringPrompt += [
+        "Tailor by reordering, categorizing, and rewriting for impact while preserving every original fact, project, experience point, certification, and technical detail.",
+        "Do not delete, omit, invent, or compress away candidate content.",
+        `Set ats.targetCompany to ${JSON.stringify(companyName)}.`,
+        `Set ats.targetRole to ${JSON.stringify(targetRole)}.`,
+        `Set ats.targetLocation to ${JSON.stringify(targetLocation)}.`,
+        `Set ats.targetJobDescription to ${JSON.stringify(jobDescription)}.`,
+      ].join("\n");
     }
     
     let aiContent = "";
