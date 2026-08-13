@@ -1,0 +1,170 @@
+import React from "react";
+import type { ResumePreviewProps } from "../resume-preview-content";
+import { cn } from "@/lib/utils";
+
+function PreviewHeading({ children, accent }: { children: React.ReactNode; accent: string }) {
+  return (
+    <h3 className="text-[11px] font-black uppercase tracking-[0.28em] mb-6" style={{ color: accent }}>
+      {children}
+    </h3>
+  );
+}
+
+export function SidebarCirclesTemplate({ resume, template, isPrintMode }: ResumePreviewProps) {
+  const fullName = [resume.personal.firstName, resume.personal.lastName].filter(Boolean).join(" ") || "Your Name";
+  const accent = resume.style.accent || template.config_json.accent;
+
+  return (
+    <div 
+      className={cn(
+        "origin-top-left bg-white overflow-hidden min-h-full flex",
+        isPrintMode ? "" : "shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
+      )}
+      style={{ width: "210mm", minHeight: "297mm", fontSize: "1em" }}
+      data-pdf-page="true"
+      data-template-id={template.id}
+      data-template-layout="sidebar-circles"
+    >
+      {/* SIDEBAR */}
+      <div 
+        className="shrink-0 p-8 flex flex-col bg-slate-50 border-r border-slate-100 w-[32%]"
+        style={{ backgroundColor: `${accent}08` }}
+      >
+        <div className="mb-10">
+          {resume.personal.profilePhotoUrl ? (
+            <div className="mx-auto overflow-hidden shadow-xl border-4 h-32 w-32 rounded-full border-white">
+              <img src={resume.personal.profilePhotoUrl} alt={fullName} className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            <div className="mx-auto flex items-center justify-center bg-white shadow-sm h-20 w-20 rounded-full">
+              <img src={template.icon || "/icons/icon-resume.png"} alt="Icon" className="h-10 w-10 opacity-10" />
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-8 flex-1">
+          {resume.skills.length > 0 && (
+            <div>
+              <PreviewHeading accent={accent}>Skills</PreviewHeading>
+              <div className="mt-4 space-y-3">
+                {resume.skills.map((skill, index) => (
+                  <div key={skill} className="flex items-center justify-between gap-3 text-[11.5px] text-slate-600">
+                    <span>{skill}</span>
+                    <span className="flex gap-1">
+                      {[0, 1, 2, 3, 4].map((dot) => (
+                        <span key={dot} className="h-2 w-2 rounded-full" style={{ backgroundColor: dot < 4 - (index % 2) ? accent : `${accent}24` }} />
+                      ))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resume.education.length > 0 && (
+            <div>
+              <PreviewHeading accent={accent}>Education</PreviewHeading>
+              <div className="mt-4 space-y-5">
+                {resume.education.map(item => (
+                  <div key={item.id}>
+                    <div className="flex justify-between items-start gap-4">
+                      <p className="text-[13.5px] font-black leading-tight text-slate-950">{item.degree || "Degree"}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] shrink-0 text-slate-400">{item.endDate}</p>
+                    </div>
+                    <p className="mt-1.5 text-[11.5px] font-bold uppercase tracking-wide text-slate-500">{item.school || "University"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {!isPrintMode && (
+          <div className="mt-auto pt-8 border-t opacity-20" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em]">High Fidelity Resume</p>
+          </div>
+        )}
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 flex flex-col min-h-full">
+        <div className="px-10 py-12">
+          <div className="flex flex-col">
+            <h1 className="font-display font-black leading-tight tracking-tight break-words text-slate-950 text-[38px]">{fullName}</h1>
+            <p className="mt-2 font-bold uppercase tracking-widest break-words text-[12px]" style={{ color: accent }}>
+              {resume.personal.headline || resume.ats.targetRole || "Professional Headline"}
+            </p>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t pt-6 text-[11px] font-medium tracking-wide border-slate-100 text-slate-500">
+            {[resume.personal.location, resume.personal.phone, resume.personal.email].filter(Boolean).map((text, i) => (
+              <span key={i} className="flex items-center gap-2">
+                {i > 0 && <span className="h-1 w-1 rounded-full bg-current opacity-30" />}
+                {text}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 px-10 pb-12 space-y-8">
+          {resume.summary && (
+            <div>
+              <PreviewHeading accent={accent}>Professional Summary</PreviewHeading>
+              <p className="mt-3 leading-6 text-slate-600 whitespace-pre-wrap break-words text-[11.5px]">{resume.summary}</p>
+            </div>
+          )}
+
+          {resume.experience.length > 0 && (
+            <div>
+              <PreviewHeading accent={accent}>Experience</PreviewHeading>
+              <div className="mt-4 space-y-5">
+                {resume.experience.map((item) => (
+                  <div key={item.id} className="relative break-inside-avoid pl-6">
+                    <div className="absolute -left-6 top-1 h-3 w-3 rounded-full" style={{ backgroundColor: accent }} />
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[13px] font-black text-slate-900">{item.title || "Role Title"}</p>
+                        <p className="mt-1 text-[11px] text-slate-500">{[item.company, item.location].filter(Boolean).join(" | ")}</p>
+                      </div>
+                      {(item.startDate || item.endDate || item.current) && (
+                        <span className="shrink-0 rounded-full bg-slate-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                          {[item.startDate, item.current ? "Present" : item.endDate].filter(Boolean).join(" - ")}
+                        </span>
+                      )}
+                    </div>
+                    <ul className="mt-2 ml-4 list-disc space-y-1 leading-5 text-slate-600 text-[11.5px]">
+                      {item.highlights.filter(Boolean).map((highlight, index) => (
+                        <li key={index} className="break-words whitespace-pre-wrap">{highlight}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resume.projects.length > 0 && resume.projects.some(p => p.name) && (
+            <div>
+              <PreviewHeading accent={accent}>Projects</PreviewHeading>
+              <div className="mt-4 space-y-5">
+                {resume.projects.map((item) => (
+                  <div key={item.id} className="group break-inside-avoid">
+                    <p className="text-[14px] font-black text-slate-900">{item.name}</p>
+                    {item.role && <p className="mt-1 text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{item.role}</p>}
+                    <div className="mt-2 space-y-2">
+                      {item.highlights.filter(Boolean).map((highlight, index) => (
+                        <p key={index} className="leading-relaxed text-slate-600 break-words whitespace-pre-wrap flex gap-3 text-[11.5px]">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
+                          {highlight}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
