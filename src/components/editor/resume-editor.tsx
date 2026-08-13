@@ -31,9 +31,10 @@ type ResumeEditorProps = {
   profile: UserProfile;
   hasActiveResumePass: boolean;
   hasMockInterviewCredit: boolean;
+  hasInterviewGuideAccess: boolean;
 };
 
-type PaymentIntent = "resume_download" | "mock_interview" | "cover_letter";
+type PaymentIntent = "resume_download" | "mock_interview" | "interview_guide" | "cover_letter";
 
 type EditorCardProps = ComponentPropsWithoutRef<"section">;
 
@@ -92,6 +93,7 @@ export function ResumeEditor({
   profile,
   hasActiveResumePass,
   hasMockInterviewCredit,
+  hasInterviewGuideAccess,
 }: ResumeEditorProps) {
   const router = useRouter();
   const [resume, setResume] = useState<ResumeData>({
@@ -111,6 +113,7 @@ export function ResumeEditor({
   const [coverLetter, setCoverLetter] = useState("");
   const [coverLetterCopied, setCoverLetterCopied] = useState(false);
   const [interviewItems, setInterviewItems] = useState<MockInterviewItem[]>([]);
+  const [interviewGuide, setInterviewGuide] = useState<{ category: string, questions: string[] }[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const saveTimer = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -199,7 +202,7 @@ export function ResumeEditor({
     }
   };
 
-  async function runAiAction(target: "summary" | "cover-letter" | "mock-interview") {
+  async function runAiAction(target: "summary" | "cover-letter" | "mock-interview" | "interview-guide") {
     setBusyAction(target);
     setSaveError("");
 
@@ -248,6 +251,19 @@ export function ResumeEditor({
         });
         setInterviewItems(payload.items);
       }
+
+      if (target === "interview-guide") {
+        const payload = await apiFetch<{ items: { category: string, questions: string[] }[] }>("/api/interview-guide", {
+          method: "POST",
+          body: JSON.stringify({
+            resumeId,
+            companyName: resume.ats.targetCompany,
+            jd: resume.ats.targetJobDescription,
+            experience: resume.personal.totalExperience,
+          }),
+        });
+        setInterviewGuide(payload.items);
+      }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "AI action failed");
     } finally {
@@ -283,7 +299,9 @@ export function ResumeEditor({
             ? "24-hour resume export access"
             : paymentType === "cover_letter"
               ? "Cover letter generation & download"
-              : "Mock interview generation",
+              : paymentType === "interview_guide"
+                ? "24-hour Interview Guide access"
+                : "Mock interview generation",
         order_id: payload.orderId,
         handler: async (response: {
           razorpay_order_id: string;
@@ -894,8 +912,19 @@ export function ResumeEditor({
                         </div>
                       </div>
 
+                      <div className="mt-6 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => runAiAction("summary")}
+                          disabled={busyAction !== null || isLocked}
+                          className="rounded-full bg-primary px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-white disabled:opacity-60 shadow-[0_16px_36px_rgba(48,103,234,0.22)]"
+                        >
+                          {busyAction === "summary" ? "Tailoring..." : "✨ Tailor with AI"}
+                        </button>
+                      </div>
+
                       <p className="mt-4 text-[11px] font-medium text-slate-400">
-                        * This information is used by the AI to tailor your summary and experience highlights when you click &quot;AI Tailor&quot;.
+                        * Clicking Tailor with AI will rewrite your summary based on the Target Opportunity above.
                       </p>
                     </div>
                   </div>
@@ -996,7 +1025,7 @@ export function ResumeEditor({
             <EditorCard>
               <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div className="flex flex-wrap items-center gap-5">
-                  <span className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Accent Theme</span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-400">Theme Color</span>
                   <div className="flex flex-wrap items-center gap-3">
                     {accentOptions.map((accent) => (
                       <button
@@ -1099,6 +1128,24 @@ export function ResumeEditor({
                 >
                   {hasMockInterviewCredit ? "Mock Interview" : "Unlock Interview"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (hasInterviewGuideAccess) {
+                      void runAiAction("interview-guide");
+                    } else {
+                      void startPayment("interview_guide");
+                    }
+                  }}
+                  disabled={busyAction !== null}
+                  className="rounded-full border border-slate-200 bg-white px-6 py-3 text-[12px] font-black uppercase tracking-[0.24em] text-slate-600 disabled:opacity-50"
+                >
+                  {busyAction === "interview-guide"
+                    ? "Generating…"
+                    : hasInterviewGuideAccess
+                      ? "Interview Guide"
+                      : "Unlock Interview Guide ₹50"}
+                </button>
                 {hasActiveResumePass ? (
                   <button
                     type="button"
@@ -1135,10 +1182,6 @@ export function ResumeEditor({
                   </div>
                   {/* Letter body */}
                   <p className="mt-5 whitespace-pre-wrap text-sm leading-8 text-slate-600">{coverLetter}</p>
-                  {/* Reminder */}
-                  <p className="mt-4 text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
-                    Tip: review &amp; personalise before sending
-                  </p>
                 </div>
               ) : null}
 
@@ -1149,6 +1192,21 @@ export function ResumeEditor({
                       <p className="text-sm font-black text-slate-900">{item.question}</p>
                       <p className="mt-4 text-sm leading-8 text-slate-600">{item.answer}</p>
                       <p className="mt-4 text-[11px] font-black uppercase tracking-[0.24em] text-primary">{item.tone_guidance}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {interviewGuide.length > 0 ? (
+                <div className="space-y-6">
+                  {interviewGuide.map((category, index) => (
+                    <div key={`guide-${index}`} className="rounded-[2.2rem] border border-slate-100 bg-slate-50 px-6 py-6">
+                      <h4 className="text-sm font-black uppercase tracking-wider text-slate-900 mb-4">{category.category}</h4>
+                      <ul className="list-disc pl-5 space-y-3">
+                        {category.questions.map((question, qIndex) => (
+                          <li key={`q-${qIndex}`} className="text-sm leading-6 text-slate-600">{question}</li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
                 </div>

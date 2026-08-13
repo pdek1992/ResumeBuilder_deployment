@@ -34,6 +34,8 @@ async function getCsrfToken() {
 export function ImportStep() {
   const router = useRouter();
   const [text, setText] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [jdLocation, setJdLocation] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -93,6 +95,12 @@ export function ImportStep() {
     }
     if (text.trim()) {
       formData.append("text", text);
+    }
+    if (companyName.trim()) {
+      formData.append("companyName", companyName);
+    }
+    if (jdLocation.trim()) {
+      formData.append("jdLocation", jdLocation);
     }
 
     const response = await fetch("/api/resumes/import", {
@@ -174,6 +182,35 @@ export function ImportStep() {
           onChange={(event) => setText(event.target.value)}
           className="mt-3 min-h-[180px] w-full rounded-3xl border-0 bg-gray-50/80 px-8 py-5 text-[16px] font-medium text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
         />
+      </div>
+
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+        <div className="flex-1">
+          <label htmlFor="companyName" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Target Company (Optional)
+          </label>
+          <input
+            id="companyName"
+            type="text"
+            placeholder="e.g. Google, Stripe"
+            value={companyName}
+            onChange={(event) => setCompanyName(event.target.value)}
+            className="mt-2 w-full rounded-full border-0 bg-gray-50/80 px-6 py-4 text-[14px] font-medium text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
+        <div className="flex-1">
+          <label htmlFor="jdLocation" className="ml-4 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            Target Role / Location (Optional)
+          </label>
+          <input
+            id="jdLocation"
+            type="text"
+            placeholder="e.g. Frontend Engineer, London"
+            value={jdLocation}
+            onChange={(event) => setJdLocation(event.target.value)}
+            className="mt-2 w-full rounded-full border-0 bg-gray-50/80 px-6 py-4 text-[14px] font-medium text-gray-800 outline-none transition placeholder:text-gray-300 focus:bg-gray-100 focus:ring-2 focus:ring-blue-100"
+          />
+        </div>
       </div>
 
       {error ? <p className="mt-4 text-sm font-medium text-red-600 ml-4">{error}</p> : null}

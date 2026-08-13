@@ -113,7 +113,7 @@ export async function markPaymentPaid({
   }
 
   const expiresAt =
-    current.payment_type === "resume_download" || current.payment_type === "cover_letter"
+    current.payment_type === "resume_download" || current.payment_type === "cover_letter" || current.payment_type === "interview_guide"
       ? addHours(new Date(), 24).toISOString()
       : null;
 
@@ -221,6 +221,23 @@ export async function hasCoverLetterAccess(userId: string) {
     .select("*")
     .eq("user_id", userId)
     .in("payment_type", ["resume_download", "cover_letter"])
+    .eq("status", "paid")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return !!data;
+}
+
+export async function hasInterviewGuideAccess(userId: string) {
+  const supabase = getSupabaseAdminClient();
+  // Check for either a full resume pass OR a specific interview guide pass
+  const { data } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("user_id", userId)
+    .in("payment_type", ["resume_download", "interview_guide"])
     .eq("status", "paid")
     .gt("expires_at", new Date().toISOString())
     .order("created_at", { ascending: false })

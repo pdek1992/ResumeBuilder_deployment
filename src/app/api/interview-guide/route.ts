@@ -1,17 +1,26 @@
 export const runtime = "nodejs";
 
+import { z } from "zod";
+
 import { ok, fail } from "@/lib/api-response";
 import { generateAiContent } from "@/lib/ai/service";
 import { getResumeForUser } from "@/lib/resume/repository";
 import { decompressJson } from "@/lib/compression";
 import { createDefaultResumeData } from "@/lib/resume/defaults";
-import { hasCoverLetterAccess } from "@/lib/payments/access";
+import { hasInterviewGuideAccess } from "@/lib/payments/access";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logUserAction } from "@/lib/logging";
-import { sendTelegramAlert } from "@/lib/telegram";
+
+const interviewGuideSchema = z.object({
+  items: z.array(
+    z.object({
+      category: z.string(),
+      questions: z.array(z.string()),
+    })
+  ),
+});
 
 export async function POST(request: Request) {
   try {
@@ -27,15 +36,17 @@ export async function POST(request: Request) {
       return fail("Authentication required", 401);
     }
 
-    const hasAccess = await hasCoverLetterAccess(user.id);
+    const hasAccess = await hasInterviewGuideAccess(user.id);
+
     if (!hasAccess) {
-      return fail("Active pass required for cover letter generation", 403);
+      return fail("An active interview guide pass is required", 403);
     }
 
     const body = (await request.json()) as {
       resumeId: string;
       companyName: string;
       jd: string;
+      experience: string;
     };
 
     const resume = await getResumeForUser(user.id, body.resumeId);
@@ -46,43 +57,37 @@ export async function POST(request: Request) {
 
     const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
     const content = await generateAiContent({
-      mode: "COVER_LETTER",
+      mode: "JSON",
       userId: user.id,
       metadata: {
-        purpose: "cover_letter",
+        purpose: "interview_guide",
         resumeId: body.resumeId,
       },
       prompt: [
-        "Generate a direct final cover letter only.",
+        "Return ONLY valid JSON in this shape:",
+        '{"items":[{"category":"","questions":["",""]}]}',
+        "Generate exactly 5 categories of interview questions tailored to the company, JD, resume, and experience. Each category should have exactly 4 questions. DO NOT GENERATE ANSWERS. Just the questions.",
         JSON.stringify({
           companyName: body.companyName,
-          jobDescription: body.jd,
+          jd: body.jd,
+          experience: body.experience,
           resume: parsedResume,
         }),
       ].join("\n"),
     });
 
-    await getSupabaseAdminClient().from("cover_letters").insert({
-      user_id: user.id,
-      resume_id: body.resumeId,
-      company_name: body.companyName,
-      jd: body.jd,
-      generated_text: content,
-    });
+    const parsed = interviewGuideSchema.parse(JSON.parse(content));
 
     await logUserAction({
       userId: user.id,
-      actionType: "cover_letter_generate",
+      actionType: "interview_guide_generate",
       metadata: {
         resumeId: body.resumeId,
       },
     });
 
-    // Telegram alert removed for cover letter generation
-
-    return ok({ content });
+    return ok(parsed);
   } catch (error) {
     return fail(error, 400);
   }
 }
-

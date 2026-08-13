@@ -71,10 +71,7 @@ export async function POST(request: Request) {
       },
     });
 
-    if (body.templateId && body.templateId !== existing.template_id) {
-      await sendTelegramAlert(`🔄 *User Template Swapped*\nUser: \`${user.email || user.id}\`\nNew Template: \`${body.templateId}\``);
-    }
-
+    // Telegram alert removed for template swaps
     return ok({ resume: updated });
   } catch (error) {
     return fail(error, 400);

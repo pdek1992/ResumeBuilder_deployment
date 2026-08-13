@@ -6,11 +6,13 @@ export type AiOutputMode =
   | "HTML"
   | "RESUME_SECTION"
   | "COVER_LETTER"
-  | "MOCK_INTERVIEW";
+  | "MOCK_INTERVIEW"
+  | "INTERVIEW_GUIDE";
 
 export type PaymentType =
   | "resume_download"
   | "mock_interview"
+  | "interview_guide"
   | "cover_letter";
 
 export type PaymentStatus =
@@ -37,7 +39,8 @@ export type AccessActionType =
   | "suspicious_activity"
   | "resume_import"
   | "cover_letter_generate"
-  | "mock_interview_generate";
+  | "mock_interview_generate"
+  | "interview_guide_generate";
 
 export type ResumeSectionKey =
   | "personal"

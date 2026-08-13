@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       resumeId?: string;
     };
 
-    const amountInRupees = body.paymentType === "mock_interview" ? env.mockInterviewPrice : env.resumeDownloadPrice;
+    const amountInRupees = body.paymentType === "mock_interview" ? env.mockInterviewPrice : body.paymentType === "interview_guide" ? env.interviewGuidePrice : body.paymentType === "cover_letter" ? env.coverLetterPrice : env.resumeDownloadPrice;
     const client = getRazorpayClient();
     const order = await client.orders.create({
       amount: Math.round(amountInRupees * 100),

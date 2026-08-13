@@ -1,6 +1,5 @@
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getRequestMetadata } from "@/lib/security/request";
-import { sendTelegramAlert } from "@/lib/telegram";
 import type { AccessLogPayload } from "@/lib/types";
 
 export async function logUserAction({ userId, email, actionType, metadata }: AccessLogPayload) {
@@ -20,12 +19,4 @@ export async function logUserAction({ userId, email, actionType, metadata }: Acc
     last_accessed_at: new Date().toISOString(),
   });
 
-  await sendTelegramAlert([
-    `*Resume Builder Alert*`,
-    `Action: \`${actionType}\``,
-    `User/Email: \`${email || userId}\``,
-    `Time: \`${new Date().toISOString()}\``,
-    `IP: \`${requestMetadata.ipAddress}\``,
-    metadata ? `Metadata: \`${JSON.stringify(metadata).slice(0, 500)}\`` : undefined,
-  ].filter(Boolean).join("\n"));
 }

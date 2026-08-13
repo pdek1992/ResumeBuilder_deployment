@@ -66,7 +66,8 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`✅ *Payment Successful*\nUser: \`${user.email || user.id}\`\nAmount: ₹100\nType: \`${payment.payment_type}\`\nID: \`${body.razorpay_payment_id}\``);
+    const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
+    await sendTelegramAlert(`✅ *Payment Successful*\nUser: \`${userName}\`\nAmount: ₹100\nType: \`${payment.payment_type}\`\nID: \`${body.razorpay_payment_id}\``);
 
     return ok({ payment });
   } catch (error) {

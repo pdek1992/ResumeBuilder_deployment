@@ -381,10 +381,14 @@ export async function GET(request: Request) {
 
     await logUserAction({ userId: user.id, actionType: "docx_download", metadata: { resumeId: resume.id } });
 
+    const name = [parsedResume.personal.firstName, parsedResume.personal.lastName].filter(Boolean).join(" ") || "Candidate";
+    const position = parsedResume.personal.headline || parsedResume.ats.targetRole || "Resume";
+    const downloadFilename = `${name.replace(/\s+/g, "_")}_${position.replace(/\s+/g, "_")}_Resume.docx`.replace(/[^a-zA-Z0-9_.-]/g, '');
+
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "content-disposition": `attachment; filename="${slugify(resume.title || "resume")}.docx"`,
+        "content-disposition": `attachment; filename="${downloadFilename}"`,
         "cache-control": "no-store",
       },
     });

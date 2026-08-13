@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`🎙️ *Mock Interview Generated*\nUser: \`${user.email || user.id}\`\nCompany: \`${body.companyName}\`\nQuestions: 20`);
+    // Telegram alert removed for mock interviews
 
     return ok(parsed);
   } catch (error) {

@@ -97,6 +97,16 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const text = String(formData.get("text") ?? "").trim();
+    const companyName = String(formData.get("companyName") ?? "").trim();
+    const jdLocation = String(formData.get("jdLocation") ?? "").trim();
+    
+    let tailoringPrompt = "";
+    if (companyName || jdLocation) {
+      tailoringPrompt = `\n\nCRITICAL TAILORING INSTRUCTIONS:\n`;
+      if (companyName) tailoringPrompt += `- Target Company: ${companyName}\n`;
+      if (jdLocation) tailoringPrompt += `- Target Role/Location: ${jdLocation}\n`;
+      tailoringPrompt += `Please deeply tailor and rewrite the bullet points, summary, and keywords in the resume to closely align with this specific target company and role. Emphasize relevant skills and experiences. Set the ats.targetCompany to ${companyName || '""'} and ats.targetRole to ${jdLocation || '""'}.\n`;
+    }
     
     let aiContent = "";
 
@@ -113,7 +123,7 @@ export async function POST(request: Request) {
         try {
           aiContent = await generateAiContent({
             mode: "JSON",
-            prompt: RESUME_JSON_PROMPT,
+            prompt: RESUME_JSON_PROMPT + tailoringPrompt,
             userId: user.id,
             provider: "gemini",
             file: {
@@ -130,7 +140,7 @@ export async function POST(request: Request) {
         try {
           const extractedText = await extractResumeTextFromFile(file);
           const prompt = [
-            RESUME_JSON_PROMPT,
+            RESUME_JSON_PROMPT + tailoringPrompt,
             "Raw text from document:",
             extractedText.slice(0, 18000),
           ].join("\n");
@@ -148,7 +158,7 @@ export async function POST(request: Request) {
     } else if (text) {
       // Manual text import
       const prompt = [
-        RESUME_JSON_PROMPT,
+        RESUME_JSON_PROMPT + tailoringPrompt,
         "Raw text:",
         text.slice(0, 18000),
       ].join("\n");
@@ -194,7 +204,8 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`📄 *Resume Imported*\nUser: \`${user.email || user.id}\`\nTitle: \`${resume.title}\``);
+    const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
+    await sendTelegramAlert(`📤 *Resume Imported*\nUser: \`${userName}\`\nTitle: \`${resume.title}\``);
 
     return ok({ resume });
   } catch (error) {

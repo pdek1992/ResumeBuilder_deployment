@@ -8,7 +8,9 @@ import { transitionPdfJob } from "@/lib/pdf/jobs";
 import { newPdfPage } from "@/lib/pdf/pdf-engine";
 import { verifyPdfRenderJob, type SignedPdfRenderJob } from "@/lib/pdf/signing";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-
+import { getResumeForUser } from "@/lib/resume/repository";
+import { decompressJson } from "@/lib/compression";
+import { createDefaultResumeData } from "@/lib/resume/defaults";
 
 
 function jsonError(message: string, status = 500) {
@@ -82,9 +84,20 @@ async function uploadPdf(job: SignedPdfRenderJob, pdfBuffer: Uint8Array) {
 
   if (uploadError) throw uploadError;
 
+  const resume = await getResumeForUser(job.userId, job.resumeId);
+  let downloadFilename = "Resume.pdf";
+  if (resume) {
+    const parsedResume = decompressJson(resume.raw_json_compressed, createDefaultResumeData());
+    const name = [parsedResume.personal.firstName, parsedResume.personal.lastName].filter(Boolean).join(" ") || "Candidate";
+    const position = parsedResume.personal.headline || parsedResume.ats.targetRole || "Resume";
+    downloadFilename = `${name.replace(/\s+/g, "_")}_${position.replace(/\s+/g, "_")}_Resume.pdf`.replace(/[^a-zA-Z0-9_.-]/g, '');
+  }
+
   const { data, error } = await supabase.storage
     .from("resumes")
-    .createSignedUrl(storagePath, env.pdfSignedUrlTtlSeconds);
+    .createSignedUrl(storagePath, env.pdfSignedUrlTtlSeconds, {
+      download: downloadFilename,
+    });
 
   if (error || !data?.signedUrl) {
     throw error ?? new Error("Failed to create signed PDF URL");

@@ -51,6 +51,7 @@ export const env = {
   // Pricing (INR)
   resumeDownloadPrice: parseNumber(process.env.RESUME_DOWNLOAD_PRICE, 100),
   mockInterviewPrice: parseNumber(process.env.MOCK_INTERVIEW_PRICE, 149),
+  interviewGuidePrice: parseNumber(process.env.INTERVIEW_GUIDE_PRICE, 50),
   coverLetterPrice: parseNumber(process.env.COVER_LETTER_PRICE, 49),
 
   // Notifications

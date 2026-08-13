@@ -55,7 +55,7 @@ export function ResumePreview(props: ResumePreviewProps) {
 
       <div className="px-5 py-6 md:px-8">
         <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-slate-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div ref={containerRef} className="mx-auto w-full relative bg-white shadow-2xl overflow-hidden" style={{ aspectRatio: "210/297" }}>
+          <div ref={containerRef} className="mx-auto w-full relative bg-white shadow-2xl overflow-y-auto max-h-[80vh]">
             <div style={{
               width: "210mm",
               minHeight: "297mm",

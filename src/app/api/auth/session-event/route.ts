@@ -98,7 +98,8 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendTelegramAlert(`🔐 *User ${body.event === "signup" ? "Registered" : "Logged In"}*\nUser: \`${user.email || user.id}\`\nEmail: \`${user.email}\`\nMobile: \`${profile.mobile ?? "Not provided"}\``);
+    const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
+    await sendTelegramAlert(`🔐 *User ${body.event === "signup" ? "Registered" : "Logged In"}*\nUser: \`${userName}\`\nEmail: \`${user.email}\`\nMobile: \`${profile.mobile ?? "Not provided"}\``);
 
     return ok({ success: true });
   } catch (error) {

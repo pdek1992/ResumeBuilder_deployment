@@ -15,7 +15,7 @@ export function SupportButton() {
   const whatsappUrl = `https://wa.me/${supportNumber}?text=${encodeURIComponent(prefillMessage)}`;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4 print:hidden">
       {isOpen && (
         <div className="bg-white border shadow-xl rounded-xl p-4 mb-2 w-72 animate-in slide-in-from-bottom-2">
           <div className="flex justify-between items-center mb-3">
@@ -59,12 +59,13 @@ export function SupportButton() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-transform hover:scale-105",
-          "bg-green-500 hover:bg-green-600 text-white"
+          "flex items-center justify-center gap-2 px-4 h-14 rounded-full shadow-lg transition-transform hover:scale-105",
+          "bg-green-500 hover:bg-green-600 text-white font-semibold"
         )}
         aria-label="Open Support"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        {isOpen ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+        <span className="hidden sm:inline">Support</span>
       </button>
     </div>
   );
