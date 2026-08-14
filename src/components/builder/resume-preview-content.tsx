@@ -12,7 +12,7 @@ export function ResumePreviewContent(props: ResumePreviewProps) {
   const { template } = props;
   const layout = template.config_json.layout || "standard";
   
-  const DedicatedComponent = TemplateRegistry[layout] || TemplateRegistry["standard"];
+  const DedicatedComponent = TemplateRegistry[template.id] || TemplateRegistry[layout] || TemplateRegistry["standard"];
   
   if (!DedicatedComponent) {
     return (

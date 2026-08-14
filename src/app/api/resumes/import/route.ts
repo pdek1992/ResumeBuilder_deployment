@@ -11,7 +11,7 @@ import { createResumeDraft } from "@/lib/resume/repository";
 import { createDefaultResumeData, resumeSectionAliases } from "@/lib/resume/defaults";
 import { extractResumeTextFromFile } from "@/lib/resume/import";
 import { logUserAction } from "@/lib/logging";
-import { sendTelegramAlert } from "@/lib/telegram";
+import { sendTelegramUserActionAlert, getIpAndLocation } from "@/lib/telegram";
 import { RESUME_JSON_PROMPT } from "@/lib/ai/prompts";
 
 const importSchema = z.object({
@@ -219,7 +219,16 @@ export async function POST(request: Request) {
     });
 
     const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
-    await sendTelegramAlert(`📤 *Resume Imported*\nUser: \`${userName}\`\nTitle: \`${resume.title}\``);
+    const { ip, location } = await getIpAndLocation(request);
+    await sendTelegramUserActionAlert({
+      action: "Resume Imported",
+      username: String(userName),
+      mobile: String(user.user_metadata?.mobile || "Not provided"),
+      ipAddress: ip,
+      location,
+      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) + " (IST)",
+      details: `Resume: \`${resume.title}\` (ID: \`${resume.id}\`)`,
+    });
 
     return ok({ resume });
   } catch (error) {

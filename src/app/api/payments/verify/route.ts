@@ -7,7 +7,7 @@ import { verifyRazorpaySignature } from "@/lib/payments/razorpay";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { sendTelegramAlert } from "@/lib/telegram";
+import { sendTelegramUserActionAlert, getIpAndLocation } from "@/lib/telegram";
 import type { PaymentType } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -67,7 +67,16 @@ export async function POST(request: Request) {
     });
 
     const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
-    await sendTelegramAlert(`✅ *Payment Successful*\nUser: \`${userName}\`\nAmount: ₹100\nType: \`${payment.payment_type}\`\nID: \`${body.razorpay_payment_id}\``);
+    const { ip, location } = await getIpAndLocation(request);
+    await sendTelegramUserActionAlert({
+      action: "Payment Successful",
+      username: String(userName),
+      mobile: String(user.user_metadata?.mobile || "Not provided"),
+      ipAddress: ip,
+      location,
+      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) + " (IST)",
+      details: `Type: \`${payment.payment_type}\` | Order ID: \`${body.razorpay_order_id}\` | Payment ID: \`${body.razorpay_payment_id}\``,
+    });
 
     return ok({ payment });
   } catch (error) {

@@ -4,7 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { logUserAction } from "@/lib/logging";
-import { sendTelegramAlert } from "@/lib/telegram";
+import { sendTelegramUserActionAlert, getIpAndLocation } from "@/lib/telegram";
 import { ensureAppUserProfile } from "@/lib/auth/profile-sync";
 
 export async function POST(request: Request) {
@@ -99,7 +99,16 @@ export async function POST(request: Request) {
     });
 
     const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
-    await sendTelegramAlert(`🔐 *User ${body.event === "signup" ? "Registered" : "Logged In"}*\nUser: \`${userName}\`\nEmail: \`${user.email}\`\nMobile: \`${profile.mobile ?? "Not provided"}\``);
+    const { ip, location } = await getIpAndLocation(request);
+    await sendTelegramUserActionAlert({
+      action: body.event === "signup" ? "User Registered" : "User Logged In",
+      username: String(userName),
+      mobile: String(profile.mobile ?? user.user_metadata?.mobile ?? "Not provided"),
+      ipAddress: ip,
+      location,
+      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) + " (IST)",
+      details: `Email: \`${user.email}\` | Provider: \`${profile.auth_provider ?? "password"}\``,
+    });
 
     return ok({ success: true });
   } catch (error) {

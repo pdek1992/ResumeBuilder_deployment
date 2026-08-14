@@ -8,6 +8,7 @@ import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { assertRateLimit } from "@/lib/security/rate-limit";
 import { getRequestMetadata } from "@/lib/security/request";
+import { sendTelegramUserActionAlert, getIpAndLocation } from "@/lib/telegram";
 
 export async function POST(request: Request) {
   try {
@@ -54,6 +55,18 @@ export async function POST(request: Request) {
         purpose: body.purpose,
         resumeId: body.resumeId,
       },
+    });
+
+    const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
+    const { ip, location } = await getIpAndLocation(request);
+    await sendTelegramUserActionAlert({
+      action: "AI Content Generated",
+      username: String(userName),
+      mobile: String(user.user_metadata?.mobile || "Not provided"),
+      ipAddress: ip,
+      location,
+      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) + " (IST)",
+      details: `Purpose: \`${body.purpose}\` | Mode: \`${body.mode}\` | Resume ID: \`${body.resumeId ?? "N/A"}\``,
     });
 
     return ok({ content });

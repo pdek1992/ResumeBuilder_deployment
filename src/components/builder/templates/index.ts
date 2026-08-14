@@ -23,8 +23,10 @@ import { BoldHeaderAccentTemplate } from "./BoldHeaderAccentTemplate";
 import { CreativeBoldTemplate } from "./CreativeBoldTemplate";
 import { DeepCharcoalTemplate } from "./DeepCharcoalTemplate";
 import { StandardTemplate } from "./StandardTemplate";
+import { SharpModernTemplate } from "./SharpModernTemplate";
 
 export const TemplateRegistry: Record<string, React.FC<ResumePreviewProps>> = {
+  // Legacy / Layout Keys
   "standard": StandardTemplate,
   "sleek-dark": SleekDarkTemplate,
   "modern-columns": ModernColumnsTemplate,
@@ -49,4 +51,36 @@ export const TemplateRegistry: Record<string, React.FC<ResumePreviewProps>> = {
   "bold-header-accent": BoldHeaderAccentTemplate,
   "creative-bold": CreativeBoldTemplate,
   "deep-charcoal": DeepCharcoalTemplate,
+
+  // Elite Tier IDs
+  "elite-modular-card": ModularCardTemplate,
+  "elite-sidebar-circles": SidebarCirclesTemplate,
+  "elite-banner-soft": BannerSoftTemplate,
+  "elite-grid-labels": GridLabelsTemplate,
+  "elite-sidebar-dark": SidebarDarkTemplate,
+  "elite-corporate-pro": CorporateMinimalTemplate,
+  "elite-creative-bold": CreativeBoldTemplate,
+  "elite-dynamic-grid": GridLabelsTemplate,
+  "elite-elegant-serif": ExecutiveSerifTemplate,
+  "elite-minimal-clean": UltraCleanTemplate,
+  "elite-modern-accent": VibrantAccentTemplate,
+  "elite-premium-executive": ExecutiveSerifTemplate,
+  "elite-sharp-modern": SharpModernTemplate,
+  "elite-soft-minimal": PastelSoftTemplate,
+  "elite-bold-header": BoldHeaderAccentTemplate,
+
+  // Standard Tier IDs
+  "minimal-ats": SleekDarkTemplate,
+  "modern-professional": SidebarDarkTemplate,
+  "executive": ExecutiveSerifTemplate,
+  "hybrid": HybridProTemplate,
+  "creative": SidebarDarkTemplate,
+  "impactful": ImpactfulBoldTemplate,
+  "infographic": InfographicSplitTemplate,
+  "startup": StartupMetricsTemplate,
+  "classic-academic": AcademicClassicTemplate,
+  "ultra-minimalist": SidebarCirclesTemplate,
+  "creative-designer": CreativeDesignerSplitTemplate,
+  "pastel-professional": InfographicSplitTemplate,
+  "vibrant-startup": VibrantAccentTemplate,
 };

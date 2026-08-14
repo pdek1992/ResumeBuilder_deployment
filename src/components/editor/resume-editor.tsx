@@ -642,7 +642,20 @@ export function ResumeEditor({
                 {activeSection === "experience" ? (
                   <div className="space-y-5">
                     {resume.experience.map((item, index) => (
-                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
+                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8 relative group">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setResume((current) => ({
+                              ...current,
+                              experience: current.experience.filter((e) => e.id !== item.id),
+                            }))
+                          }
+                          disabled={isLocked}
+                          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 opacity-100 transition-all hover:bg-rose-50 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          ✕
+                        </button>
                         <div className="grid gap-5 md:grid-cols-2">
                           <div>
                             <label className={labelClassName}>Role Title</label>
@@ -651,6 +664,24 @@ export function ResumeEditor({
                           <div>
                             <label className={labelClassName}>Company</label>
                             <input value={item.company} onChange={(event) => setExperienceField(item.id, "company", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Location</label>
+                            <input value={item.location} onChange={(event) => setExperienceField(item.id, "location", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div className="flex items-center gap-4 mt-6">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" checked={item.current} onChange={(event) => setExperienceField(item.id, "current", event.target.checked)} className="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary" />
+                              <span className="text-[14px] font-bold text-slate-700">Currently Work Here</span>
+                            </label>
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Start Date</label>
+                            <input value={item.startDate} onChange={(event) => setExperienceField(item.id, "startDate", event.target.value)} className={fieldClassName} placeholder="Jan 2020" />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>End Date</label>
+                            <input value={item.endDate} onChange={(event) => setExperienceField(item.id, "endDate", event.target.value)} className={fieldClassName} placeholder="Dec 2022" disabled={item.current} />
                           </div>
                         </div>
                         <div className="mt-5">
@@ -741,7 +772,20 @@ export function ResumeEditor({
                 {activeSection === "education" ? (
                   <div className="space-y-5">
                     {resume.education.map((item, index) => (
-                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
+                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8 relative group">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setResume((current) => ({
+                              ...current,
+                              education: current.education.filter((e) => e.id !== item.id),
+                            }))
+                          }
+                          disabled={isLocked}
+                          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 opacity-100 transition-all hover:bg-rose-50 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          ✕
+                        </button>
                         <div className="grid gap-5 md:grid-cols-2">
                           <div>
                             <label className={labelClassName}>Degree</label>
@@ -750,6 +794,22 @@ export function ResumeEditor({
                           <div>
                             <label className={labelClassName}>Institution</label>
                             <input value={item.school} onChange={(event) => setEducationField(item.id, "school", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Field of Study</label>
+                            <input value={item.field} onChange={(event) => setEducationField(item.id, "field", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Location</label>
+                            <input value={item.location} onChange={(event) => setEducationField(item.id, "location", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Start Date</label>
+                            <input value={item.startDate} onChange={(event) => setEducationField(item.id, "startDate", event.target.value)} className={fieldClassName} placeholder="2018" />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>End Date</label>
+                            <input value={item.endDate} onChange={(event) => setEducationField(item.id, "endDate", event.target.value)} className={fieldClassName} placeholder="2022" />
                           </div>
                         </div>
                         {index === resume.education.length - 1 ? (
@@ -794,10 +854,33 @@ export function ResumeEditor({
                 {activeSection === "projects" ? (
                   <div className="space-y-5">
                     {resume.projects.map((item, index) => (
-                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
-                        <div>
-                          <label className={labelClassName}>Project Name</label>
-                          <input value={item.name} onChange={(event) => setProjectField(item.id, "name", event.target.value)} className={fieldClassName} />
+                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8 relative group">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setResume((current) => ({
+                              ...current,
+                              projects: current.projects.filter((e) => e.id !== item.id),
+                            }))
+                          }
+                          disabled={isLocked}
+                          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 opacity-100 transition-all hover:bg-rose-50 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          ✕
+                        </button>
+                        <div className="grid gap-5 md:grid-cols-2">
+                          <div>
+                            <label className={labelClassName}>Project Name</label>
+                            <input value={item.name} onChange={(event) => setProjectField(item.id, "name", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Role / Title</label>
+                            <input value={item.role} onChange={(event) => setProjectField(item.id, "role", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Link / URL</label>
+                            <input value={item.link} onChange={(event) => setProjectField(item.id, "link", event.target.value)} className={fieldClassName} />
+                          </div>
                         </div>
                         <div className="mt-5">
                           <label className={labelClassName}>Highlights</label>
@@ -829,7 +912,20 @@ export function ResumeEditor({
                 {activeSection === "certifications" ? (
                   <div className="space-y-5">
                     {resume.certifications.map((item, index) => (
-                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8">
+                      <div key={item.id} className="rounded-[2.6rem] border border-slate-100 bg-white px-6 py-7 shadow-[0_14px_40px_rgba(15,23,42,0.04)] md:px-8 relative group">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setResume((current) => ({
+                              ...current,
+                              certifications: current.certifications.filter((e) => e.id !== item.id),
+                            }))
+                          }
+                          disabled={isLocked}
+                          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 opacity-100 transition-all hover:bg-rose-50 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          ✕
+                        </button>
                         <div className="grid gap-5 md:grid-cols-2">
                           <div>
                             <label className={labelClassName}>Certification Name</label>
@@ -840,9 +936,19 @@ export function ResumeEditor({
                             <input value={item.issuer} onChange={(event) => setCertificationField(item.id, "issuer", event.target.value)} className={fieldClassName} />
                           </div>
                         </div>
-                        <div className="mt-5">
-                          <label className={labelClassName}>Issued On</label>
-                          <input value={item.issuedOn} onChange={(event) => setCertificationField(item.id, "issuedOn", event.target.value)} className={fieldClassName} placeholder="e.g. Jan 2024" />
+                        <div className="mt-5 grid gap-5 md:grid-cols-3">
+                          <div>
+                            <label className={labelClassName}>Issued On</label>
+                            <input value={item.issuedOn} onChange={(event) => setCertificationField(item.id, "issuedOn", event.target.value)} className={fieldClassName} placeholder="e.g. Jan 2024" />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Credential ID</label>
+                            <input value={item.credentialId} onChange={(event) => setCertificationField(item.id, "credentialId", event.target.value)} className={fieldClassName} />
+                          </div>
+                          <div>
+                            <label className={labelClassName}>Link</label>
+                            <input value={item.link} onChange={(event) => setCertificationField(item.id, "link", event.target.value)} className={fieldClassName} />
+                          </div>
                         </div>
                         {index === resume.certifications.length - 1 ? (
                           <button

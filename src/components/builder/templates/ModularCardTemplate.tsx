@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 function PreviewHeading({ children, accent }: { children: React.ReactNode; accent: string }) {
   return (
     <div className="mb-4 flex items-center gap-3">
-      <span className="h-6 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: accent }} />
+      <span className="h-6 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: accent , WebkitPrintColorAdjust: "exact" }} />
       <h3 className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: accent }}>{children}</h3>
     </div>
   );
@@ -106,6 +106,7 @@ export function ModularCardTemplate({ resume, template, isPrintMode }: ResumePre
                 {resume.projects.map((item) => (
                   <div key={item.id} className="group break-inside-avoid">
                     <p className="break-words text-[14px] font-black text-slate-900">{item.name}</p>
+                  {item.link && <a href={item.link} className="mt-1 text-[10px] underline text-slate-400 block">{item.link}</a>}
                     {item.role && <p className="mt-1 text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{item.role}</p>}
                     <div className="mt-2 space-y-2">
                       {item.highlights.filter(Boolean).map((highlight, index) => (
@@ -153,7 +154,39 @@ export function ModularCardTemplate({ resume, template, isPrintMode }: ResumePre
             </div>
           )}
         </div>
-      </div>
+      
+          {resume.certifications && resume.certifications.length > 0 && (
+            <div className="mt-6">
+              <PreviewHeading accent={accent}>Certifications</PreviewHeading>
+              <div className="mt-4 space-y-4">
+                {resume.certifications.map((cert) => (
+                  <div key={cert.id} className="break-inside-avoid">
+                    <p className="text-[13px] font-black text-slate-900">{cert.name}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{cert.issuer}</p>
+                    <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                      <span>{cert.issuedOn}</span>
+                      {cert.credentialId && <span>ID: {cert.credentialId}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resume.more && resume.more.length > 0 && (
+            <div className="mt-6">
+              <PreviewHeading accent={accent}>Additional Info</PreviewHeading>
+              <div className="mt-4 space-y-4">
+                {resume.more.map((item) => (
+                  <div key={item.id} className="break-inside-avoid">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-900">{item.label}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-slate-600 whitespace-pre-wrap">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+</div>
     </div>
   );
 }

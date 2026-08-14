@@ -20,7 +20,7 @@ export function SleekDarkTemplate({ resume, template, isPrintMode }: ResumePrevi
         "origin-top-left bg-slate-50 overflow-hidden min-h-full flex flex-col",
         isPrintMode ? "" : "overflow-hidden shadow-[0_25px_60px_rgba(15,23,42,0.12)]"
       )}
-      style={{ width: "210mm", minHeight: "297mm", fontSize: "1em" }}
+      style={{ width: "210mm", minHeight: "297mm", fontSize: "1em" , WebkitPrintColorAdjust: "exact" }}
       data-pdf-page="true"
       data-template-id={template.id}
       data-template-layout="sleek-dark"
@@ -113,6 +113,7 @@ export function SleekDarkTemplate({ resume, template, isPrintMode }: ResumePrevi
               {resume.projects.map((item) => (
                 <div key={item.id} className="group break-inside-avoid">
                   <p className="break-words text-[14px] font-black text-slate-900">{item.name}</p>
+                  {item.link && <a href={item.link} className="mt-1 text-[10px] underline text-slate-400 block">{item.link}</a>}
                   {item.role && <p className="mt-1 text-[10.5px] font-bold uppercase tracking-wide text-slate-400">{item.role}</p>}
                   <div className="mt-2 space-y-2">
                     {item.highlights.filter(Boolean).map((highlight, index) => (
@@ -127,7 +128,39 @@ export function SleekDarkTemplate({ resume, template, isPrintMode }: ResumePrevi
             </div>
           </div>
         )}
-      </div>
+      
+          {resume.certifications && resume.certifications.length > 0 && (
+            <div className="mt-6">
+              <PreviewHeading accent={accent}>Certifications</PreviewHeading>
+              <div className="mt-4 space-y-4">
+                {resume.certifications.map((cert) => (
+                  <div key={cert.id} className="break-inside-avoid">
+                    <p className="text-[13px] font-black text-slate-900">{cert.name}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{cert.issuer}</p>
+                    <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                      <span>{cert.issuedOn}</span>
+                      {cert.credentialId && <span>ID: {cert.credentialId}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resume.more && resume.more.length > 0 && (
+            <div className="mt-6">
+              <PreviewHeading accent={accent}>Additional Info</PreviewHeading>
+              <div className="mt-4 space-y-4">
+                {resume.more.map((item) => (
+                  <div key={item.id} className="break-inside-avoid">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-900">{item.label}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-slate-600 whitespace-pre-wrap">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+</div>
     </div>
   );
 }

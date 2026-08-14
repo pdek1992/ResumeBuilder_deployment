@@ -5,7 +5,7 @@ import { getActiveResumePass } from "@/lib/payments/access";
 import { assertCsrf } from "@/lib/security/csrf";
 import { assertSafeOrigin } from "@/lib/security/request";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { sendTelegramAlert } from "@/lib/telegram";
+import { sendTelegramUserActionAlert, getIpAndLocation } from "@/lib/telegram";
 
 export async function POST(request: Request) {
   try {
@@ -35,7 +35,16 @@ export async function POST(request: Request) {
     });
 
     const userName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || user.id;
-    await sendTelegramAlert(`📥 *Export Initiated*\nUser: \`${userName}\`\nFormat: \`${body.format.toUpperCase()}\`\nResume: \`${body.resumeId}\``);
+    const { ip, location } = await getIpAndLocation(request);
+    await sendTelegramUserActionAlert({
+      action: "Export Initiated",
+      username: String(userName),
+      mobile: String(user.user_metadata?.mobile || "Not provided"),
+      ipAddress: ip,
+      location,
+      timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }) + " (IST)",
+      details: `Format: \`${body.format.toUpperCase()}\` | Resume ID: \`${body.resumeId}\``,
+    });
 
     return ok({
       url: absoluteUrl(`/api/downloads/${body.format}?token=${encodeURIComponent(token)}`),

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 function PreviewHeading({ children, accent }: { children: React.ReactNode; accent: string }) {
   return (
-    <h3 className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: accent }}>
+    <h3 className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: accent , WebkitPrintColorAdjust: "exact" }}>
       {children}
     </h3>
   );
@@ -134,7 +134,39 @@ export function ModernColumnsTemplate({ resume, template, isPrintMode }: ResumeP
             )}
           </div>
         </div>
-      </div>
+      
+          {resume.certifications && resume.certifications.length > 0 && (
+            <div className="mt-6">
+              <PreviewHeading accent={accent}>Certifications</PreviewHeading>
+              <div className="mt-4 space-y-4">
+                {resume.certifications.map((cert) => (
+                  <div key={cert.id} className="break-inside-avoid">
+                    <p className="text-[13px] font-black text-slate-900">{cert.name}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">{cert.issuer}</p>
+                    <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                      <span>{cert.issuedOn}</span>
+                      {cert.credentialId && <span>ID: {cert.credentialId}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {resume.more && resume.more.length > 0 && (
+            <div className="mt-6">
+              <PreviewHeading accent={accent}>Additional Info</PreviewHeading>
+              <div className="mt-4 space-y-4">
+                {resume.more.map((item) => (
+                  <div key={item.id} className="break-inside-avoid">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-900">{item.label}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-slate-600 whitespace-pre-wrap">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+</div>
     </div>
   );
 }
